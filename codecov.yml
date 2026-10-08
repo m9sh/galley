@@ -1,0 +1,45 @@
+# Codecov: coverage per source folder, and a check that new code arrives with tests.
+# The unit tests' own thresholds (vitest.config.ts) are the hard gate; this is the view over time.
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: auto
+        # Vitest enforces the overall and per-folder floors; patch coverage stays advisory.
+        informational: true
+
+ignore:
+  - src/testing
+  - "**/*.test.ts"
+
+component_management:
+  individual_components:
+    - component_id: core
+      name: core
+      paths: [src/core/**]
+    - component_id: platforms
+      name: platforms
+      paths: [src/platforms/**]
+    - component_id: background
+      name: background
+      paths: [src/background/**]
+    - component_id: ui
+      name: ui
+      paths: [src/ui/**]
+    - component_id: content
+      name: content
+      paths: [src/content/**]
+    - component_id: popup
+      name: popup
+      paths: [src/popup/**]
+    - component_id: dev
+      name: dev
+      paths: [src/dev/**]
+
+comment:
+  layout: "condensed_header, condensed_files, components"
+  require_changes: true

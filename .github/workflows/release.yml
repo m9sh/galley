@@ -1,0 +1,104 @@
+name: Release
+
+# Builds the Chrome and Firefox packages for a release tag such as v0.3.1 (it must match "version"
+# in package.json) and attaches them to its GitHub release.
+#
+# release-please.yml calls this when the release pull request is merged. To redo a failed build or
+# upload, run it by hand from the Actions tab with the existing tag.
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag, for example v0.3.1
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag, for example v0.3.1
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  # Runs the dependencies' code (tests and the build) with a read-only token, no cache and no way
+  # to sign: a compromised package cannot push, publish or attest from here.
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      # The tag is an input, so it goes in through the environment and is checked before use.
+      - name: Tag looks like a release
+        env:
+          TAG: ${{ inputs.tag }}
+        run: '[[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+      - run: npm ci --ignore-scripts
+      - name: Tag must match package.json
+        env:
+          TAG: ${{ inputs.tag }}
+        run: test "v$(node -p "require('./package.json').version")" = "$TAG"
+      - run: npm run check
+      - run: npm run build -- --zip
+      # addons.mozilla.org asks for the source of any bundled or minified extension. This is the
+      # tagged tree, without dependencies; store/FIREFOX.md has the build steps reviewers follow.
+      - name: Source package for Firefox review
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          git archive --format=zip --prefix="galley-${version}/" -o "dist/galley-source-${version}.zip" HEAD
+      - name: Checksums
+        run: cd dist && sha256sum galley-*.zip > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release
+          path: |
+            dist/galley-chrome-*.zip
+            dist/galley-firefox-*.zip
+            dist/galley-source-*.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
+
+  # Holds the write and signing permissions, and runs no code from the repository or npm.
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      # Build provenance: the attestation proves the zips were built by this workflow from this tag.
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release
+          path: dist
+      - name: Checksums still match
+        run: cd dist && sha256sum --check SHA256SUMS.txt
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/galley-*.zip
+      # release-please has already created the release, with the changelog as its notes; only the
+      # files are added. If someone tagged by hand there is no release yet, so it is created.
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$TAG" dist/galley-chrome-*.zip dist/galley-firefox-*.zip dist/galley-source-*.zip dist/SHA256SUMS.txt \
+              --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG" dist/galley-chrome-*.zip dist/galley-firefox-*.zip dist/galley-source-*.zip dist/SHA256SUMS.txt \
+              --repo "$GITHUB_REPOSITORY" --title "Galley $TAG" --generate-notes
+          fi
