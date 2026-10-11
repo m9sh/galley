@@ -1,10 +1,11 @@
 ---
-status: Proposed
+status: Accepted
 created: 2026-10-10
 authors: [m9sh]
 discussion: https://github.com/m9sh/galley/issues/55
 theme: Galley where you want it
 phase: Foundation; three parts that can ship separately
+progress: Part 2, how the reader opens, shipped in https://github.com/m9sh/galley/pull/58; part 1 (where Galley runs) and part 3 (feature switches) remain, with their privacy and default-setting questions
 adrs: [2, 19, 22]
 ---
 
