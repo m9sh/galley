@@ -79,8 +79,11 @@
 .mr-repo-views {
   margin-right: 4px;
 }
+.mr-repo-menu-views {
+  display: none;
+}
 
-/* Words on wide screens; on phones the views keep their icons and give the document name room. */
+/* Wide screens keep view names in the top bar; phones use the document menu. */
 .mr-repo-views .mr-icon {
   display: none;
   width: 17px;
@@ -778,7 +781,7 @@
 }
 
 @media (max-width: 760px) {
-  /* Phones keep Back, the document name and the view; Forward and the commit's digits give way. */
+  /* Phones keep Back and a readable document name; view choices move into its menu. */
   .mr-repo-commit-label,
   .mr-repo-commit:disabled,
   .mr-repo-history [data-act="forward"] {
@@ -792,21 +795,20 @@
   }
 
   .mr-repo-views {
-    margin-right: 0;
-  }
-
-  .mr-repo-views button {
-    display: inline-flex;
-    align-items: center;
-    padding: 0 9px;
-  }
-
-  .mr-repo-views button > span {
     display: none;
   }
-
-  .mr-repo-views .mr-icon {
-    display: block;
+  .mr-repo-menu-views {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 8px 16px;
+    gap: 6px;
+  }
+  .mr-repo-menu-views button {
+    min-height: 44px;
+    gap: 6px;
+  }
+  .mr-repo-menu-views .mr-icon {
+    display: none;
   }
 
   .mr-repo .mr-brand {
@@ -815,5 +817,95 @@
 
   .mr-repo-docs {
     width: calc(100vw - 12px);
+  }
+}
+
+/* A quiet return path belongs beside the article, without crowding the top bar. */
+.mr-repo-return {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  max-width: 680px;
+  margin: 24px auto 0;
+  padding: 0 24px;
+  color: var(--muted);
+  font: 400 13px / 1.4 var(--sans);
+}
+.mr-repo-return > span {
+  flex: 1 1 100%;
+  overflow-wrap: anywhere;
+}
+.mr-repo-return .mr-btn {
+  min-height: 44px;
+  white-space: normal;
+}
+.mr-repo-return ~ .mr-main {
+  padding-top: 32px;
+}
+.mr-chapter-attachment {
+  margin: 20px 0;
+  font: 400 14px / 1.4 var(--sans);
+}
+.mr-chapter-attachment summary {
+  cursor: pointer;
+  padding: 12px 0;
+  color: var(--accent);
+}
+.mr-chapter-attachment form {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  background: var(--soft);
+  border-radius: 12px;
+}
+.mr-chapter-attachment label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+}
+.mr-chapter-attachment select {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--control-rule);
+  border-radius: 6px;
+  font: inherit;
+}
+.mr-chapter-attachment .mr-btn {
+  min-height: 44px;
+  justify-self: start;
+}
+.mr-review-attachment {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mr-review-attachment small {
+  color: var(--muted);
+}
+
+.mr-repo .mr-file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+@media (max-width: 760px) {
+  .mr-repo .mr-byline {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .mr-repo .mr-file-meta,
+  .mr-repo .mr-file-actions {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .mr-repo .mr-repo-at {
+    flex: 1 1 100%;
   }
 }

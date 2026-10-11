@@ -18,9 +18,11 @@ interface Options {
   mount: HTMLElement;
   beforeOpen(): void;
   navigate(doc: DocRef): void;
+  resume(): void;
   reorder(docs: DocRef[] | null): void;
   state(doc: DocRef): ChapterFileState;
   diffUrl(): string;
+  projectContext?(chapter: ReviewChapter): HTMLElement | null;
 }
 
 function node<K extends keyof HTMLElementTagNameMap>(tag: K, className = '', text = ''): HTMLElementTagNameMap[K] {
@@ -71,8 +73,8 @@ export class ChapterMap {
   private readonly feedback = node('p', 'mr-chapters-feedback');
 
   /** The chapters as they stand, with the paths of their files: what a repository read from this review shows. */
-  outline(): Array<{ title: string; paths: string[] }> {
-    return this.chapters.map((chapter) => ({ title: chapter.title, paths: chapter.files.map((doc) => doc.path) }));
+  outline(): Array<{ id: string; title: string; paths: string[] }> {
+    return this.chapters.map((chapter) => ({ id: chapter.id, title: chapter.title, paths: chapter.files.map((doc) => doc.path) }));
   }
 
   constructor(private readonly options: Options) {
@@ -146,12 +148,13 @@ export class ChapterMap {
     );
   }
 
-  setSource(docs: DocRef[], other: DocRef[]): void {
+  setSource(docs: DocRef[], other: DocRef[], project: boolean): void {
     this.docs = docs;
     this.other = other;
     this.partners = testPartners(docs);
     this.chapters = reviewChapters(docs, other);
-    this.options.toggle.hidden = docs.length + other.length < 2;
+    const count = docs.length + other.length;
+    this.options.toggle.hidden = count === 0 || (count === 1 && !project);
     this.build();
   }
 
@@ -199,6 +202,26 @@ export class ChapterMap {
       }
     }
     return true;
+  }
+
+  /** Rebuild the chapter after context reading and restore its opening control. */
+  returnToContext(id: string, key: string): void {
+    this.expanded.add(id);
+    if (this.overlay.hidden) this.open();
+    else this.build();
+    const chapter = [...this.content.querySelectorAll<HTMLElement>('[data-chapter]')].find((el) => el.dataset.chapter === id)!;
+    const control =
+      [...chapter.querySelectorAll<HTMLElement>('[data-context-key]')].find((el) => el.dataset.contextKey === key) ??
+      chapter.querySelector<HTMLElement>('[data-context-key="find"]')!;
+    control.focus({ preventScroll: true });
+  }
+
+  continueChapter(id: string): void {
+    this.close();
+    const chapter = this.chapters.find((chapter) => chapter.id === id)!;
+    const current = chapter.files.find((doc) => this.options.state(doc).current);
+    if (current) this.options.resume();
+    else this.start(chapter);
   }
 
   private background(): NodeListOf<HTMLElement> {
@@ -350,7 +373,9 @@ export class ChapterMap {
         }
         const list = node('ul', 'mr-chapter-files');
         list.append(...chapter.files.map((doc) => this.file(doc)));
-        body.append(list);
+        body.append(node('h3', 'mr-chapter-group-title', 'Changed files'), list);
+        const context = this.options.projectContext?.(chapter);
+        if (context) body.append(context);
         const start = button('Read chapter', () => this.start(chapter));
         start.disabled = !chapter.files.some((doc) => !this.options.state(doc).unsupported);
         body.append(start);

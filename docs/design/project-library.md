@@ -1,12 +1,12 @@
 # Project library: reading layouts and chapter context
 
-Implementation plan for [task #60](https://github.com/m9sh/galley/issues/60). This is a phased task, not an RFC. Its first delivery is the independently reviewable reading-layout foundation; direct chapter context is a follow-up.
+Implementation plan for [task #60](https://github.com/m9sh/galley/issues/60). This is a phased task, not an RFC. The layout foundation shipped in MR #61. The next delivery connects each chapter to supporting reading with explicit session attachments.
 
 ## Current journey
 
 | Surface | Responsibility | Existing owner |
 | --- | --- | --- |
-| Chapters | Explainable groups and a reading order through changed files | `core/chapters.ts`, `ui/chapters.ts`, `Reader` |
+| Chapters | Explainable groups and a reading order through changed files | `core/chapters.ts`, `ui/review/chapters.ts`, `Reader` |
 | Review article | Changed file, its contents, folds, Viewed and discussion | `Reader` |
 | Project library opening | Choose the review's head or base and leave the review open behind it | `Reader.openProject()` |
 | This review | Changed files by chapter, with linked documents and their evidence | `repo-views.ts`, `RepoReader` |
@@ -14,11 +14,11 @@ Implementation plan for [task #60](https://github.com/m9sh/galley/issues/60). Th
 | Contents | Headings of the current article; visible beside Balanced / Wide text on desktop | Each reader's `buildToc()` |
 | Project map | Connections backed by explicit document links, plus their evidence | `ProjectIndex`, `repo-views.ts` |
 
-The review sends a snapshot of its chapter groups into This review. Direct supporting-document links in Chapters and shared context attachments are not implemented yet. Avoid another chapter-grouping system: the next delivery should extend this existing snapshot and evidence model.
+The review sends chapter IDs, titles and changed paths into This review. Each chapter distinguishes **Changed files** from **Project context**. **Find project context** opens the library at the chosen base or head; merely opening Chapters requests no repository content. The existing bounded index supplies the same explicit Markdown-link evidence to This review, Project map and chapter context. Its read count, listing limits, failed reads and oversized documents remain visible. No connection is inferred from folder proximity.
 
 ## Foundation components
 
-`ui/layout-controls.ts` owns the fixed layout-picker markup, names and captions. Both readers compose it into the existing `settingsSheet()`. Review choices remain Balanced, Files, Review, Wide text, Focus and Fit to screen; the library offers Focus, Balanced and Wide text, with previews that do not suggest a discussion column.
+`ui/components/layout-controls.ts` owns the fixed layout-picker markup, names and captions. Both readers compose it into the existing `settingsSheet()`. Review choices remain Balanced, Files, Review, Wide text, Focus and Fit to screen; the library offers Focus, Balanced and Wide text, with previews that do not suggest a discussion column.
 
 `LibraryLayout` owns the library session's supported choice and cycling order. It starts in Focus, survives document navigation and refresh, and ends when the overlay closes. It does not write settings. Component tests cover the two picker contexts and the session model; integration tests exercise selection, navigation, late preference loads, keyboard cycling and the return to a review.
 
@@ -36,7 +36,7 @@ The shared `applyReadingControls()` in `settings-sheet.ts` applies selected cont
 | Library document and back stack | `RepoReader` history: path, first visible block and offset | Link navigation and Back/Forward restore the paragraph; a layout reflow restores the first visible block |
 | Revision | Commit-pinned `RepositorySource`; head/base selected before opening | Existing This review identifies the revision; all reads use its commit |
 | Focus and Escape | Existing layer ownership and return callback | Settings close first; closing the library returns focus to the review's opening control |
-| Future document/heading attachment | Session state attached to a review chapter | Not implemented here; retain source identity, revision and explicit evidence or “Added by you” |
+| Document/heading attachment | `ChapterContext`, owned by the background review, keyed by chapter ID and base/head | Stores path, heading, label and actual commit in memory only; survives closing the library, not closing the review; shown as Added by you |
 
 There is no new storage key or saved repository content. The library's layout choice is independent of content visibility: it does not change Marked / Clean, Changed parts / Whole files, indexing completeness or review progress.
 
@@ -46,15 +46,21 @@ Focus is a centred article with a 680px maximum measure and navigation available
 
 Existing palettes, typography, optional glow and Comfortable / Compact density continue to apply. Maps and notes retain their separate on-demand views.
 
+## Context components and return contract
+
+`core/review-context.ts` owns the shared related-document query and `ChapterContext` session model. Automatic evidence remains keyed to the changed path, so moving a file to another chapter moves its evidence with it. Explicit attachments belong to stable chapter IDs and a revision; renaming or moving a chapter retains them. A base attachment is never silently used at head. Chapter edits and attachments are separate from persistent Project notes.
+
+`ui/components/chapter-context.ts` renders the revision picker, exact link evidence and the reader's attachments. `ui/components/chapter-attachment.ts` supplies the native disclosure and form shared with the library article: select a chapter, choose Whole document or a real heading, and Add for this session. Attachments are shown before automatic evidence; Remove affects only that session choice. This review shows the same attachments. They do not create documented edges in Project map.
+
+Opening an evidence item keeps its source line; opening an attachment keeps its heading. A missing document retains the return path and platform link. A missing heading says it was not found and shows the beginning. The library's quiet return row names the chapter and provides Return to review and Continue chapter. Return and Escape rebuild the chapter map and focus the exact context control. Continue closes the library and resumes the current paragraph if already in that chapter, or starts its first unviewed readable file otherwise. It is disabled for empty or platform-only chapters. Neither operation submits a draft, unfolds a file or marks one Viewed.
+
 ## Next deliveries
 
-1. Put existing related-document evidence beside each chapter's Changed files as Project context. Share those connections with This review and Project map.
-2. Add explicit session attachments of a document or heading, labelled Added by you. Preserve head/base and the active chapter when opening them.
-3. Add Return to review and Continue chapter with complete position, focus, draft, fold and Viewed regression coverage. Reuse the chapter presentation for optional standalone reading sequences.
-4. Refine wrapped navigation items, inspect the joined journey at desktop and phone widths, and run 5–8 voluntary reading sessions. Naming and comfort remain hypotheses until readers validate them; no telemetry is introduced.
+1. Reuse the chapter presentation for optional standalone library reading sequences, retaining the plain outline.
+2. Continue list/navigation polish and voluntary validation of the joined journey with 5–8 readers. Naming and comfort remain hypotheses until readers validate them; no telemetry is introduced.
 
 ## Representative captures
 
 The same architecture article at 1,440px: [before](library-before.png), [Focus](library-focus.png), and the extracted [layout picker](library-layouts.png). The [390px capture](library-phone.png) uses dark appearance, Compact density and 22px text. Browser checks exercise all three layouts at 1,440, 1,280, 390 and 320px in light/Comfortable/20px and dark/Compact/22px.
 
-These captures validate the layout foundation, not the entire joined journey. At 320px the existing top-bar actions squeeze out the document name; the chapter/navigation polish should give the current document space while keeping all actions reachable. Direct chapter context and voluntary reader sessions remain outstanding.
+The joined chapter journey has matching 1,440px [before](chapter-context-before.png) and [after](chapter-context-after.png) captures, plus [320px chapter context](chapter-context-phone.png) and [390px supporting reading](chapter-context-reading.png). Its browser checks cover 1,440, 1,280, 390 and 320px, light/dark appearance, Comfortable/Compact density and 17/24px text, including source evidence, heading attachments, focus and state restoration. These captures validate the implemented journey. At phone widths, view choices move into the document menu, leaving the top bar for a readable document name. The byline gives paths and actions separate rows. Voluntary reader sessions and standalone reading sequences remain outstanding.

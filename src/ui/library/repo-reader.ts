@@ -1,3 +1,6 @@
+import { relatedDocuments, type ChapterContext } from '../../core/review-context.ts';
+import { chapterAttachment } from '../components/chapter-attachment.ts';
+import type { ContextOpening } from '../components/chapter-context.ts';
 import { buildLens, MAX_CONFIG_CHARS, ORIGIN_NAMES, type ArchitectureInput, type ConfigReading, type LensName } from '../../core/architecture.ts';
 import { configFormat, type RepoDiscovery } from '../../core/discovery.ts';
 import {
@@ -40,19 +43,7 @@ import { layoutPanel, LibraryLayout, LAYOUT_NAMES } from '../components/layout-c
 import css from '../components/reader.css';
 import { digestText, ProjectNotes, when } from './project-store.ts';
 import { loadImage, renderDocument, type RenderedDoc } from '../rendering/render.ts';
-import {
-  button,
-  configStatus,
-  exportSheet,
-  external,
-  h,
-  lensSwitch,
-  lensView,
-  notesView,
-  reviewView,
-  type ConfigState,
-  type ReviewRelated,
-} from './repo-views.ts';
+import { button, configStatus, exportSheet, external, h, lensSwitch, lensView, notesView, reviewView, type ConfigState } from './repo-views.ts';
 import repoCss from './repo.css';
 import { DEFAULT_SETTINGS, loadSettings, updateSettings, TEXT_SIZES, type Settings } from '../preferences/settings.ts';
 import {
@@ -244,7 +235,9 @@ export interface ReviewContext {
   /** The branch of that revision. */
   ref: string;
   /** The review's chapters, in reading order, with the paths each one changes. */
-  chapters: Array<{ title: string; paths: string[] }>;
+  chapters: Array<{ id?: string; title: string; paths: string[] }>;
+  context?: ChapterContext;
+  entry?: ContextOpening;
 }
 
 let active: RepoReader | null = null;
@@ -256,7 +249,7 @@ export interface RepoReaderHandle {
 /** Open the repository reader over the page. Accepts a promise so it can show loading and errors itself. */
 export function openRepository(
   source: RepositorySource | Promise<RepositorySource>,
-  options: { onClose?: () => void; review?: ReviewContext } = {},
+  options: { onClose?: (action?: 'continue') => void; review?: ReviewContext } = {},
 ): RepoReaderHandle {
   active?.close();
   const reader = new RepoReader(options.onClose, options.review ?? null);
@@ -329,7 +322,7 @@ class RepoReader {
   private readonly prevFocus: Element | null;
 
   constructor(
-    private readonly onClose: (() => void) | undefined,
+    private readonly onClose: ((action?: 'continue') => void) | undefined,
     private readonly review: ReviewContext | null,
   ) {
     this.changed = new Set(review?.chapters.flatMap((chapter) => chapter.paths));
@@ -353,7 +346,22 @@ class RepoReader {
       close.title = 'Back to the review (Esc)';
       close.setAttribute('aria-label', 'Back to the review (Esc)');
       this.q('[data-view="review"]').hidden = false;
+      const returnBar = h('nav', 'mr-repo-return');
+      returnBar.setAttribute('aria-label', 'Return to review');
+      const chapter = review.entry ? review.chapters.find((chapter) => chapter.id === review.entry!.chapter) : undefined;
+      returnBar.append(h('span', '', chapter ? chapter.title : review.title), button('Return to review', 'close', 'mr-btn mr-outline'));
+      if (review.entry) {
+        const next = button('Continue chapter', 'continue-chapter', 'mr-btn mr-outline');
+        next.disabled = !review.entry.canContinue;
+        returnBar.append(next);
+      }
+      this.q('.mr-topbar').after(returnBar);
     }
+    // Phones put view choices in the document menu, leaving the top bar for the reading title.
+    const views = this.q('.mr-repo-views').cloneNode(true) as HTMLElement;
+    views.className = 'mr-seg mr-repo-menu-views';
+    views.setAttribute('aria-label', 'Library view');
+    this.q('.mr-repo-docs').prepend(views);
     this.root.addEventListener('scroll', () => this.onScroll(), { passive: true });
     this.q('.mr-palette-track').addEventListener('scroll', () => this.palettes.update(), { passive: true });
     this.q('.mr-repo-search').addEventListener('input', (e) => {
@@ -385,7 +393,15 @@ class RepoReader {
       if (this.view === 'notes') void this.checkAnchors();
     });
     // Opened from a review, the reader starts at what the review changes.
-    if (this.review) void this.showReview();
+    if (this.review?.entry?.path) {
+      void this.open(this.review.entry.path, this.review.entry);
+      void this.discover().then(
+        () => {
+          if (!this.closed) this.autoIndex();
+        },
+        () => {},
+      );
+    } else if (this.review) void this.showReview();
     else this.start();
   }
 
@@ -429,8 +445,9 @@ class RepoReader {
     this.message(e.message, e.hint, extra);
   }
 
-  close(): void {
+  close(action?: 'continue'): void {
     if (this.closed) return;
+    if (this.review?.context && this.index) this.publishContext();
     this.closed = true;
     if (this.indexing) this.indexing.cancelled = true;
     if (this.config.run) this.config.run.cancelled = true;
@@ -442,7 +459,7 @@ class RepoReader {
     document.documentElement.style.overflow = this.prevOverflow;
     if (this.prevFocus instanceof HTMLElement) this.prevFocus.focus({ preventScroll: true });
     active = null;
-    this.onClose?.();
+    this.onClose?.(action);
   }
 
   /** The repository listing, once per snapshot; a failed listing can be tried again. */
@@ -642,6 +659,19 @@ class RepoReader {
     actions.append(button('Add a note', 'note-here', 'mr-repo-note'), external(`Open on ${source.platform}`, source.links.blob(path), 'mr-repo-open'));
     byline.append(facts, actions);
     intro.push(byline);
+    if (this.review?.context) {
+      const review = this.review;
+      const title = r.title ?? fileTitle(path);
+      const attachment = chapterAttachment({
+        chapters: review.chapters.map((chapter) => ({ id: chapter.id!, title: chapter.title })),
+        current: review.entry?.chapter,
+        headings: indexDocument(path, this.read.get(path)!).headings,
+        add: (chapter, heading, label) => {
+          review.context!.add({ chapter, revision: review.revision, commit: source.commit, path, heading, title: heading ? `${title} — ${label}` : title });
+        },
+      });
+      intro.push(attachment);
+    }
     if (r.lead) {
       const before: Element[] = [];
       for (let el = r.content.firstElementChild; el && el !== r.lead; el = el.nextElementSibling) before.push(el);
@@ -985,6 +1015,7 @@ class RepoReader {
 
   /** After the index changes: the map, the list's kinds and the current document's backlinks. */
   private refreshIndexViews(): void {
+    if (this.review?.context && this.view !== 'review') this.publishContext();
     if (this.view === 'map') this.drawMap();
     else if (this.view === 'review') this.drawReview();
     else this.updateIndexStatus();
@@ -1571,33 +1602,18 @@ class RepoReader {
     this.autoIndex();
   }
 
-  /** Documents read so far that link to a path: each with the links that connect them, flagged, never judged. */
-  private relatedTo(path: string): ReviewRelated[] {
-    const index = this.index!;
-    const found = new Map<string, ReviewRelated>();
-    for (const doc of index.docs.values()) {
-      if (doc.path === path) continue;
-      for (const link of doc.links) {
-        if (link.path === null || (link.path !== path && index.documentAt(link.path) !== path)) continue;
-        const { kind } = classify(doc, this.corrections);
-        const entry = found.get(doc.path) ?? {
-          path: doc.path,
-          title: doc.title,
-          kind: kind === 'other' ? null : KIND_NAMES[kind],
-          flag: this.changed.has(doc.path) ? 'changed' : 'worth-checking',
-          evidence: [],
-        };
-        entry.evidence.push({ path: doc.path, line: link.line, text: link.text || link.href });
-        found.set(doc.path, entry);
-      }
-    }
-    return [...found.values()].sort((a, b) => Number(a.flag > b.flag) - Number(a.flag < b.flag) || a.title.localeCompare(b.title, 'en', { numeric: true }));
+  private publishContext(): Map<string, import('../../core/review-context.ts').ReviewRelated[]> {
+    const related = new Map([...this.changed].map((path) => [path, relatedDocuments(this.index!, path, this.changed, this.corrections)]));
+    const status = [...this.indexStatus().querySelectorAll('p')].map((p) => p.textContent).join(' ');
+    this.review!.context?.snapshots.set(this.review!.revision, { commit: this.source!.commit, status, related });
+    return related;
   }
 
   private drawReview(): void {
     const review = this.review!;
     const index = this.index!;
     const source = this.source!;
+    const related = this.publishContext();
     const status = h('div', 'mr-review-status');
     status.append(this.indexStatus());
     const configs = new Set(this.listing!.configs.files.map((file) => file.path));
@@ -1609,10 +1625,11 @@ class RepoReader {
         status,
         chapters: review.chapters.map((chapter) => ({
           title: chapter.title,
+          attachments: review.context?.forChapter(chapter.id!, review.revision),
           files: chapter.paths.map((path) => ({
             path,
             changedDoc: index.documentAt(path) === path,
-            related: this.relatedTo(path),
+            related: related.get(path)!,
             declares: (this.configs.get(path)?.items ?? []).slice(0, 12).map((item) => item.name),
           })),
         })),
@@ -1726,6 +1743,7 @@ class RepoReader {
     }
     const view = target.closest<HTMLElement>('[data-view]');
     if (view) {
+      this.closeMenus();
       if (view.dataset.view === 'map') void this.showMap();
       else if (view.dataset.view === 'notes') this.showNotes();
       else if (view.dataset.view === 'review') void this.showReview();
@@ -1758,6 +1776,9 @@ class RepoReader {
     switch (el.dataset.act) {
       case 'close':
         this.close();
+        return;
+      case 'continue-chapter':
+        this.close('continue');
         return;
       case 'back':
         this.go(-1);

@@ -16,6 +16,7 @@ import { checkCodeComments, checkSpecs } from './specs.mjs';
 import { checkLargeReview } from './large.mjs';
 import { checkFilesLayout } from './files.mjs';
 import { checkChapters } from './chapters.mjs';
+import { checkChapterContext } from './chapter-context.mjs';
 import { checkRepository } from './repo.mjs';
 import { checkOpening } from './opening.mjs';
 
@@ -1044,6 +1045,7 @@ try {
   await checkLargeReview(browser, demoUrl, screenshots);
   await checkFilesLayout(browser, demoUrl, screenshots);
   await checkChapters(browser, demoUrl, screenshots);
+  await checkChapterContext(browser, demoUrl, screenshots);
   await checkRepository(browser, demoUrl, screenshots);
   await checkOpening(findChrome(), screenshots);
   console.log(

@@ -150,12 +150,12 @@ A failure keeps the draft; writes are never retried ([ADR 0008](../adr/0008-comm
 | --- | --- | --- | --- |
 | `src/content/` | Page detection, launcher, single-page navigation, token-change signal | `main.ts` | Page (jsdom in tests) |
 | `src/platforms/` | GitHub and GitLab adapters behind `ReviewSource` and `RepositorySource`; detection of reviews and repository pages; HTTP with retries; comments and threads; Viewed sync; tokens and enabled sites | `types.ts`, `index.ts`, `detect.ts`, `github.ts`, `github-api.ts`, `github-read.ts`, `github-repo.ts`, `github-queries.ts`, `github-viewed.ts`, `gitlab.ts`, `gitlab-repo.ts`, `comments.ts`, `http.ts`, `tokens.ts`, `sites.ts` | Node in tests |
-| `src/core/` | Pure logic, no DOM: Markdown units, block and word diffs, limits, DOM highlighting of ops, patch reversal, paths and links, reading order, folded-file rules, chapters; repository listing budgets, the document index, architecture and decision views, notes and their export | `markdown.ts`, `blockdiff.ts`, `worddiff.ts`, `limits.ts`, `highlight.ts`, `patch.ts`, `paths.ts`, `order.ts`, `quiet.ts`, `chapters.ts`, `discovery.ts`, `docindex.ts`, `architecture.ts`, `notes.ts` | Node in tests |
+| `src/core/` | Pure logic, no DOM: Markdown units, block and word diffs, limits, DOM highlighting of ops, patch reversal, paths and links, reading order, folded-file rules, chapters and session project context; repository listing budgets, the document index, architecture and decision views, notes and their export | `markdown.ts`, `blockdiff.ts`, `worddiff.ts`, `limits.ts`, `highlight.ts`, `patch.ts`, `paths.ts`, `order.ts`, `quiet.ts`, `chapters.ts`, `review-context.ts`, `discovery.ts`, `docindex.ts`, `architecture.ts`, `notes.ts` | Node in tests |
 | `src/ui/review/` | Review shell, chapters, moved lines, Viewed and reading positions | `reader.ts`, `chapters.ts`, `moves.ts`, `viewed.ts`, `positions.ts` | jsdom in tests |
 | `src/ui/library/` | Project library shell, map and notes views, saved notes, configuration client | `repo-reader.ts`, `repo-views.ts`, `repo.css`, `project-store.ts`, `configs.ts` | jsdom in tests |
 | `src/ui/rendering/` | Sanitised Markdown, code, diagrams, images, source comments and reading behavior | `render.ts`, `reading.ts`, `code*.ts`, `diagrams.ts`, `image.ts`, `specs.ts`, `symbols.ts`, `source-comments.ts` | jsdom in tests |
 | `src/ui/sandbox/` | Opaque frame transport and bundled engines; isolated image fallback | `sandbox.ts`, `sandbox-frame.ts`, `*-frame.ts`, `*-frame.html`, `elk-shim.ts` | jsdom and Chrome |
-| `src/ui/components/` | Shared DOM controls, layout picker, settings sheet, icons, fonts and common reader styles | `dom.ts`, `layout-controls.ts`, `settings-sheet.ts`, `icons.ts`, `fonts.ts`, `fonts/`, `reader.css` | jsdom in tests |
+| `src/ui/components/` | Shared DOM controls, layout picker, chapter context and attachment form, settings sheet, icons, fonts and common reader styles | `dom.ts`, `layout-controls.ts`, `chapter-context.ts`, `chapter-attachment.ts`, `settings-sheet.ts`, `icons.ts`, `fonts.ts`, `fonts/`, `reader.css` | jsdom in tests |
 | `src/ui/preferences/` | Shared preference model, persistence and application | `settings.ts` | jsdom in tests |
 | `src/ui/opening/` | The optional page launcher | `launcher.ts` | jsdom in tests |
 | `src/background/` | The only holder of GitHub tokens; allowlisted API proxy; restores enabled sites | `worker.ts` | Node in tests |
@@ -166,7 +166,7 @@ A failure keeps the draft; writes are never retried ([ADR 0008](../adr/0008-comm
 | `demo/` | The real reader on a sample review; `?spec`, `?comments`, `?large`, `?chapters`, `?code-only`, `?diagram-error`; `?repo` for the repository reader on a sample handbook | `main.ts`, `index.html`, `samples/` | Browser |
 | `site/` | The website | `index.html`, `styles.css`, `main.js` | Browser |
 | `scripts/` | Build, dev server, demo and site servers, store assets, Pages previews, docs check, the repository reading report | `build.mjs`, `dev.mjs`, `docs.mjs`, `pages-*.mjs`, `repo-report.mjs` | Node |
-| `e2e/` | Browser checks in Chrome with Puppeteer | `reader.mjs`, `specs.mjs`, `large.mjs`, `files.mjs`, `chapters.mjs`, `repo.mjs`, `site.mjs` | Chrome |
+| `e2e/` | Browser checks in Chrome with Puppeteer | `reader.mjs`, `specs.mjs`, `large.mjs`, `files.mjs`, `chapters.mjs`, `chapter-context.mjs`, `repo.mjs`, `site.mjs` | Chrome |
 
 Dependencies point inwards: `core` imports only types from `platforms/types.ts`; `platforms` imports `core`; `ui` imports `core` and `platforms/types.ts`; `content` wires `platforms` and `ui` together. Nothing outside `src/background/` and `src/popup/` imports token storage, and the build enforces it.
 
@@ -204,7 +204,7 @@ The repository reader (`src/ui/library/repo-reader.ts`) reads a project's own do
 
 The reader keeps one `ProjectIndex` (`src/core/docindex.ts`) per snapshot for the outline, backlinks and the map; the architecture and decision views (`src/core/architecture.ts`) are built from it, from configuration read in `config-frame`, and from the reader's own proposals.
 
-Both readers compose their layout picker from `src/ui/components/layout-controls.ts`, tested independently in `layout-controls.test.ts`. The review keeps its persisted `Settings.layout`; the library owns a `LibraryLayout` instance that starts in Focus and lasts until close. Applying a library layout updates only its own root and selected controls, and restores its paragraph after reflow. No new storage key or repository content is persisted. See the [library delivery and state contract](../design/project-library.md) for the next chapter-context work.
+Both readers compose their layout picker from `src/ui/components/layout-controls.ts`, tested independently in `layout-controls.test.ts`. The review keeps its persisted `Settings.layout`; the library owns a `LibraryLayout` instance that starts in Focus and lasts until close. Applying a library layout updates only its own root and selected controls, and restores its paragraph after reflow. No new storage key or repository content is persisted. See the [library delivery and state contract](../design/project-library.md) for the chapter-context session model and return journey.
 
 ## Build outputs
 

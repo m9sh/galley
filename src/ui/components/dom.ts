@@ -12,6 +12,13 @@ export function h<K extends keyof HTMLElementTagNameMap>(tag: K, className = '',
   return el;
 }
 
+export function button(label: string, act: string, className = 'mr-btn mr-outline'): HTMLButtonElement {
+  const b = h('button', className, label);
+  b.type = 'button';
+  b.dataset.act = act;
+  return b;
+}
+
 /** Change kinds colour the dot; `own` is the reader's own (a hint of the accent), `unverified` a guess (a hollow dot). */
 export type ChipKind = 'added' | 'modified' | 'removed' | 'moved' | 'own' | 'unverified';
 
