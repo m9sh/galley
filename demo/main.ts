@@ -8,6 +8,7 @@ import { structuredPatch } from 'diff';
 import type { DocRef, RepositorySource, ReviewSource, Thread } from '../src/platforms/types.ts';
 import { Launcher } from '../src/ui/opening/launcher.ts';
 import { openReader } from '../src/ui/review/reader.ts';
+import { openMapPrototype } from './project-map.ts';
 import { openRepository } from '../src/ui/library/repo-reader.ts';
 import { loadSettings, saveSettings } from '../src/ui/preferences/settings.ts';
 
@@ -317,6 +318,10 @@ source.project = {
 };
 
 const open = () => {
+  if (params.has('atlas')) {
+    void openMapPrototype(repository, params.get('atlas') || 'small');
+    return;
+  }
   if (params.has('repo')) {
     openRepository(repository);
     return;
@@ -329,6 +334,6 @@ const open = () => {
     });
   else show();
 };
-new Launcher().show('demo', params.has('repo') ? null : source.docs.length || source.codeDocs!.length, open);
+new Launcher().show('demo', params.has('repo') || params.has('atlas') ? null : source.docs.length || source.codeDocs!.length, open);
 void drawDiff();
 if (!params.has('closed')) open();

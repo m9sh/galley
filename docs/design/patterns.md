@@ -100,3 +100,7 @@ Follow [COPY.md](../COPY.md). In controls specifically:
 ## Supporting reading for a chapter
 
 Changed files and Project context are separate groups. Context controls show base/head and the commit before opening material. Automatic connections show their source link and line; session attachments say Added by you and offer Remove. The library's return row names the originating chapter. Return to review restores the context control; Continue chapter resumes the review article. A native Add to chapter disclosure contains the chapter and heading selects, session lifetime explanation, submit action and live confirmation.
+
+## Proposed spatial map interaction
+
+The demo-only [Project map proposal](project-map-reimagining.md) uses native place and relationship buttons over a non-interactive SVG edge layer. Selection updates one evidence panel; **Show connections** deliberately changes the neighbourhood, while **You are here** retains the reading place. A separate session bookmark retains map camera/selection during an article round trip. On phones the existing 760px breakpoint and layer 40 hold the detail sheet; background controls are inert, Tab stays in the sheet, and Escape/Close return focus to the selected place. These patterns require ADR 0030 review and reader validation before production adoption.

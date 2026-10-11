@@ -11,6 +11,7 @@ Galley's interface has one job: help a reviewer understand a change and say some
 | [Accessibility](accessibility.md) | The bar every change meets, and how it is checked |
 | [Voice and product copy](../COPY.md) | Words: tone, shared terms, claims |
 | [Artwork](../../store/ARTWORK.md) | How the store and README images are made |
+| [Project map proposal](project-map-reimagining.md) | Proposed spatial map, interaction concept, decision gate and delivery stages |
 
 ## Principles
 

@@ -145,3 +145,7 @@ Its own shadow root under `#galley-repo-reader` (`#galley-repo-reader-dev` in de
 ### Chapter project context
 
 `core/review-context.ts` owns explicit link evidence and revision-pinned session attachments. `ui/components/chapter-context.ts` renders Project context in Chapters; `ui/components/chapter-attachment.ts` adds an article or heading from the library. The reader shells own the return journey. Find is explicit, status states partial coverage, attachments say Added by you, and Return / Continue preserve review state. Adjacent component/model tests, `reader-project.test.ts`, `repo-review.test.ts` and `e2e/chapter-context.mjs` cover this journey.
+
+## Demo-only Project map proposal
+
+`demo/project-map.ts` and `demo/project-map.css` render the issue #68 prototype at `?atlas`, using `src/core/project-map.ts` for document evidence and deterministic placement. Map, List and Overview share selection; the detail panel opens a source paragraph through the existing safe renderer. Phones use an inert-background detail sheet; camera keys act only on the focused canvas. `e2e/project-map.mjs` checks this proposal. The production surfaces above remain governed by Accepted ADR 0026 until Proposed ADR 0030 is reviewed.

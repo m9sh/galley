@@ -217,6 +217,8 @@ Both readers compose their layout picker from `src/ui/components/layout-controls
 | `demo/build/` | The demo bundle and copies of the frames |
 | `dist/dev/` | The development build (`npm run dev`): orange icon, DEV badges, source maps, live reload, its own storage |
 
+The demo-only project map proposal (`demo/project-map.ts`, `demo/project-map.css`) uses a pure document adapter and deterministic placement in `src/core/project-map.ts`. Its article preview uses the existing safe renderer, its settings/camera stay in memory, and its extra fixtures are bundled demo data. A build guard rejects those modules from shipped extension bundles until ADR 0030 is accepted.
+
 The build fails if token storage reaches `content.js` or a frame. Our own bundles stay readable; only Mermaid and its layout engine are minified ([ADR 0005](../adr/0005-plain-typescript-and-dom.md)).
 
 ## Invariants
