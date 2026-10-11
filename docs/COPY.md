@@ -20,7 +20,7 @@ Describe the benefit before the visual metaphor. The book-proof origin of Galley
 | Read this review / Read the project | Toolbar actions for the current review or repository |
 | Read button on the page | The extension setting that shows or hides both page buttons |
 | Project library / Library | The repository's readable material at the selected commit; Library is the compact label |
-| Chapters | A reading order through related files in a review |
+| Chapters | A reading order through changed files and supporting material; in standalone library reading, an optional sequence selected by the reader |
 | Contents | Headings inside the current article |
 | Documents | Markdown files shown as readable articles |
 | Code files | Supported source and configuration files; enabled in Reading settings → Review |

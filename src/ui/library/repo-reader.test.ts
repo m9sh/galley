@@ -536,6 +536,7 @@ it('keys: Esc closes menus then the reader, / finds a document, M switches to th
   expect(ui.shadow().activeElement).toBe(ui.q('.mr-repo-search'));
   ui.key('Escape');
   expect(ui.q('.mr-repo-docs').hidden).toBe(true);
+  expect(ui.shadow().activeElement).toBe(ui.q('[data-act="docs"]'));
   ui.key('M');
   await vi.waitFor(() => expect(ui.q('.mr-repo-map').hidden).toBe(false));
   ui.key('m');

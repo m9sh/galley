@@ -5,7 +5,7 @@ Galley's two reader shells compose shared controls and rendering. Tests stay bes
 | Directory | Responsibility | Start here |
 | --- | --- | --- |
 | `review/` | The review reader, chapters, Viewed, reading positions and moved-line presentation | [reader.ts](review/reader.ts) |
-| `library/` | The Project library, its map and notes views, saved notes and configuration reads | [repo-reader.ts](library/repo-reader.ts) |
+| `library/` | The Project library, standalone session chapters, map and notes views, saved notes and configuration reads | [repo-reader.ts](library/repo-reader.ts) |
 | `rendering/` | Sanitised Markdown and code, diagrams, images, source comments, test plans and document interaction | [render.ts](rendering/render.ts), [reading.ts](rendering/reading.ts) |
 | `sandbox/` | Opaque frame transport and bundled parsers/renderers; the isolated image fallback | [sandbox.ts](sandbox/sandbox.ts), [sandbox-frame.ts](sandbox/sandbox-frame.ts) |
 | `components/` | Shared controls, layout picker, chapter context and attachment form, settings sheet, icons, fonts and the common stylesheet | [dom.ts](components/dom.ts), [layout-controls.ts](components/layout-controls.ts), [chapter-context.ts](components/chapter-context.ts), [chapter-attachment.ts](components/chapter-attachment.ts), [reader.css](components/reader.css) |

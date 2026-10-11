@@ -45,6 +45,7 @@ import { digestText, ProjectNotes, when } from './project-store.ts';
 import { loadImage, renderDocument, type RenderedDoc } from '../rendering/render.ts';
 import { button, configStatus, exportSheet, external, h, lensSwitch, lensView, notesView, reviewView, type ConfigState } from './repo-views.ts';
 import repoCss from './repo.css';
+import { ReadingSequence, sequenceRoute, sequenceView, type ReadingStop } from './reading-sequence.ts';
 import { DEFAULT_SETTINGS, loadSettings, updateSettings, TEXT_SIZES, type Settings } from '../preferences/settings.ts';
 import {
   applyReadingControls,
@@ -91,6 +92,7 @@ const SHORTCUTS: Shortcuts = [
   [
     'Views',
     [
+      [['C'], 'Open library chapters (standalone reading)'],
       [['M'], 'Open the map, or go back to reading'],
       [['L'], 'Next reading layout'],
       [['N'], 'Open your notes, or go back to reading'],
@@ -123,7 +125,7 @@ const TEMPLATE = `
       <button class="mr-btn mr-file-btn" data-act="docs" aria-haspopup="dialog" aria-expanded="false" title="Project library (/)"><span class="mr-file-name">Project library</span>${icons.chevronDown}</button>
     </div>
     <div class="mr-tb-right">
-      <div class="mr-seg mr-repo-views" role="group" aria-label="View"><button data-view="review" aria-pressed="false" aria-label="This review" hidden>${icons.review}<span>This review</span></button><button data-view="read" aria-pressed="true" aria-label="Read">${icons.book}<span>Read</span></button><button data-view="map" aria-pressed="false" aria-label="Map" title="Map (M)">${icons.map}<span>Map</span></button><button data-view="notes" aria-pressed="false" aria-label="Notes" title="Your notes (N)">${icons.note}<span>Notes</span></button></div>
+      <div class="mr-seg mr-repo-views" role="group" aria-label="View"><button data-view="review" aria-pressed="false" aria-label="This review" hidden>${icons.review}<span>This review</span></button><button data-view="chapters" aria-pressed="false" aria-label="Library chapters">${icons.book}<span>Chapters</span></button><button data-view="read" aria-pressed="true" aria-label="Read">${icons.book}<span>Read</span></button><button data-view="map" aria-pressed="false" aria-label="Map" title="Map (M)">${icons.map}<span>Map</span></button><button data-view="notes" aria-pressed="false" aria-label="Notes" title="Your notes (N)">${icons.note}<span>Notes</span></button></div>
       <button class="mr-btn mr-repo-commit" data-act="refresh" hidden>${icons.refresh}<span class="mr-repo-commit-label"></span></button>
       <button class="mr-btn mr-icon-btn" data-act="settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings" aria-label="Reading settings">${icons.settings}</button>
     </div>
@@ -160,6 +162,7 @@ ${settingsSheet('Set type, appearance and layout for comfortable reading.', [
     <section class="mr-repo-map" aria-label="Project map" hidden></section>
     <div class="mr-repo-thinking" hidden></div>
     <div class="mr-repo-review" hidden></div>
+    <div class="mr-repo-chapters" hidden></div>
   </main>
   <div class="mr-settings mr-repo-export" hidden>
     <div class="mr-settings-backdrop" data-act="close-export"></div>
@@ -224,9 +227,10 @@ interface Place {
   path: string;
   block: number;
   offset: number;
+  anchor?: string;
 }
 
-type View = 'read' | 'map' | 'notes' | 'review';
+type View = 'read' | 'map' | 'notes' | 'review' | 'chapters';
 
 /** The review a repository reader was opened from (RFC 0049, Phase 5): its title, the revision read and its chapters. */
 export interface ReviewContext {
@@ -268,6 +272,8 @@ class RepoReader {
   private readonly q = <T extends HTMLElement = HTMLElement>(selector: string) => this.shadow.querySelector<T>(selector)!;
   private settings: Settings = { ...DEFAULT_SETTINGS };
   private readonly layouts = new LibraryLayout();
+  private readonly sequence = new ReadingSequence();
+  private readingAnchor = '';
   private source: RepositorySource | null = null;
   private discovery: Promise<RepoDiscovery> | null = null;
   private listing: RepoDiscovery | null = null;
@@ -346,6 +352,7 @@ class RepoReader {
       close.title = 'Back to the review (Esc)';
       close.setAttribute('aria-label', 'Back to the review (Esc)');
       this.q('[data-view="review"]').hidden = false;
+      this.q('[data-view="chapters"]').hidden = true;
       const returnBar = h('nav', 'mr-repo-return');
       returnBar.setAttribute('aria-label', 'Return to review');
       const chapter = review.entry ? review.chapters.find((chapter) => chapter.id === review.entry!.chapter) : undefined;
@@ -562,8 +569,13 @@ class RepoReader {
     this.unreadable.failed.clear();
     this.unreadable.skipped.clear();
     this.indexedOnce = false;
+    const hadSequence = this.sequence.items.length > 0;
+    this.sequence.clear();
+    this.updateSequence();
     this.showSnapshot();
-    this.toast(`Now reading ${shortSha(next.commit)}. It was ${shortSha(before.commit)}.`);
+    this.toast(
+      `Now reading ${shortSha(next.commit)}. It was ${shortSha(before.commit)}.${hadSequence ? ' Your reading sequence was cleared for the new commit.' : ''}`,
+    );
     this.anchorStates = new Map();
     void this.checkAnchors();
     if (this.view !== 'read') {
@@ -572,6 +584,7 @@ class RepoReader {
       this.q('.mr-doc').replaceChildren(this.skeleton());
       if (this.view === 'map') await this.showMap();
       else if (this.view === 'review') await this.showReview();
+      else if (this.view === 'chapters') this.showSequence();
       else this.drawNotes();
     } else if (this.path) await this.open(this.path, { push: false });
     // Nothing was open, such as a repository without documents: start again at the new commit.
@@ -585,12 +598,14 @@ class RepoReader {
     if (options.push !== false) {
       this.remember();
       this.history = this.history.slice(0, this.at + 1);
-      this.history.push({ path, block: -1, offset: 0 });
+      this.history.push({ path, block: -1, offset: 0, anchor: options.anchor });
       this.at = this.history.length - 1;
     }
     this.updateHistory();
     this.setView('read');
     this.path = path;
+    this.readingAnchor = options.place?.anchor ?? options.anchor ?? '';
+    this.updateSequence();
     this.rendered = null;
     this.q('.mr-file-name').textContent = fileTitle(path);
     this.q('.mr-doc').replaceChildren(this.skeleton());
@@ -671,6 +686,16 @@ class RepoReader {
         },
       });
       intro.push(attachment);
+    } else if (!this.review) {
+      const title = r.title ?? fileTitle(path);
+      intro.push(
+        chapterAttachment({
+          chapters: [{ id: 'library', title: 'Your reading sequence' }],
+          headings: indexDocument(path, this.read.get(path)!).headings,
+          scope: 'library',
+          add: (_chapter, anchor, label) => this.addStop({ path, anchor, title: anchor ? `${title} — ${label}` : title }),
+        }),
+      );
     }
     if (r.lead) {
       const before: Element[] = [];
@@ -680,6 +705,65 @@ class RepoReader {
     } else frag.append(h('h1', 'mr-title', r.title ?? fileTitle(path)), ...intro);
     frag.append(r.content, this.backlinks(path));
     return frag;
+  }
+
+  private addStop(stop: ReadingStop): void {
+    this.remember();
+    const focused = this.shadow.activeElement instanceof HTMLElement && this.shadow.activeElement.dataset.act === 'sequence-add';
+    const added = this.sequence.add(stop);
+    this.updateSequence();
+    this.buildOutline();
+    if (this.view === 'chapters') this.drawSequence();
+    if (focused) {
+      [...this.shadow.querySelectorAll<HTMLElement>('[data-act="sequence-add"]')]
+        .find((el) => el.dataset.path === stop.path && el.dataset.anchor === stop.anchor)!
+        .focus();
+    }
+    const place = this.history[this.at];
+    if (place && this.rendered && this.view === 'read') this.restore(place);
+    this.toast(added ? 'Added to your reading sequence.' : 'Already in your reading sequence.');
+  }
+
+  private updateSequence(): void {
+    const route = sequenceRoute(this.sequence.items, this.sequence.current(this.path, this.readingAnchor));
+    const old = this.shadow.querySelector('.mr-repo-read > .mr-chapter-route');
+    if (old) old.replaceWith(route);
+    else this.q('.mr-repo-read').prepend(route);
+  }
+
+  private showSequence(): void {
+    if (!this.source) return;
+    this.closeMenus();
+    this.setView('chapters');
+    this.drawSequence();
+    this.root.scrollTo({ top: 0 });
+  }
+
+  private drawSequence(): void {
+    const pane = this.q('.mr-repo-chapters');
+    pane.replaceChildren(sequenceView(this.sequence.items, this.sequence.current(this.path, this.readingAnchor), shortSha(this.source!.commit)));
+    // Only links written in the current document are offered. No index scan or folder inference.
+    if (this.path && this.read.has(this.path)) {
+      const doc = indexDocument(this.path, this.read.get(this.path)!);
+      const links = doc.links.filter((link) => link.path && link.path !== this.path && /\.(md|markdown|mdown|mkd|mdx)$/i.test(link.path));
+      if (links.length) {
+        const section = h('section', 'mr-sequence-links');
+        section.append(h('h2', '', 'Links from this document'), h('p', 'mr-repo-quiet', this.path));
+        for (const link of links) {
+          const row = h('div', 'mr-sequence-link');
+          const add = button(`Add ${link.text}`, 'sequence-add', 'mr-chapter-button');
+          add.dataset.path = link.path!;
+          add.dataset.anchor = link.anchor;
+          add.dataset.title = link.text;
+          const evidence = button(`Source link · line ${link.line}`, 'evidence', 'mr-repo-proof');
+          evidence.dataset.path = this.path;
+          evidence.dataset.line = String(link.line);
+          row.append(add, h('small', '', `${link.path}${link.anchor ? `#${link.anchor}` : ''}`), evidence);
+          section.append(row);
+        }
+        pane.append(section);
+      }
+    }
   }
 
   /** A document's type as a chip; one the reader set carries the accent, like everything else of theirs. */
@@ -773,6 +857,7 @@ class RepoReader {
     const i = this.root.scrollTop > 0 ? blocks.findIndex((block) => block.el.getBoundingClientRect().bottom > TOP) : -1;
     place.block = i;
     place.offset = i < 0 ? 0 : blocks[i].el.getBoundingClientRect().top;
+    place.anchor = this.readingAnchor;
   }
 
   /** Reflow the article around the paragraph in view, without moving a map or notes view. */
@@ -884,7 +969,10 @@ class RepoReader {
           item.dataset.anchor = match.heading.id;
           item.querySelector('.mr-path-dir')!.textContent = `§ ${match.heading.text}`;
         }
-        list.append(item);
+        const row = h('div', 'mr-repo-document-row');
+        row.append(item);
+        if (!this.review) row.append(this.addStopButton(match.path, match.heading?.id ?? '', match.heading?.text ?? this.titleOf(match.path)));
+        list.append(row);
       }
       if (!found.length) list.append(h('p', 'mr-repo-quiet', 'No document or heading matches.'));
       if (this.index.docs.size < this.index.listed.length)
@@ -895,7 +983,12 @@ class RepoReader {
     const tree = folderTree(this.index.listed);
     const openAll = this.index.listed.length <= OPEN_OUTLINE;
     const draw = (node: FolderNode, parent: HTMLElement) => {
-      for (const path of node.docs) parent.append(this.docItem(path));
+      for (const path of node.docs) {
+        const row = h('div', 'mr-repo-document-row');
+        row.append(this.docItem(path));
+        if (!this.review) row.append(this.addStopButton(path, '', this.titleOf(path)));
+        parent.append(row);
+      }
       for (const folder of node.folders) {
         const details = h('details', 'mr-repo-folder');
         details.open = openAll || this.path?.startsWith(`${folder.path}/`) === true;
@@ -925,6 +1018,15 @@ class RepoReader {
     return item;
   }
 
+  private addStopButton(path: string, anchor: string, title: string): HTMLButtonElement {
+    const add = button('Add', 'sequence-add', 'mr-chapter-button mr-sequence-add');
+    add.dataset.path = path;
+    add.dataset.anchor = anchor;
+    add.dataset.title = title;
+    add.setAttribute('aria-label', `Add ${title} to your reading sequence`);
+    return add;
+  }
+
   // ---------------------------------------------------------------- map
 
   private setView(view: View): void {
@@ -934,6 +1036,7 @@ class RepoReader {
     this.q('.mr-repo-map').hidden = view !== 'map';
     this.q('.mr-repo-thinking').hidden = view !== 'notes';
     this.q('.mr-repo-review').hidden = view !== 'review';
+    this.q('.mr-repo-chapters').hidden = view !== 'chapters';
     // Focus never stays in a view that is hidden: it goes back to the reader.
     if (this.shadow.activeElement?.closest('[hidden]')) this.root.focus({ preventScroll: true });
     this.q('.mr-toc').hidden = view !== 'read';
@@ -1747,6 +1850,7 @@ class RepoReader {
       if (view.dataset.view === 'map') void this.showMap();
       else if (view.dataset.view === 'notes') this.showNotes();
       else if (view.dataset.view === 'review') void this.showReview();
+      else if (view.dataset.view === 'chapters') this.showSequence();
       else if (this.path && this.rendered?.content.isConnected) this.setView('read');
       else if (this.path) void this.open(this.path, { push: false });
       else this.start();
@@ -1789,6 +1893,35 @@ class RepoReader {
       case 'docs':
         this.toggleDocs();
         return;
+      case 'sequence':
+        this.showSequence();
+        return;
+      case 'sequence-add':
+        this.addStop({ path: path!, anchor: el.dataset.anchor!, title: el.dataset.title! });
+        return;
+      case 'sequence-open': {
+        const stop = this.sequence.items[Number(el.dataset.at)];
+        this.root.focus({ preventScroll: true });
+        return void this.open(stop.path, { anchor: stop.anchor });
+      }
+      case 'sequence-earlier':
+      case 'sequence-later':
+      case 'sequence-remove': {
+        let at = Number(el.dataset.at);
+        if (el.dataset.act === 'sequence-remove') this.sequence.remove(at);
+        else {
+          const step = el.dataset.act === 'sequence-earlier' ? -1 : 1;
+          this.sequence.move(at, step);
+          at += step;
+        }
+        this.updateSequence();
+        this.showSequence();
+        const opens = this.q('.mr-repo-chapters').querySelectorAll<HTMLElement>('[data-act="sequence-open"]');
+        if (this.sequence.items.length) opens[Math.min(at, this.sequence.items.length - 1)].focus();
+        else this.q('.mr-repo-chapters [data-act="docs"]').focus();
+        this.toast(el.dataset.act === 'sequence-remove' ? 'Removed from this chapter.' : 'Reading order updated.');
+        return;
+      }
       case 'settings':
         this.openSettings('reading');
         return;
@@ -2094,8 +2227,18 @@ class RepoReader {
     if (e.key === 'Escape') {
       e.preventDefault();
       if (this.closeSheet()) return;
-      if (this.closeZoom() || this.closeMenus()) {
+      if (this.closeZoom()) {
         this.root.focus({ preventScroll: true });
+        return;
+      }
+      if (this.closeMenus()) {
+        this.q('[data-act="docs"]').focus({ preventScroll: true });
+        return;
+      }
+      const attachment = this.shadow.querySelector<HTMLDetailsElement>('.mr-repo-read:not([hidden]) .mr-chapter-attachment[open]');
+      if (attachment) {
+        attachment.open = false;
+        attachment.querySelector('summary')!.focus({ preventScroll: true });
         return;
       }
       this.close();
@@ -2139,6 +2282,9 @@ class RepoReader {
       this.layouts.next();
       this.arrangeLayout();
       this.toast(`Layout: ${LAYOUT_NAMES[this.layouts.value]}`);
+    } else if (e.key === 'c' || e.key === 'C') {
+      e.preventDefault();
+      if (!this.review) this.showSequence();
     } else if (e.key === 'm' || e.key === 'M') {
       e.preventDefault();
       if (this.view === 'map') this.q<HTMLElement>('[data-view="read"]').click();

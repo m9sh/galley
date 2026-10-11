@@ -240,7 +240,7 @@ it('after a refresh, notes about a section that changed ask to be reconfirmed, a
   const source = repository(before, { refresh: vi.fn(async () => next) });
   await ui.open(source);
   ui.click('[data-act="docs"]');
-  await vi.waitFor(() => expect(ui.all('.mr-repo-outline button').length).toBe(4));
+  await vi.waitFor(() => expect(ui.all('.mr-repo-outline .mr-menu-item').length).toBe(4));
   ui.press(spec, '.mr-repo-outline button');
   await ui.settled();
   showNotes();

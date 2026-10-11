@@ -6,6 +6,7 @@ export function chapterAttachment(options: {
   chapters: Array<{ id: string; title: string }>;
   current?: string;
   headings: OutlineHeading[];
+  scope?: 'library';
   add(chapter: string, heading: string, label: string): void;
 }): HTMLElement {
   const details = h('details', 'mr-chapter-attachment');
@@ -37,7 +38,19 @@ export function chapterAttachment(options: {
   add.type = 'submit';
   const feedback = h('p', 'mr-repo-quiet');
   feedback.setAttribute('role', 'status');
-  form.append(chapterLabel, sectionLabel, h('p', 'mr-repo-quiet', 'Only for this review. Reading context does not mark files Viewed.'), add, feedback);
+  form.append(
+    chapterLabel,
+    sectionLabel,
+    h(
+      'p',
+      'mr-repo-quiet',
+      options.scope === 'library'
+        ? 'Only for this library session. Nothing is marked Viewed.'
+        : 'Only for this review. Reading context does not mark files Viewed.',
+    ),
+    add,
+    feedback,
+  );
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     event.stopPropagation();

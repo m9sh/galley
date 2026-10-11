@@ -51,7 +51,7 @@ The same merge request, files and comments, shown in a more readable view. Teamm
 3. **Focus on what changed.** Changes to paragraph wrapping are not marked as text edits. Unchanged sections fold away; open them whenever you need more context. Lockfiles, generated files and whitespace-only edits fold to one line each, code that moved says where it went, tests follow the code they test, and JavaScript and TypeScript files start with a short list of the functions, classes and types that changed. Come back tomorrow and Galley offers to continue where you stopped. Your scrollbar gets a breather.
 4. **Discuss it beside the text.** Read threads beside their paragraph or code line. Select text to add a comment, reply in the thread, and keep drafts while you read on. Comments and replies go to the original GitHub or GitLab review.
 5. **Find your reading comfort.** Choose from nineteen palettes, six typefaces, five text sizes and six layouts, with light and dark modes, compact spacing and keyboard shortcuts.
-6. **Read the project, not just the change.** Read a repository's docs at one commit, follow their links and come back to the same paragraph. The project map shows what links to a document and what it links to, the exact link behind each connection, and links that lead nowhere; its architecture, infrastructure and decision views say where every item comes from, and never call declared configuration running. Your own notes and proposals stay on your device, are saved only when you choose, and leave it only through an export you preview.
+6. **Read the project, not just the change.** Read a repository's docs at one commit, follow their links and come back to the same paragraph. Build an optional reading chapter from documents or headings you choose; the full library stays available. The project map shows what links to a document and what it links to, the exact link behind each connection, and links that lead nowhere; its architecture, infrastructure and decision views say where every item comes from, and never call declared configuration running. Your own notes and proposals stay on your device, are saved only when you choose, and leave it only through an export you preview.
 7. **Keep your work on your code host.** Files render in your browser. Galley has no server, account or analytics. External images load only when you choose.
 
 Source changes that do not appear in the rendered document, such as HTML comments and link definitions, are counted and linked to the platform diff.
@@ -64,7 +64,7 @@ Source changes that do not appear in the rendered document, such as HTML comment
 | **1** | **Read** button to open changed documents and supported code files. |
 | **19** | reading palettes, each available in light and dark. |
 | **6 · 5 · 6** | typefaces, text sizes and layouts to suit your screen and your eyes. |
-| **20** | keyboard shortcuts for navigation, comments and settings. |
+| **20** | review keyboard shortcuts for navigation, comments and settings; the library also has its own navigation keys. |
 | **120** | characters of code per line on a wide screen, before wrapping. |
 
 ## Install

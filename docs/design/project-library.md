@@ -1,6 +1,6 @@
 # Project library: reading layouts and chapter context
 
-Implementation plan for [task #60](https://github.com/m9sh/galley/issues/60). This is a phased task, not an RFC. The layout foundation shipped in MR #61. The next delivery connects each chapter to supporting reading with explicit session attachments.
+Implementation plan for [task #60](https://github.com/m9sh/galley/issues/60). This is a phased task, not an RFC. The layout foundation shipped in MR #61. Chapter context shipped in MR #64. The final implementation adds standalone session chapters and list polish; voluntary reader validation remains open.
 
 ## Current journey
 
@@ -54,13 +54,23 @@ Existing palettes, typography, optional glow and Comfortable / Compact density c
 
 Opening an evidence item keeps its source line; opening an attachment keeps its heading. A missing document retains the return path and platform link. A missing heading says it was not found and shows the beginning. The library's quiet return row names the chapter and provides Return to review and Continue chapter. Return and Escape rebuild the chapter map and focus the exact context control. Continue closes the library and resumes the current paragraph if already in that chapter, or starts its first unviewed readable file otherwise. It is disabled for empty or platform-only chapters. Neither operation submits a draft, unfolds a file or marks one Viewed.
 
-## Next deliveries
+## Standalone reading chapter
 
-1. Reuse the chapter presentation for optional standalone library reading sequences, retaining the plain outline.
-2. Continue list/navigation polish and voluntary validation of the joined journey with 5–8 readers. Naming and comfort remain hypotheses until readers validate them; no telemetry is introduced.
+A standalone library offers **Chapters** (<kbd>C</kbd>) without requiring setup before reading. One **Your reading sequence** chapter reuses the review disclosure, file-list and route presentation. Readers add whole documents or indexed headings from the ordinary library browser, or use the shared **Add to chapter** form in the article. The chapter also offers explicit Markdown links from the current article, with their source line. It never infers connections from folders or adds a second automatic grouping system.
+
+**Earlier**, **Later** and **Remove** edit the order. The route shows the selected step, with **Previous** and **Next**, rather than completion or Viewed counts. **Browse all documents** leaves the plain outline available. The sequence owns only path, heading and label in memory; history keeps heading identity and the paragraph bookmark. Missing documents/headings use the existing errors and keep the route, platform link and Back. A successful refresh to a different commit clears the choices and explains why. Closing the library ends the sequence. A library opened over a review uses the review chapters instead.
+
+Navigation titles use compact line spacing within an item, with 10px gaps between document rows. Paths and type metadata sit below the title; long paths wrap, and Add has its own 44px target. Chapter controls and source evidence have 44px targets too.
+
+## Remaining validation
+
+The [reader-session protocol](project-library-validation.md) provides the tasks and recording sheet for 5–8 voluntary readers. Naming and comfort remain hypotheses until those sessions take place; no telemetry is introduced.
 
 ## Representative captures
 
 The same architecture article at 1,440px: [before](library-before.png), [Focus](library-focus.png), and the extracted [layout picker](library-layouts.png). The [390px capture](library-phone.png) uses dark appearance, Compact density and 22px text. Browser checks exercise all three layouts at 1,440, 1,280, 390 and 320px in light/Comfortable/20px and dark/Compact/22px.
 
-The joined chapter journey has matching 1,440px [before](chapter-context-before.png) and [after](chapter-context-after.png) captures, plus [320px chapter context](chapter-context-phone.png) and [390px supporting reading](chapter-context-reading.png). Its browser checks cover 1,440, 1,280, 390 and 320px, light/dark appearance, Comfortable/Compact density and 17/24px text, including source evidence, heading attachments, focus and state restoration. These captures validate the implemented journey. At phone widths, view choices move into the document menu, leaving the top bar for a readable document name. The byline gives paths and actions separate rows. Voluntary reader sessions and standalone reading sequences remain outstanding.
+The joined chapter journey has matching 1,440px [before](chapter-context-before.png) and [after](chapter-context-after.png) captures, plus [320px chapter context](chapter-context-phone.png) and [390px supporting reading](chapter-context-reading.png). Its browser checks cover 1,440, 1,280, 390 and 320px, light/dark appearance, Comfortable/Compact density and 17/24px text, including source evidence, heading attachments, focus and state restoration. These captures validate the implemented journey. At phone widths, view choices move into the document menu, leaving the top bar for a readable document name. The byline gives paths and actions separate rows. Standalone sequences now have automated and rendered checks. Voluntary reader sessions remain outstanding.
+
+
+The final delivery includes matching library-list captures at 1,440px ([before](library-list-before-desktop.png), [after](library-list-after-desktop.png), light / Comfortable / 17px) and 320px ([before](library-list-before-phone.png), [after](library-list-after-phone.png), dark / Compact / 24px). Standalone chapter screens: [desktop](library-chapter-desktop.png), [390px](library-chapter-phone.png), [320px](library-chapter-narrow.png), and [article with diagram](library-chapter-article.png). The [320px table](library-table-phone.png) retains a single-line title even with 24px text. Review discussion is captured at [desktop](library-review-discussion-desktop.png) and [320px](library-review-discussion-phone.png). These are rendered checks, not reader research.
