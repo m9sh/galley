@@ -1,12 +1,12 @@
 ---
-status: Proposed
+status: Accepted
 created: 2026-10-10
 authors: [m9sh]
 discussion: https://github.com/m9sh/galley/issues/49
 theme: Read the project, understand the change
 phase: Exploratory plan; separate from the three proposed core review RFCs
 delivery: Phased experiments and implementation gates; owners, effort and dates remain to be estimated
-progress: Phases 1–5 implemented on the extension's branch for issue 49 (repository reader, project map with architecture, infrastructure and decision lenses, private notes, Project docs from reviews); reader validation sessions, self-hosted GitLab version checks and pilot targets remain (see the discussion); issue 68 adds a demo-only spatial-map proposal and layout spike pending ADR 0030 review and voluntary reader sessions
+progress: Phases 1–5 implemented in https://github.com/m9sh/galley/pull/54 (repository reader, project map with architecture, infrastructure and decision lenses, private notes, Project docs from reviews); reader validation sessions, self-hosted GitLab version checks and pilot targets remain; the spatial project map continues in https://github.com/m9sh/galley/issues/68, with a demo-only proposal and layout spike pending ADR 0030 review and voluntary reader sessions
 adrs: [1, 9, 11, 19, 24, 25, 26, 27, 28, 30]
 ---
 
