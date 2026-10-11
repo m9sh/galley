@@ -2797,12 +2797,15 @@
 .mr-menu-name .mr-path-name {
   font-size: 14px;
   font-weight: 500;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
 .mr-menu-name .mr-path-dir {
   color: var(--muted);
   font-size: 12px;
+  line-height: 1.35;
+  margin-top: 4px;
   overflow-wrap: anywhere;
 }
 
@@ -2940,6 +2943,7 @@
 }
 .mr-chapter-title {
   font-weight: 600;
+  line-height: 1.3;
 }
 .mr-chapter-progress {
   display: block;
@@ -2963,7 +2967,7 @@
   list-style: none;
 }
 .mr-chapter-file {
-  margin: 0 0 4px;
+  margin: 0 0 10px;
   border-radius: 8px;
 }
 .mr-chapter-file.is-current {
