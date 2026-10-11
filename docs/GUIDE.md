@@ -119,7 +119,13 @@ Choose **Chapters** in the top bar, or press <kbd>M</kbd>, for a suggested path 
 
 **Start here** goes to the first unviewed readable file. After you mark files Viewed, it becomes **Continue here**. Reviews with six or more files also show a quiet chapter route and **Next chapter**. Choosing a folded file keeps it folded; choosing code while Code files is off turns that setting on. Progress counts explicit Viewed actions, never scrolling.
 
-The chapter map includes folded files, failed loads and code currently turned off. Unsupported formats appear under **Other changed files**, with a link to the platform diff. **All files** always gives a flat list, and the original file menu remains available. A single-file review needs no chapter setup.
+The chapter map includes folded files, failed loads and code currently turned off. Unsupported formats appear under **Other changed files**, with a link to the platform diff. **All files** always gives a flat list, and the original file menu remains available. A single-file review needs no chapter setup; when its Project library is available, Chapters also provides a place for supporting context.
+
+Each chapter separates **Changed files** from **Project context**. Choose head (after the change) or base (before it), then **Find project context**. Galley reads the library only when you open it. Back in Chapters, linked documents show the exact Markdown link and source line that connects them; the status says how much of the repository was read and what could not be read.
+
+While reading a supporting article, **Add to chapter** lets you attach the whole document or a heading for this session. It is labelled **Added by you**, also appears in **This review**, and can be removed in Chapters. Base and head choices stay separate; attachments are lost when the review closes. These are reading aids, not saved Project notes or architectural claims.
+
+**Return to review** and <kbd>Esc</kbd> return to the same context control in Chapters, keeping your paragraph, drafts, folds and Viewed state. **Continue chapter** returns directly to the current paragraph, or starts that chapter if you were elsewhere. It is disabled for chapters with no readable changed files. Reading project context never marks a file Viewed.
 
 Choose **Edit chapters** to rename a chapter, add an optional introduction, move it earlier or later, or move a file to another chapter. **New chapter** creates a place for your own concern. These changes stay in the open session. Reordering keeps your reading position, Viewed state, folds and comment drafts. **Reset chapters** restores suggestions; choosing **Suggested** or **As listed** in File order restores that reading order.
 
@@ -192,6 +198,8 @@ The map is built from what documents say. Galley reads up to 150 documents at a 
 When a newer commit changes the section a note is about, the note says so: **Reconfirm** once you have read it again, or **Detach** a note whose section is gone. After a refresh the map also says which links changed among the documents read at both commits, and how many notes need another look.
 
 **Export.** **Export…** opens a sheet like the settings that shows exactly what would leave: only the notes you switch on in it, as Markdown or as a Mermaid flowchart, every note labelled a proposal and every source linked at its commit. **Copy** or **Download** it, or **Open a new issue…** to open the platform's own new-issue form in a new tab with the text filled in; nothing is posted unless you submit it there.
+
+On a phone, open the document-name menu to choose **Read**, **Map**, **Notes** or **This review**. These choices leave room for the document name in the top bar.
 
 **From a review: Project library.** In a pull or merge request, **Library** in the top bar (or **Project library** at the end of the files list on a phone) opens the repository's docs over the review, at the review's **head** (as the change leaves them) or its **base** (before it). It starts at **This review**: each changed file, chapter by chapter, with the documents read so far that link to it and the links that connect them, flagged **Changed in this review** or **Worth checking**. Galley never says a document is wrong. Changed documents are flagged in the documents list, the byline and the map. Close the library (<kbd>Esc</kbd>) to come back to the review exactly where you were, drafts included.
 

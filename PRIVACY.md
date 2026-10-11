@@ -27,6 +27,8 @@ Galley is a browser extension that shows the markdown documents changed in GitHu
 
 **Diagrams and code colours.** Mermaid diagrams and syntax colours are produced locally using code included in the extension, loaded from the extension package only when needed. Both run in sandboxed frames that have no network access and cannot read the page, your session or Galley's storage. Diagram source, code and images are not sent to any service, and external image/icon assets in Mermaid are disabled.
 
+**Chapter context.** Documents and headings you add to a review chapter, their chosen base/head commit and the link evidence read for that chapter stay in memory for the open review. They are not saved with Project notes or sent anywhere. Reading context does not mark files Viewed.
+
 **Reading position.** So you can pick up where you left off, Galley remembers which file you were reading in a review and how far into it, for your 50 most recent reviews. It keeps only a fingerprint of the review's address, a fingerprint of the file's path and a scroll offset, never the address or path themselves, in extension storage (local storage in the demo), on your device.
 
 **Preferences.** Your page-button choice, theme, typeface, text size, display mode, paragraph filter, code-files option, file order, folding and external-images choice are stored in your browser's extension storage.

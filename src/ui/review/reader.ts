@@ -1,3 +1,5 @@
+import { ChapterContext } from '../../core/review-context.ts';
+import { chapterContext, type ContextOpening } from '../components/chapter-context.ts';
 import {
   ReaderError,
   type DocContents,
@@ -349,6 +351,8 @@ class Reader {
   private readonly shadow = this.host.attachShadow({ mode: 'open' });
   private readonly root: HTMLElement;
   private readonly chapters: ChapterMap;
+  private readonly projectContext = new ChapterContext();
+  private contextRevision: 'base' | 'head' = 'head';
   private readonly palettes = new PaletteCarousel(this.shadow);
   private chapterOrder: DocRef[] | null = null;
   private readonly el: Record<
@@ -471,9 +475,33 @@ class Reader {
       mount: this.el.doc,
       beforeOpen: () => this.closeMenus(),
       navigate: (doc) => this.showChapterFile(doc),
+      resume: () => this.root.focus({ preventScroll: true }),
       reorder: (docs) => this.reorderChapters(docs),
       state: (doc) => this.chapterState(doc),
       diffUrl: () => this.source!.diffUrl,
+      projectContext: (chapter) => {
+        const project = this.source?.project;
+        if (!project) return null;
+        return chapterContext({
+          chapter: { id: chapter.id, paths: chapter.files.map((doc) => doc.path) },
+          revision: this.contextRevision,
+          ...project[this.contextRevision],
+          context: this.projectContext,
+          canContinue: chapter.files.some((doc) => !this.chapterState(doc).unsupported),
+          select: (revision) => {
+            this.contextRevision = revision;
+            this.chapters.returnToContext(chapter.id, 'revision');
+          },
+          open: (target) => {
+            this.chapters.close();
+            this.openProject(target.revision, target);
+          },
+          remove: (attachment) => {
+            this.projectContext.remove(attachment);
+            this.chapters.returnToContext(chapter.id, 'find');
+          },
+        });
+      },
     });
     this.commentBtn.type = 'button';
     this.commentBtn.dataset.act = 'comment-block';
@@ -570,7 +598,7 @@ class Reader {
     if (source.project) this.offerProject(source.project);
     const all = [...source.docs, ...(source.codeDocs ?? [])];
     if (!all.length) {
-      this.chapters.setSource([], source.otherFiles ?? []);
+      this.chapters.setSource([], source.otherFiles ?? [], Boolean(source.project));
       this.showMessage('No readable changes here', 'This change set does not touch any supported document or text source files.');
       return;
     }
@@ -595,7 +623,7 @@ class Reader {
     this.orderViews();
     // Opened at its start, a review starts at the first file in reading order.
     if (!start) this.index = 0;
-    this.chapters.setSource(all, source.otherFiles ?? []);
+    this.chapters.setSource(all, source.otherFiles ?? [], Boolean(source.project));
     this.updateFileButton();
     // A review opened at its start, and read over several sittings, offers to continue where the reader was.
     void this.loadAll(this.index).then(() => {
@@ -1234,15 +1262,19 @@ class Reader {
     return [item('head', 'As this change leaves them'), item('base', 'Before this change')];
   }
 
-  private openProject(revision: 'base' | 'head'): void {
+  private openProject(revision: 'base' | 'head', target?: ContextOpening): void {
     const source = this.source!;
     const project = source.project!;
     const back = this.shadow.querySelector<HTMLElement>('[data-act="project"]')!;
     this.layer = openRepository(project.open(revision), {
-      review: { title: source.title, revision, ref: project[revision].ref, chapters: this.chapters.outline() },
-      onClose: () => {
+      review: { title: source.title, revision, ref: project[revision].ref, chapters: this.chapters.outline(), context: this.projectContext, entry: target },
+      onClose: (action) => {
         this.layer = null;
-        back.focus({ preventScroll: true });
+        if (this.closed) return;
+        if (target) {
+          if (action === 'continue') this.chapters.continueChapter(target.chapter);
+          else this.chapters.returnToContext(target.chapter, target.key);
+        } else back.focus({ preventScroll: true });
       },
     });
   }

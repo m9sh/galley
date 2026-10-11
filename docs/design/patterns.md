@@ -96,3 +96,7 @@ Follow [COPY.md](../COPY.md). In controls specifically:
 - Name settings by what the reviewer chooses, with the choices as nouns: **Context: Changed parts / Whole files**.
 - Use sentence case, no full stop in labels, and "…" only for actions that open something to type in (**Add a comment…**).
 - Write numbers with separators and units: "1,204 added", "20 px", "lines 31–37" (en dash).
+
+## Supporting reading for a chapter
+
+Changed files and Project context are separate groups. Context controls show base/head and the commit before opening material. Automatic connections show their source link and line; session attachments say Added by you and offer Remove. The library's return row names the originating chapter. Return to review restores the context control; Continue chapter resumes the review article. A native Add to chapter disclosure contains the chapter and heading selects, session lifetime explanation, submit action and live confirmation.

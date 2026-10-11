@@ -1,3 +1,7 @@
+import { button } from '../components/dom.ts';
+export { button } from '../components/dom.ts';
+import type { ChapterAttachment, ReviewRelated } from '../../core/review-context.ts';
+export type { ReviewRelated } from '../../core/review-context.ts';
 import {
   ORIGIN_NAMES,
   PROPOSED_KINDS,
@@ -21,13 +25,6 @@ import { icons } from '../components/icons.ts';
  */
 
 export { h };
-
-export function button(label: string, act: string, className = 'mr-btn mr-outline'): HTMLButtonElement {
-  const b = h('button', className, label);
-  b.type = 'button';
-  b.dataset.act = act;
-  return b;
-}
 
 export function external(label: string, href: string, className = ''): HTMLAnchorElement {
   const a = h('a', className, label);
@@ -661,21 +658,16 @@ export function exportSheet(options: ExportOptions): HTMLElement[] {
 
 // ---------------------------------------------------------------- a review's project context
 
-export interface ReviewRelated {
-  path: string;
-  title: string;
-  kind: string | null;
-  /** Changed in the review itself, or connected to a file the review changes. */
-  flag: 'changed' | 'worth-checking';
-  evidence: Array<{ path: string; line: number; text: string }>;
-}
-
 export interface ReviewOptions {
   title: string;
   revision: string;
   /** How much of the repository has been read: related documents come only from those. */
   status: HTMLElement;
-  chapters: Array<{ title: string; files: Array<{ path: string; changedDoc: boolean; related: ReviewRelated[]; declares: string[] }> }>;
+  chapters: Array<{
+    title: string;
+    attachments?: ChapterAttachment[];
+    files: Array<{ path: string; changedDoc: boolean; related: ReviewRelated[]; declares: string[] }>;
+  }>;
 }
 
 /** A flag says what is true, never that a document is wrong: changed is a change, worth checking is a plain fact. */
@@ -698,6 +690,14 @@ export function reviewView(options: ReviewOptions): HTMLElement {
   for (const chapter of options.chapters) {
     const section = h('section', 'mr-review-chapter');
     section.append(h('h2', '', chapter.title));
+    for (const attachment of chapter.attachments ?? []) {
+      const row = h('p', 'mr-review-attachment');
+      const open = button(attachment.title, 'open', 'mr-repo-edge-doc');
+      open.dataset.path = attachment.path;
+      open.dataset.anchor = attachment.heading;
+      row.append(open, h('small', '', `Added by you · ${attachment.commit.slice(0, 7)}`));
+      section.append(row);
+    }
     for (const file of chapter.files) {
       const box = h('div', 'mr-review-file');
       const head = h('p', 'mr-review-path');

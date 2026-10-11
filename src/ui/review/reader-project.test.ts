@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
 import type { ReviewProject } from '../../platforms/types.ts';
-import { readerHarness, review } from '../../testing/reader.ts';
+import { guide, readerHarness, review } from '../../testing/reader.ts';
 import { handbook, repository } from '../../testing/repo.ts';
 
 const ui = readerHarness();
@@ -109,4 +109,110 @@ it('a library layout choice leaves the review layout, paragraph, folds, Viewed a
   expect([...ui.shadow().querySelectorAll('[data-act="fold"]')].map((el) => el.getAttribute('aria-checked'))).toEqual(before.folds);
   expect(ui.q<HTMLTextAreaElement>('.mr-composer textarea').value).toBe('Check the rationale before posting');
   expect(ui.shadow().activeElement).toBe(ui.q('[data-act="project"]'));
+});
+
+it('finds chapter context explicitly, adds a heading for this session and returns to the same paragraph, draft and context control', async () => {
+  const behind = project();
+  vi.mocked(behind.open).mockImplementation((revision) =>
+    repository(
+      { ...handbook, 'docs/context.md': '# Context\n\nRead [the guide](guide.md).\n\n## Choice\n\nChoose deliberately.' },
+      { pinned: true, commit: behind[revision].commit },
+    ),
+  );
+  await ui.open(review({ docs: [guide, { ...guide, path: 'README.md' }], project: behind }));
+  await ui.readyViewed();
+  await ui.commentOn();
+  ui.input('Keep my question while reading');
+  ui.q('.mr-root').scrollTop = 460;
+  const viewed = ui.q('.mr-viewed').getAttribute('aria-pressed');
+  ui.click('.mr-chapters-toggle');
+  expect(behind.open).not.toHaveBeenCalled();
+  expect(ui.q('[data-chapter="docs:docs"]').textContent).toContain('Changed files');
+  ui.click('[data-chapter="docs:docs"] [data-context-key="find"]');
+  await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-review-status .mr-map-status')?.textContent).toMatch(/^Built from all/));
+  let library = repoShadow()!;
+  library.querySelector<HTMLButtonElement>('[data-act="open"][data-path="docs/context.md"]')!.click();
+  await vi.waitFor(() => expect(library.querySelector('.mr-lead')?.textContent).toBe('Context'));
+  const form = library.querySelector<HTMLFormElement>('.mr-chapter-attachment form')!;
+  form.querySelector<HTMLSelectElement>('[aria-label="Section to add"]')!.value = 'choice';
+  form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  expect(form.querySelector('[role="status"]')!.textContent).toBe('Added to docs.');
+  library.querySelector<HTMLButtonElement>('[data-view="review"]')!.click();
+  expect(library.querySelector('.mr-review-attachment')!.textContent).toContain('Context — ChoiceAdded by you');
+  library.querySelector<HTMLButtonElement>('.mr-repo-return [data-act="close"]')!.click();
+  expect(repoShadow()).toBeNull();
+  expect(ui.q('.mr-root').scrollTop).toBe(460);
+  expect(ui.q<HTMLTextAreaElement>('.mr-composer textarea').value).toBe('Keep my question while reading');
+  expect(ui.q('.mr-viewed').getAttribute('aria-pressed')).toBe(viewed);
+  expect(ui.q('.mr-chapters').hidden).toBe(false);
+  expect(ui.shadow().activeElement).toBe(ui.q('[data-chapter="docs:docs"] [data-context-key="find"]'));
+  const context = ui.q('[data-chapter="docs:docs"] .mr-chapter-context');
+  expect(context.textContent).toContain('Links to docs/guide.md');
+  expect(context.textContent).toContain('“the guide” · line 3');
+  ui.click('[data-chapter="docs:docs"] [data-context-key="attached:docs/context.md:choice"]');
+  await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-lead')?.textContent).toBe('Context'));
+  library = repoShadow()!;
+  library.querySelector<HTMLButtonElement>('[data-act="continue-chapter"]')!.click();
+  expect(repoShadow()).toBeNull();
+  expect(ui.q('.mr-chapters').hidden).toBe(true);
+  expect(ui.q<HTMLTextAreaElement>('.mr-composer textarea').value).toBe('Keep my question while reading');
+  ui.click('.mr-chapters-toggle');
+  ui.q('[aria-label="Remove Context — Choice from this chapter"]').click();
+  expect(ui.q('.mr-chapter-context').textContent).not.toContain('Added by you');
+  // If the linked document becomes unavailable, the old evidence control disappears;
+  // returning still restores a reachable control in the same chapter.
+  const unavailable = repository({ ...handbook, 'docs/context.md': '# Context' }, { pinned: true });
+  vi.mocked(unavailable.load).mockImplementation(async (path) => {
+    if (path === 'docs/context.md') throw new Error('temporarily offline');
+    return handbook[path];
+  });
+  vi.mocked(behind.open).mockReturnValueOnce(unavailable);
+  ui.click('[data-chapter="docs:docs"] [data-context-key="docs/guide.md:docs/context.md:3"]');
+  await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-doc .mr-message p')?.textContent).toBe('temporarily offline'));
+  repoShadow()!.querySelector<HTMLButtonElement>('[data-view="review"]')!.click();
+  await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-review-status')?.textContent).toContain('1 document could not be read'));
+  repoShadow()!.querySelector<HTMLButtonElement>('.mr-repo-return [data-act="close"]')!.click();
+  expect(ui.shadow().activeElement).toBe(ui.q('[data-chapter="docs:docs"] [data-context-key="find"]'));
+  const picker = ui.q<HTMLSelectElement>('[data-chapter="docs:docs"] [aria-label="Project context revision"]');
+  picker.value = 'base';
+  picker.dispatchEvent(new Event('change'));
+  expect(ui.shadow().activeElement).toBe(ui.q('[data-chapter="docs:docs"] [aria-label="Project context revision"]'));
+  expect(ui.q('[data-chapter="docs:docs"] .mr-chapter-context').textContent).toContain('No project context read yet');
+  ui.click('[data-chapter="docs:docs"] [data-context-key="find"]');
+  expect(behind.open).toHaveBeenLastCalledWith('base');
+  await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-review-status .mr-map-status')?.textContent).toMatch(/^Built from all/));
+  repoShadow()!.querySelector<HTMLButtonElement>('[data-act="continue-chapter"]')!.click();
+  ui.click('.mr-chapters-toggle');
+  ui.click('[data-chapter="docs:"] [data-context-key="find"]');
+  await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-review-status .mr-map-status')?.textContent).toMatch(/^Built from all/));
+  repoShadow()!.querySelector<HTMLButtonElement>('[data-act="continue-chapter"]')!.click();
+  expect(ui.q('.mr-chapters').hidden).toBe(true);
+  ui.click('.mr-chapters-toggle');
+  ui.click('[data-chapter="docs:"] [data-context-key="find"]');
+  await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-review-status .mr-map-status')?.textContent).toMatch(/^Built from all/));
+  ui.close();
+  expect(repoShadow()).toBeNull();
+});
+
+it('can attach a whole document without a title, and keeps that choice out of other chapters', async () => {
+  const behind = project();
+  vi.mocked(behind.open).mockImplementation(() => repository({ ...handbook, 'CONTEXT.md': 'Only a paragraph.' }, { pinned: true }));
+  await ui.open(review({ project: behind }));
+  ui.click('[data-act="project"]');
+  ui.click('[data-act="project-open"][data-revision="head"]');
+  await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-review-status .mr-map-status')?.textContent).toMatch(/^Built from all/));
+  repoShadow()!.querySelector<HTMLButtonElement>('[data-view="read"]')!.click();
+  await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-lead')?.textContent).toBe('Handbook'));
+  repoShadow()!.querySelector<HTMLButtonElement>('[data-act="docs"]')!.click();
+  repoShadow()!.querySelector<HTMLButtonElement>('[data-act="open"][data-path="CONTEXT.md"]')!.click();
+  await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-doc .mr-title')?.textContent).toBe('CONTEXT'));
+  repoShadow()!
+    .querySelector<HTMLFormElement>('.mr-chapter-attachment form')!
+    .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  repoShadow()!.querySelector<HTMLButtonElement>('[data-view="review"]')!.click();
+  expect(repoShadow()!.querySelector('.mr-review-attachment')!.textContent).toContain('CONTEXTAdded by you');
+  repoShadow()!.querySelector<HTMLButtonElement>('.mr-repo-return [data-act="close"]')!.click();
+  ui.click('.mr-chapters-toggle');
+  expect(ui.q('.mr-chapters').hidden).toBe(false);
+  expect(ui.q('[data-context-key="attached:CONTEXT.md:"]').textContent).toBe('CONTEXT');
 });

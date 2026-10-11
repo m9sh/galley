@@ -2,6 +2,7 @@ import { expect, it, vi } from 'vitest';
 import { handbook, listing, repoHarness, repository, words } from '../../testing/repo.ts';
 import { readConfig } from '../sandbox/config-frame.ts';
 import type { ReviewContext } from './repo-reader.ts';
+import { ChapterContext } from '../../core/review-context.ts';
 
 const drawn = vi.hoisted(() => ({ renderDiagrams: vi.fn(), highlightCode: vi.fn(async () => {}) }));
 vi.mock('../rendering/diagrams.ts', async (original) => ({
@@ -35,6 +36,7 @@ const review: ReviewContext = {
 it('a repository read on its own has no review view', async () => {
   await ui.open(repository());
   expect(ui.q('[data-view="review"]').hidden).toBe(true);
+  expect(ui.q('.mr-repo-menu-views [data-view="review"]').hidden).toBe(true);
   expect(ui.q('[data-act="close"]').title).toBe('Close reader (Esc)');
 });
 
@@ -42,6 +44,8 @@ it('opened from a review, the reader starts at what it changes: each file with t
   const onClose = vi.fn();
   await ui.open(repository(files, { pinned: true }), { review, onClose });
   expect(ui.q('[data-view="review"]').hidden).toBe(false);
+  expect(ui.q('.mr-repo-menu-views [data-view="review"]').hidden).toBe(false);
+  expect(ui.q('.mr-repo-menu-views [data-view="review"]').getAttribute('aria-pressed')).toBe('true');
   expect(ui.q('[data-view="review"]').getAttribute('aria-pressed')).toBe('true');
   expect(ui.q('[data-act="close"]').getAttribute('aria-label')).toBe('Back to the review (Esc)');
   await vi.waitFor(() => expect(ui.q('.mr-review-status .mr-map-status').textContent).toMatch(/^Built from all 5 documents/));
@@ -131,4 +135,41 @@ it('a newer commit redraws the review view from the new snapshot', async () => {
   ui.click('[data-act="refresh"]');
   await vi.waitFor(() => expect(ui.q('.mr-review-status .mr-map-status').textContent).toMatch(/at beef000/));
   expect(ui.text('.mr-review-context .mr-subtitle')).toContain('feature/render @ beef000');
+});
+
+it('a directly opened context document stays readable if its repository listing fails, with a disabled continuation for a platform-only chapter', async () => {
+  const source = repository(files, {
+    discover: vi.fn(async () => {
+      throw new Error('offline');
+    }),
+  });
+  await ui.open(source, {
+    review: { ...review, context: new ChapterContext(), entry: { chapter: 'platform', revision: 'head', key: 'find', path: 'NOTES.md', canContinue: false } },
+  });
+  await ui.settled();
+  expect(ui.text('.mr-lead')).toBe('Field notes');
+  expect(ui.q<HTMLButtonElement>('[data-act="continue-chapter"]').disabled).toBe(true);
+  ui.click('.mr-repo-return [data-act="close"]');
+});
+
+it('a context listing that arrives after closing cannot start another indexing pass', async () => {
+  let resolve!: (found: ReturnType<typeof listing>) => void;
+  const source = repository(files, {
+    discover: vi.fn(
+      () =>
+        new Promise<ReturnType<typeof listing>>((found) => {
+          resolve = found;
+        }),
+    ),
+  });
+  const handle = await ui.open(source, {
+    review: { ...review, entry: { chapter: 'code', revision: 'head', key: 'doc', path: 'NOTES.md', canContinue: true } },
+  });
+  await ui.settled();
+  handle.close();
+  resolve(listing(Object.keys(files).filter((path) => path.endsWith('.md'))));
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(source.load).toHaveBeenCalledTimes(1);
+  expect(source.load).toHaveBeenCalledWith('NOTES.md');
 });
