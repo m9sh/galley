@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.16.0](https://github.com/m9sh/galley/compare/v0.15.0...v0.16.0) (2026-10-11)
+
+
+### Features
+
+* **library:** add session reading chapters ([9c3da08](https://github.com/m9sh/galley/commit/9c3da0809cd2e8c6967e0b4aa21c8759d229843d))
+* **library:** add session reading chapters ([bba6c53](https://github.com/m9sh/galley/commit/bba6c53c6525fd463d9573959df5626e81ca2d17))
+
 ## [0.15.0](https://github.com/m9sh/galley/compare/v0.14.0...v0.15.0) (2026-10-11)
 
 
