@@ -6,8 +6,8 @@ discussion: https://github.com/m9sh/galley/issues/49
 theme: Read the project, understand the change
 phase: Exploratory plan; separate from the three proposed core review RFCs
 delivery: Phased experiments and implementation gates; owners, effort and dates remain to be estimated
-progress: Phases 1–5 implemented in https://github.com/m9sh/galley/pull/54 (repository reader, project map with architecture, infrastructure and decision lenses, private notes, Project docs from reviews); reader validation sessions, self-hosted GitLab version checks and pilot targets remain; the spatial project map continues in https://github.com/m9sh/galley/issues/68
-adrs: [1, 9, 11, 19, 24, 25, 26, 27, 28]
+progress: Phases 1–5 implemented in https://github.com/m9sh/galley/pull/54 (repository reader, project map with architecture, infrastructure and decision lenses, private notes, Project docs from reviews); reader validation sessions, self-hosted GitLab version checks and pilot targets remain; the spatial project map continues in https://github.com/m9sh/galley/issues/68, with a demo-only proposal and layout spike pending ADR 0030 review and voluntary reader sessions
+adrs: [1, 9, 11, 19, 24, 25, 26, 27, 28, 30]
 ---
 
 # RFC 0049: Repository docs reading, project maps and architecture exploration
@@ -180,3 +180,9 @@ Advance phases when the earlier experience helps understanding and its provenanc
 - [RFC 0042](0042-inspect-related-code.md) — Inspect related code without losing your place.
 - [RFC 0043](0043-test-evidence.md) — Connect changed behavior to test evidence.
 - [RFC 0045](0045-search-across-a-review.md) — Search across a review, including folded content.
+
+## Spatial map follow-up — issue 68
+
+[Issue #68](https://github.com/m9sh/galley/issues/68) and the [design proposal](../design/project-map-reimagining.md) explore a spatial workspace over the same evidence. [Proposed ADR 0030](../adr/0030-spatial-project-map-with-an-equivalent-list.md) proposes replacing only ADR 0026's presentation requirement. ADR 0026 remains Accepted while the proposal is reviewed.
+
+The first slice supplies a bounded document model, deterministic placement and a demo-only prototype. It proposes Documents as the initial source, two neighbours per side on desktop (one on phones), a native List and a phone detail sheet. These address the initial-neighbourhood and outline-versus-map questions for review; they do not accept this RFC or resolve its diagram-extraction or provider-validation work. Voluntary reader sessions remain pending.

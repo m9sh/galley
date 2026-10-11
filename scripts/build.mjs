@@ -98,6 +98,10 @@ function checkTokenIsolation() {
 async function assemble() {
   if (!bundles.every((bundle) => metafiles.has(bundle.name))) return;
   checkTokenIsolation();
+  for (const { name } of bundles.filter((bundle) => bundle.shipped)) {
+    const leak = Object.keys(metafiles.get(name).inputs).find((input) => /(?:core|demo)\/project-map\.(?:ts|css)$/.test(input));
+    if (leak) throw new Error(`${name}: ${leak} is demo-only until ADR 0030 is accepted`);
+  }
   await mkdir(`${root}demo/build`, { recursive: true });
   for (const frame of FRAMES) {
     await cp(`${root}dist/.build/${frame}.js`, `${root}demo/build/${frame}.js`);

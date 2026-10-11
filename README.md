@@ -153,6 +153,12 @@ The [privacy policy](PRIVACY.md) has the details. Security reports go through [S
 
 Tell us what makes your reviews harder: a long document, missing context, an accessibility barrier, a conversation that is hard to follow. [Issues](https://github.com/m9sh/galley/issues) and pull requests shape the project. [CONTRIBUTING.md](CONTRIBUTING.md) has the setup, architecture and contribution guidelines, [PUBLISHING.md](PUBLISHING.md) the store release steps, and [store/ARTWORK.md](store/ARTWORK.md) how every image in this README is made. Larger ideas start as [RFCs](docs/rfcs/README.md); the decisions behind the code are in the [architecture decision records](docs/adr/README.md).
 
+### Project map design prototype
+
+For [issue #68](https://github.com/m9sh/galley/issues/68), run `npm run demo` and open `http://localhost:4173/?atlas`. The demo uses the real local document index and safe renderer; it does not change the extension's Map. `?atlas=dense` adds 300 linked demo documents, `?atlas=sparse` adds 30 disconnected documents, and `?atlas=partial` leaves the real handbook partly indexed. Add `&doc=docs/adr/0003-queue-for-reviews.md` to open a document directly. Preview settings stay in the session.
+
+The [design proposal](docs/design/project-map-reimagining.md) and [Proposed ADR 0030](docs/adr/0030-spatial-project-map-with-an-equivalent-list.md) explain the decision and reader-validation gates before production adoption.
+
 ## License
 
 [GPL-3.0-or-later](LICENSE) © Marcin Urbanski. Free to use, study, change and share. If you distribute a modified version, publish its source under the same license. The licences of the bundled libraries ship in `THIRD_PARTY_NOTICES.txt` inside every build.
