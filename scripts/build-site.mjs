@@ -10,7 +10,7 @@ const out = `${root}dist/site`;
 await rm(out, { recursive: true, force: true });
 await mkdir(`${out}/assets`, { recursive: true });
 for (const file of ['index.html', 'styles.css', 'main.js']) await cp(`${root}site/${file}`, `${out}/${file}`);
-await cp(`${root}src/ui/fonts`, `${out}/fonts`, { recursive: true });
+await cp(`${root}src/ui/components/fonts`, `${out}/fonts`, { recursive: true });
 const assets = {
   'src/icons/icon128.png': 'icon.png',
   'store/assets/social-preview-1280x640.png': 'social.png',

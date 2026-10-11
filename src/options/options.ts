@@ -1,4 +1,4 @@
-import { loadSettings, updateSettings } from '../ui/settings.ts';
+import { loadSettings, updateSettings } from '../ui/preferences/settings.ts';
 
 const control = document.querySelector<HTMLInputElement>('#read-button')!;
 const status = document.querySelector<HTMLElement>('#status')!;

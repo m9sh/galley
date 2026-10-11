@@ -14,7 +14,8 @@ import puppeteer from 'puppeteer-core';
 import { startDemoServer } from './serve.mjs';
 
 const root = new URL('..', import.meta.url).pathname;
-const read = (pattern) => [...(pattern.exec(readFileSync(join(root, 'src/ui/settings.ts'), 'utf8'))?.[1] ?? '').matchAll(/'([a-z-]+)'/g)].map(([, id]) => id);
+const read = (pattern) =>
+  [...(pattern.exec(readFileSync(join(root, 'src/ui/preferences/settings.ts'), 'utf8'))?.[1] ?? '').matchAll(/'([a-z-]+)'/g)].map(([, id]) => id);
 const PALETTES = read(/export const THEMES = \[([\s\S]*?)\] as const/);
 const LAYOUTS = read(/export const LAYOUTS = \[([\s\S]*?)\] as const/);
 const DEMOS = ['default', 'large', 'spec', 'comments', 'chapters', 'code-only', 'diagram-error'];

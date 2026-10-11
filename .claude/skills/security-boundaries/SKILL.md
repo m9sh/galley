@@ -9,7 +9,7 @@ Galley renders content anyone can write, inside the reviewer's session, next to 
 
 ## The boundaries, in one line each
 
-1. **Content → DOM:** only through `sanitize()` (`src/ui/render.ts`) or as text nodes. No `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write` with anything but fixed markup ([ADR 0006](../../../docs/adr/0006-sanitise-all-rendered-html.md)).
+1. **Content → DOM:** only through `sanitize()` (`src/ui/rendering/render.ts`) or as text nodes. No `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write` with anything but fixed markup ([ADR 0006](../../../docs/adr/0006-sanitise-all-rendered-html.md)).
 2. **Content → Galley's markup:** block ids carry a nonce, classes are allowlisted, content ids get `user-content-`; content must never be able to fake a change mark.
 3. **Content → network:** only `<img>`, and external images wait for consent ([ADR 0010](../../../docs/adr/0010-external-images-behind-consent.md)).
 4. **Content → engines:** Mermaid, highlight.js and Babel run in sandbox frames; replies are untrusted and validated ([ADR 0011](../../../docs/adr/0011-sandbox-third-party-engines.md)).
@@ -20,7 +20,7 @@ Galley renders content anyone can write, inside the reviewer's session, next to 
 
 ## Working near a boundary
 
-- **Write the hostile test first.** A document, file name, Mermaid source, comment or API reply that attempts the attack; assert it fails. Put it beside the existing ones (`src/ui/render.test.ts`, `render-edges.test.ts`, `src/core/edges.test.ts`, `src/platforms/comments.test.ts`, `src/background/worker.test.ts`, `src/ui/*-frame.test.ts`).
+- **Write the hostile test first.** A document, file name, Mermaid source, comment or API reply that attempts the attack; assert it fails. Put it beside the existing ones (`src/ui/rendering/render.test.ts`, `render-edges.test.ts`, `src/core/edges.test.ts`, `src/platforms/comments.test.ts`, `src/background/worker.test.ts`, `src/ui/sandbox/*-frame.test.ts`).
 - **Static HTML needs a reason:** `// biome-ignore lint/plugin: a bundled icon constant.` A reviewer must be able to agree that no content can reach it.
 - **New request, permission, storage key or dependency?** Update [PRIVACY.md](../../../PRIVACY.md), the [storage inventory](../../../docs/architecture/storage.md), the store listing if permissions change, and write an ADR for a new boundary. A new permission is at least a `feat`.
 - **New GitHub call?** Follow [the how-to](../../../docs/how-to/add-a-github-api-call.md); the worker refuses anything not in `allowedRequest()`.

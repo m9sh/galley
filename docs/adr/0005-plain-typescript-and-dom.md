@@ -15,7 +15,7 @@ Galley ships as a content script into every pull request page, and store reviewe
 
 ## Decision
 
-- Source is **TypeScript with no UI framework**: the reader builds its DOM with `document.createElement`, small helpers (`h()` in `src/ui/reader.ts`) and static templates of fixed markup. State lives on the `Reader` instance; settings in `src/ui/settings.ts`.
+- Source is **TypeScript with no UI framework**: the reader builds its DOM with `document.createElement`, small helpers (`h()` in `src/ui/review/reader.ts`) and static templates of fixed markup. State lives on the `Reader` instance; settings in `src/ui/preferences/settings.ts`.
 - **Runtime dependencies stay few** and each has a job no small module could do: `markdown-it` (and its emoji and footnote plugins), `diff`, `dompurify`, `highlight.js`, `mermaid` and `@babel/parser`. Mermaid, highlight.js and Babel run only inside sandboxed frames ([ADR 0011](0011-sandbox-third-party-engines.md)).
 - **New runtime dependencies need a good reason and a permissive licence** (MIT, BSD, ISC or Apache-2.0), so the project stays compatible with the GPL and the commercial licence ([ADR 0016](0016-gpl-with-commercial-licence.md)). The build writes `THIRD_PARTY_NOTICES.txt` from what it bundles.
 - **Bundles stay readable.** esbuild folds constants (`minifySyntax`) but keeps names and whitespace, except Mermaid and its layout engine, which are minified to fit addons.mozilla.org's 5 MB scan limit.

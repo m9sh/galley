@@ -1,5 +1,5 @@
 import type { DocStatus } from '../platforms/types.ts';
-import { type RenderedDoc, type RenderInput, renderDocument } from '../ui/render.ts';
+import { type RenderedDoc, type RenderInput, renderDocument } from '../ui/rendering/render.ts';
 
 export const REPO_LINKS = { raw: (path: string) => `/raw/${path}`, blob: (path: string) => `/blob/${path}` };
 

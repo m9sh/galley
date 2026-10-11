@@ -32,17 +32,33 @@ export async function checkOpening(executablePath, screenshots) {
     const page = await browser.newPage();
     await page.setViewport({ width: 1440, height: 1000 });
     const requests = [];
+    const imageRequests = [];
+    const unwantedRequests = [];
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.setRequestInterception(true);
     page.on('request', (request) => {
       const url = new URL(request.url());
       if (url.protocol === 'chrome-extension:' || url.protocol === 'data:') return void request.continue();
+      if (url.hostname === 'tracker.example') unwantedRequests.push(request.url());
+      if (url.hostname === 'img.shields.io') {
+        const fallback = request.frame()?.url().startsWith('chrome-extension://');
+        imageRequests.push({ url: request.url(), headers: request.headers(), fallback });
+        // Newer Chrome isolates content-script image requests from page CSP. Force its direct
+        // attempt to fail too, so every browser must exercise the real fallback frame.
+        if (!fallback) return void request.respond({ status: 404, body: '' });
+        return void request.respond({
+          status: 200,
+          contentType: 'image/svg+xml',
+          body: '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="20"><script>fetch("https://tracker.example/script")</script><image href="https://tracker.example/nested"/><rect width="128" height="20" fill="#243e32"/><text x="8" y="15" fill="white">coverage 100%</text></svg>',
+        });
+      }
       if (request.isNavigationRequest()) {
         const attributes = url.hostname === 'gitlab.com' ? ' data-project-full-path="team/repo" data-project-id="7"' : '';
         return void request.respond({
           status: 200,
           contentType: 'text/html',
+          headers: { 'Content-Security-Policy': "img-src 'self' data:; object-src 'none'" },
           body: `<!doctype html><html lang="en"><title>Example project</title><body${attributes}><h1>Example project</h1></body></html>`,
         });
       }
@@ -57,7 +73,11 @@ export async function checkOpening(executablePath, screenshots) {
       else if (url.pathname.endsWith('/repository/commits/HEAD')) body = { id: 'b'.repeat(40) };
       else if (url.pathname.endsWith('/repository/tree')) body = [{ path: 'README.md', type: 'blob' }];
       else if (url.pathname.endsWith('/raw'))
-        return void request.respond({ status: 200, contentType: 'text/plain', body: '# A focused review\n\nRead the changes when you are ready.\n' });
+        return void request.respond({
+          status: 200,
+          contentType: 'text/plain',
+          body: '# A focused review\n\nRead the changes when you are ready.\n\n[![Coverage](https://img.shields.io/badge/coverage-100%25-green)](https://example.com/coverage)\n',
+        });
       else return void request.respond({ status: 404, contentType: 'application/json', body: '{}' });
       void request.respond({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
     });
@@ -125,6 +145,61 @@ export async function checkOpening(executablePath, screenshots) {
       true,
     );
     console.log('Opening: repository reader loaded.');
+    assert.equal(imageRequests.length, 0, 'Badges must remain behind consent');
+    await page.bringToFront();
+    const loadBadge = await page.evaluateHandle(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-img-load'));
+    await loadBadge.asElement().click();
+    try {
+      await page.waitForFunction(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-image-frame')?.dataset.loaded === 'true', {
+        polling: 100,
+      });
+    } catch (error) {
+      console.log(
+        'Image failure:',
+        imageRequests,
+        errors,
+        page.frames().map((frame) => frame.url()),
+        await page.evaluate(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-content').outerHTML),
+      );
+      throw error;
+    }
+    assert.equal(imageRequests.filter((request) => request.fallback).length, 1, 'A consented badge must load in its fallback frame');
+    assert.ok(imageRequests.length <= 2, 'At most one direct image attempt and one fallback are allowed');
+    assert.ok(
+      imageRequests.every((request) => !request.headers.referer),
+      'Image hosts must not receive the repository address',
+    );
+    const badge = await page.evaluate(() => {
+      const frame = document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-image-frame');
+      const rect = frame.getBoundingClientRect();
+      return { width: rect.width, height: rect.height, title: frame.title, linked: !!frame.closest('a[href="https://example.com/coverage"]') };
+    });
+    assert.equal(badge.width, 128);
+    assert.equal(badge.height, 20);
+    assert.equal(badge.title, 'Coverage');
+    assert.equal(badge.linked, true);
+    const imageFrame = page.frames().find((frame) => frame.url().endsWith('/image-frame.html'));
+    assert.equal(await imageFrame.evaluate(() => !!globalThis.chrome?.runtime), false, 'Image frames must have no extension API');
+    assert.equal(
+      await imageFrame.evaluate(() => {
+        try {
+          return !!parent.document;
+        } catch {
+          return false;
+        }
+      }),
+      false,
+      'Image frames must not read the authenticated page',
+    );
+    assert.deepEqual(unwantedRequests, [], 'An SVG image must not execute scripts or load nested resources');
+    await page.screenshot({ path: join(screenshots, 'opening-library-badge.png') });
+    await page.setViewport({ width: 390, height: 844 });
+    assert.equal(
+      await page.evaluate(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-content').scrollWidth <= innerWidth),
+      true,
+    );
+    await page.screenshot({ path: join(screenshots, 'opening-library-badge-phone.png') });
+    await page.setViewport({ width: 1440, height: 1000 });
     await page.evaluate(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('[data-act="close"]').click());
 
     const longRepository = `acme/${'architecture'.repeat(6)}`;
@@ -135,7 +210,7 @@ export async function checkOpening(executablePath, screenshots) {
     const githubPopup = await githubPopupTarget.asPage();
     await githubPopup.waitForSelector('#reader button');
     await githubPopup.waitForSelector('#token-form', { visible: true });
-    assert.equal(await githubPopup.$eval('#reader button', (button) => button.textContent), 'Read docs');
+    assert.equal(await githubPopup.$eval('#reader button', (button) => button.textContent), 'Read the project');
     assert.equal(
       await githubPopup.$eval('#reader p', (label) => label.getBoundingClientRect().height > Number.parseFloat(getComputedStyle(label).lineHeight)),
       true,

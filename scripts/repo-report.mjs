@@ -20,7 +20,7 @@ const { buildLens } = await import('../src/core/architecture.ts');
 const { collectDocs, configFormat } = await import('../src/core/discovery.ts');
 const { classify, INDEX_BATCH, indexDocument, KIND_NAMES, ProjectIndex } = await import('../src/core/docindex.ts');
 const { MAX_DOCUMENT_CHARS } = await import('../src/core/limits.ts');
-const { readConfig } = await import('../src/ui/config-frame.ts');
+const { readConfig } = await import('../src/ui/sandbox/config-frame.ts');
 const { MAX_CONFIG_CHARS } = await import('../src/core/architecture.ts');
 
 const { values, positionals } = parseArgs({ allowPositionals: true, options: { json: { type: 'boolean', default: false } } });
