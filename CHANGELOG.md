@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.13.0](https://github.com/m9sh/galley/compare/v0.12.0...v0.13.0) (2026-10-11)
+
+
+### Features
+
+* **reader:** add shared project library layouts ([72ad2ce](https://github.com/m9sh/galley/commit/72ad2ced589241ff976103e91fd39809debcb495))
+* **reader:** add shared project library layouts ([ae66edf](https://github.com/m9sh/galley/commit/ae66edff11b1481f5b69f18aa6bf9c140b332df5))
+
+
+### Bug Fixes
+
+* **reader:** recover consented images blocked by page CSP ([c5d4a96](https://github.com/m9sh/galley/commit/c5d4a9658469f3c60e4821c901b3838708571747))
+
 ## [0.12.0](https://github.com/m9rc1n/galley/compare/v0.11.0...v0.12.0) (2026-10-10)
 
 
