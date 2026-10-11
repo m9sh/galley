@@ -1,7 +1,7 @@
 ---
 status: Accepted
 date: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: [49]
 tags: [process, docs]
 ---
@@ -47,5 +47,5 @@ The front matter is plain YAML that GitHub and Galley both show as metadata. Tha
 
 ## References
 
-- RFC issues [#36](https://github.com/m9rc1n/galley/issues/36) to [#49](https://github.com/m9rc1n/galley/issues/49).
+- RFC issues [#36](https://github.com/m9sh/galley/issues/36) to [#49](https://github.com/m9sh/galley/issues/49).
 - Michael Nygard, [Documenting architecture decisions](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions), and [MADR](https://adr.github.io/madr/), which the template follows loosely.

@@ -1,11 +1,11 @@
 ---
 status: Accepted
 created: 2026-10-10
-authors: [m9rc1n]
-discussion: https://github.com/m9rc1n/galley/issues/36
+authors: [m9sh]
+discussion: https://github.com/m9sh/galley/issues/36
 theme: Never lose the thread
 phase: Core, 1 of 3
-implemented-in: [https://github.com/m9rc1n/galley/pull/50]
+implemented-in: [https://github.com/m9sh/galley/pull/50]
 progress: Initial slice merged in pull request 50; reviewer pilot, lasting chapter edits and truncated-list detection are open
 adrs: [21, 22]
 ---
@@ -16,7 +16,7 @@ adrs: [21, 22]
 
 A reviewer opening a large MR needs to understand how its files relate before deciding where to start. A flat list can leave them repeatedly choosing the next file while holding the change's structure in their head.
 
-Galley's suggested reading order, file folding and file navigation in [#34](https://github.com/m9rc1n/galley/pull/34) provide a foundation. This RFC proposes a map of meaningful review units on top of those controls. The expected benefit is a hypothesis to validate with reviewers, rather than an established result.
+Galley's suggested reading order, file folding and file navigation in [#34](https://github.com/m9sh/galley/pull/34) provide a foundation. This RFC proposes a map of meaningful review units on top of those controls. The expected benefit is a hypothesis to validate with reviewers, rather than an established result.
 
 ## Proposal
 
@@ -60,7 +60,7 @@ Prototype with 5–8 reviewers on real large MRs. Observe how they choose a star
 
 ## Sequencing
 
-One of the three proposed core RFCs. Build on [#34](https://github.com/m9rc1n/galley/pull/34). Chapter identifiers should be usable by private follow-ups and richer resume checkpoints.
+One of the three proposed core RFCs. Build on [#34](https://github.com/m9sh/galley/pull/34). Chapter identifiers should be usable by private follow-ups and richer resume checkpoints.
 
 ## Related RFCs
 

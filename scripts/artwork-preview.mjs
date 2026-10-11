@@ -68,7 +68,7 @@ const server = createServer(async (req, res) => {
         .end(
           shell(
             `Galley — ${doc}`,
-            `<main class="markdown"><header><a href="/">← Mission & artwork</a><a href="https://github.com/m9rc1n/galley">Source on GitHub</a></header>${content}</main>`,
+            `<main class="markdown"><header><a href="/">← Mission & artwork</a><a href="https://github.com/m9sh/galley">Source on GitHub</a></header>${content}</main>`,
           ),
         );
       return;

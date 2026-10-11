@@ -1,8 +1,8 @@
 ---
 status: Proposed
 created: 2026-10-10
-authors: [m9rc1n]
-discussion: https://github.com/m9rc1n/galley/issues/40
+authors: [m9sh]
+discussion: https://github.com/m9sh/galley/issues/40
 theme: Never lose the thread
 phase: Follow-up after the core experience
 adrs: [8, 21]

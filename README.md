@@ -6,11 +6,10 @@
 
 <p align="center"><em>Understand changes. Review in peace.</em><br><sub>Clearer code and document reviews for teams on GitHub and GitLab.</sub></p>
 
-<!-- Codecov still keeps the repository record under m9rc1n after the GitHub move to m9sh. -->
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/galley-markdown-reader-fo/ccmihhdpegbhbijhahdanmcbbpoeneic"><img src="https://img.shields.io/chrome-web-store/v/ccmihhdpegbhbijhahdanmcbbpoeneic?style=flat-square&color=243e32&label=chrome%20web%20store" alt="Chrome Web Store"></a>
   <a href="https://github.com/m9sh/galley/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/m9sh/galley/ci.yml?branch=main&style=flat-square&label=ci" alt="CI"></a>
-  <a href="https://codecov.io/gh/m9rc1n/galley"><img src="https://img.shields.io/codecov/c/github/m9rc1n/galley?style=flat-square&color=243e32&label=coverage" alt="Coverage"></a>
+  <a href="https://codecov.io/gh/m9sh/galley"><img src="https://img.shields.io/codecov/c/github/m9sh/galley?style=flat-square&color=243e32&label=coverage" alt="Coverage"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/m9sh/galley?style=flat-square&color=243e32" alt="License: GPL-3.0-or-later"></a>
   <img src="https://img.shields.io/badge/servers-0-243e32?style=flat-square" alt="Servers: 0">
 </p>
@@ -156,7 +155,7 @@ Tell us what makes your reviews harder: a long document, missing context, an acc
 
 ## License
 
-[GPL-3.0-or-later](LICENSE) © Marcin Urbanski. Free to use, study, change and share. If you distribute a modified version, publish its source under the same license. The licences of the bundled libraries ship in `THIRD_PARTY_NOTICES.txt` inside every build. Releases up to and including 0.4.1 were published under MIT and stay available under it.
+[GPL-3.0-or-later](LICENSE) © Marcin Urbanski. Free to use, study, change and share. If you distribute a modified version, publish its source under the same license. The licences of the bundled libraries ship in `THIRD_PARTY_NOTICES.txt` inside every build.
 
 **Commercial license.** Building Galley into a closed-source product, or shipping a modified version without its source? A separate commercial license is available: [open an issue](https://github.com/m9sh/galley/issues/new/choose) titled "Commercial license", leave your contact details out, and you'll get a private way to talk.
 

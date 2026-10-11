@@ -3,7 +3,7 @@
   "name": "Galley: Clearer reviews for GitHub & GitLab",
   "short_name": "Galley",
   "description": "Understand GitHub and GitLab changes: readable docs and code, edits in context, and comments beside the text.",
-  "homepage_url": "https://github.com/m9rc1n/galley",
+  "homepage_url": "https://github.com/m9sh/galley",
   "version": "0.0.0",
   "minimum_chrome_version": "111",
   "icons": {

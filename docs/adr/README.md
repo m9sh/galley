@@ -42,7 +42,7 @@ An accepted ADR is not rewritten. Corrections of fact and new links are fine; a 
 status: Accepted          # Proposed, Accepted, Deprecated, Superseded or Rejected
 date: 2026-10-06          # when the decision was made (YYYY-MM-DD)
 recorded: 2026-10-10      # optional: when it was written down, if later
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: [36]                # RFCs that led to or bear on this decision
 supersedes: []            # optional: ADR numbers this replaces
 superseded-by:            # optional: the ADR that replaces this one

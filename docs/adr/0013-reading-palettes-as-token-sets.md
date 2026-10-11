@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-06
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: []
 tags: [ui, design-system, accessibility]
 ---
@@ -40,4 +40,4 @@ Reviewers read for a long time, on different screens, at different hours, and so
 
 ## References
 
-- `e68da5a` (palettes separated from appearance), `60f2890` (per-palette change colours), pull requests [#23](https://github.com/m9rc1n/galley/pull/23) and [#34](https://github.com/m9rc1n/galley/pull/34) (twelve, then nineteen palettes).
+- `e68da5a` (palettes separated from appearance), `60f2890` (per-palette change colours), pull requests [#23](https://github.com/m9sh/galley/pull/23) and [#34](https://github.com/m9sh/galley/pull/34) (twelve, then nineteen palettes).

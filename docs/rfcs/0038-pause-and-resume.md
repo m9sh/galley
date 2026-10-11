@@ -1,8 +1,8 @@
 ---
 status: Proposed
 created: 2026-10-10
-authors: [m9rc1n]
-discussion: https://github.com/m9rc1n/galley/issues/38
+authors: [m9sh]
+discussion: https://github.com/m9sh/galley/issues/38
 theme: Never lose the thread
 phase: Core, 3 of 3
 adrs: [19]
@@ -14,7 +14,7 @@ adrs: [19]
 
 Returning to the previous scroll position restores a location, but may not restore the reviewer's intention. After an interruption, they can still spend time reconstructing what they checked and what they planned to check next.
 
-Galley already offers saved-position resume in [#34](https://github.com/m9rc1n/galley/pull/34). This RFC extends that experience with a lightweight checkpoint.
+Galley already offers saved-position resume in [#34](https://github.com/m9sh/galley/pull/34). This RFC extends that experience with a lightweight checkpoint.
 
 ## Proposal
 
@@ -57,7 +57,7 @@ Interrupt 5–8 reviewers at a meaningful point in a real review, then ask them 
 
 ## Sequencing
 
-One of the three proposed core RFCs. Builds on [#34](https://github.com/m9rc1n/galley/pull/34)'s position resume. Coordinate with private follow-ups; chapter integration can be added as chapter navigation becomes available.
+One of the three proposed core RFCs. Builds on [#34](https://github.com/m9sh/galley/pull/34)'s position resume. Coordinate with private follow-ups; chapter integration can be added as chapter navigation becomes available.
 
 ## Related RFCs
 

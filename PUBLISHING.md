@@ -14,7 +14,7 @@ The package, graphics, listing copy and privacy texts are ready in this reposito
 `PRIVACY.md` is complete: it names the project and points to the GitHub issues page for questions. Use its public address as the privacy policy URL in the dashboard:
 
 ```
-https://github.com/m9rc1n/galley/blob/main/PRIVACY.md
+https://github.com/m9sh/galley/blob/main/PRIVACY.md
 ```
 
 If you prefer a standalone page, `npm run privacy-page` renders `store/privacy-policy.html`, which you can host anywhere (GitHub Pages works).
@@ -55,7 +55,7 @@ If the review asks about permissions, the answers are in `store/LISTING.md`. In 
 The version is automatic (see "Commits and releases" in [CONTRIBUTING.md](CONTRIBUTING.md#commits-and-releases)); the store needs a higher number than the published one, and every release raises it.
 
 1. Merge the open `chore(main): release X.Y.Z` pull request when you want to ship. This tags the release and builds the packages.
-2. When the **Release** run finishes, download `galley-chrome-X.Y.Z.zip` from the GitHub release and upload it in the item's **Package** tab. `SHA256SUMS.txt` and the build provenance (`gh attestation verify <zip> --repo m9rc1n/galley`) show that the zip is the one built from the tag.
+2. When the **Release** run finishes, download `galley-chrome-X.Y.Z.zip` from the GitHub release and upload it in the item's **Package** tab. `SHA256SUMS.txt` and the build provenance (`gh attestation verify <zip> --repo m9sh/galley`) show that the zip is the one built from the tag.
 3. If the UI changed, run `npm run store-assets` to redraw the screenshots and promo tiles from the real reader, then replace them in the listing.
 
 `npm run release` still builds the zip on your machine, which is useful for trying a package before the first submission.

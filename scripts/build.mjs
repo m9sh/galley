@@ -140,7 +140,7 @@ async function assemble() {
       m.name = 'Galley: Understand pull request changes';
       // data_collection_permissions needs Firefox 140 (Android 142); older versions would ignore it.
       m.browser_specific_settings = {
-        gecko: { id: 'galley@m9rc1n.github.io', strict_min_version: '140.0', data_collection_permissions: { required: ['none'] } },
+        gecko: { id: 'galley@m9sh.github.io', strict_min_version: '140.0', data_collection_permissions: { required: ['none'] } },
         gecko_android: { strict_min_version: '142.0' },
       };
       // Limits addons.mozilla.org enforces on upload, caught here instead of at submission.

@@ -17,9 +17,9 @@ Open http://localhost:4185. Edit `site/index.html`, `site/styles.css`, or `site/
 
 1. In the repository, open **Settings → Pages** and choose **GitHub Actions** as the build and deployment source.
 2. Merge the website files into `main`, or run the **Website** workflow manually from `main`.
-3. After a successful **Website** build, **Publish website and MR demos** runs from `main`, checks the production site and deploys it to **https://m9rc1n.github.io/galley/**.
+3. After a successful **Website** build, **Publish website and MR demos** runs from `main`, checks the production site and deploys it to **https://m9sh.github.io/galley/**.
 
-Same-repository MRs targeting `main` get a temporary demo at **https://m9rc1n.github.io/galley/pr-preview/NUMBER/demo/** after a successful Website build. Further successful builds replace that MR's demo. Closing or merging the MR removes it; reopening and rebuilding recreates it. One bot comment tracks the URL and built revision, then records removal. Forks still receive website checks, but are not published automatically.
+Same-repository MRs targeting `main` get a temporary demo at **https://m9sh.github.io/galley/pr-preview/NUMBER/demo/** after a successful Website build. Further successful builds replace that MR's demo. Closing or merging the MR removes it; reopening and rebuilding recreates it. One bot comment tracks the URL and built revision, then records removal. Forks still receive website checks, but are not published automatically.
 
 The publisher retains open previews in the generated `pages-previews` branch and combines them with the main site for each deployment. Publishing is queued to retain concurrent MR updates and cleanup events. The build has read-only permissions; the publisher always checks out `main`, treats artifacts as static data, rejects links/repository metadata, and checks that an MR is still open at the built revision before installing its demo.
 

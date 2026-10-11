@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-08
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: []
 tags: [testing, process]
 ---
@@ -11,7 +11,7 @@ tags: [testing, process]
 
 ## Context
 
-Galley renders hostile input, holds a token, and posts on the reviewer's behalf; most of its code is either a security boundary or a reviewer-visible behaviour. Coverage rose from per-folder ratchets to a 95% floor ([#25](https://github.com/m9rc1n/galley/pull/25)), and the last gaps turned out to be either untested real flows or code no flow could reach.
+Galley renders hostile input, holds a token, and posts on the reviewer's behalf; most of its code is either a security boundary or a reviewer-visible behaviour. Coverage rose from per-folder ratchets to a 95% floor ([#25](https://github.com/m9sh/galley/pull/25)), and the last gaps turned out to be either untested real flows or code no flow could reach.
 
 ## Decision
 
@@ -39,5 +39,5 @@ Galley renders hostile input, holds a token, and posts on the reviewer's behalf;
 
 ## References
 
-- `b421883`, pull request [#31](https://github.com/m9rc1n/galley/pull/31); [codecov.yml](../../codecov.yml).
+- `b421883`, pull request [#31](https://github.com/m9sh/galley/pull/31); [codecov.yml](../../codecov.yml).
 - [CONTRIBUTING.md, Tests and lint](../../CONTRIBUTING.md#tests-and-lint).

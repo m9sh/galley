@@ -1,8 +1,8 @@
 ---
 status: Proposed
 created: 2026-10-10
-authors: [m9rc1n]
-discussion: https://github.com/m9rc1n/galley/issues/49
+authors: [m9sh]
+discussion: https://github.com/m9sh/galley/issues/49
 theme: Read the project, understand the change
 phase: Exploratory plan; separate from the three proposed core review RFCs
 delivery: Phased experiments and implementation gates; owners, effort and dates remain to be estimated

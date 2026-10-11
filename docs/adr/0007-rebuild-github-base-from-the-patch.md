@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-04
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: []
 tags: [platforms, github]
 ---
@@ -42,5 +42,5 @@ GitLab is different: the signed-in session reaches its API and raw files directl
 
 ## References
 
-- `e941109` (0.1.0, patch reversal), `985f4ea` (retries, from pull request [#27](https://github.com/m9rc1n/galley/pull/27)).
+- `e941109` (0.1.0, patch reversal), `985f4ea` (retries, from pull request [#27](https://github.com/m9sh/galley/pull/27)).
 - [GitHub REST: list pull request files](https://docs.github.com/en/rest/pulls/pulls#list-pull-requests-files).

@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-06
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: []
 tags: [privacy, typography]
 ---

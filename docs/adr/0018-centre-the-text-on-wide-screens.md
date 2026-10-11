@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-09
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: []
 tags: [ui, layout]
 ---
@@ -39,4 +39,4 @@ The reader shares a wide window between three things: the contents of the curren
 
 ## References
 
-- `7896a54`, pull request [#30](https://github.com/m9rc1n/galley/pull/30) (with before and after measurements); layouts from pull request [#23](https://github.com/m9rc1n/galley/pull/23).
+- `7896a54`, pull request [#30](https://github.com/m9sh/galley/pull/30) (with before and after measurements); layouts from pull request [#23](https://github.com/m9sh/galley/pull/23).

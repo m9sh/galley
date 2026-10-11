@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-07
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: []
 tags: [licence]
 ---
@@ -39,4 +39,4 @@ Galley was MIT-licensed up to 0.4.1. MIT lets anyone ship a closed-source fork. 
 
 ## References
 
-- `925402c`, pull request [#21](https://github.com/m9rc1n/galley/pull/21).
+- `925402c`, pull request [#21](https://github.com/m9sh/galley/pull/21).

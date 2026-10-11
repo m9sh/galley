@@ -1,7 +1,7 @@
 ---
 status: Accepted
 date: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: [49]
 tags: [security, platforms]
 ---

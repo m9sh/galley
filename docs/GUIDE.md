@@ -213,7 +213,7 @@ The token is kept in Galley's own extension storage, which web pages (GitHub's i
 
 ## The demo
 
-The [live demo](https://m9rc1n.github.io/galley/demo/) runs the real reader on a sample merge request. It saves comments in session storage and Viewed progress locally, and never sends anything to GitHub or GitLab. To run it from a checkout: `npm install && npm run demo`, then open http://localhost:4173.
+The [live demo](https://m9sh.github.io/galley/demo/) runs the real reader on a sample merge request. It saves comments in session storage and Viewed progress locally, and never sends anything to GitHub or GitLab. To run it from a checkout: `npm install && npm run demo`, then open http://localhost:4173.
 
 Add `?repo` to the demo URL to read a sample handbook as from a repository page: decision records, an RFC, an architecture note and a runbook that link to each other, with a missing document and a missing section for the map to find, and a Compose file, a workflow, Kubernetes manifests and Terraform for the architecture views. `?repo=docs/adr/0003-queue-for-reviews.md` starts at one document. In the sample review, **Project library** opens the same handbook at the merge request's base or head. Notes in the demo are kept in that browser's local storage.
 

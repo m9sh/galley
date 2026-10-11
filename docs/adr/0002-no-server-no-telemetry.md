@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-04
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: [37, 42, 45, 47, 48, 55]
 tags: [privacy, architecture]
 ---

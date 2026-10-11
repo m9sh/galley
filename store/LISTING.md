@@ -63,7 +63,7 @@ PRIVATE BY DEFAULT
 • Galley contacts the GitHub or GitLab site you are using. Images hosted elsewhere load only when you choose.
 • Review content is sanitised before rendering. Your GitHub token stays in extension storage that web pages cannot read.
 
-Free and open source (GPL-3.0-or-later): github.com/m9rc1n/galley
+Free and open source (GPL-3.0-or-later): github.com/m9sh/galley
 
 GitHub is a trademark of GitHub, Inc. GitLab is a trademark of GitLab Inc. Galley is not affiliated with or endorsed by either company.
 ```
@@ -87,9 +87,9 @@ GitHub is a trademark of GitHub, Inc. GitLab is a trademark of GitLab Inc. Galle
 
 The screenshots are real reader captures with one line of copy above them; the raw captures are `reader-*.jpg`.
 
-**Homepage URL:** `https://m9rc1n.github.io/galley/`
+**Homepage URL:** `https://m9sh.github.io/galley/`
 
-**Support URL:** `https://github.com/m9rc1n/galley/issues`
+**Support URL:** `https://github.com/m9sh/galley/issues`
 
 ## Privacy practices
 
@@ -141,7 +141,7 @@ Tick all three certifications:
 - I do not use or transfer user data for purposes that are unrelated to my item's single purpose.
 - I do not use or transfer user data to determine creditworthiness or for lending purposes.
 
-**Privacy policy URL:** `https://github.com/m9rc1n/galley/blob/main/PRIVACY.md`
+**Privacy policy URL:** `https://github.com/m9sh/galley/blob/main/PRIVACY.md`
 
 ## Distribution
 

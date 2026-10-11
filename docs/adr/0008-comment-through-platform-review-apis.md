@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-05
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: [40, 46, 47]
 tags: [review, platforms]
 ---

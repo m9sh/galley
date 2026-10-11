@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-06
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: []
 tags: [process, testing, tooling]
 ---
@@ -37,5 +37,5 @@ Tests first ran on `node --test` from a root `test/` folder, which depended on t
 
 ## References
 
-- `00bf166` (Vitest and Biome), `2be0281` (pre-push hook and formatting, pull request [#28](https://github.com/m9rc1n/galley/pull/28)).
+- `00bf166` (Vitest and Biome), `2be0281` (pre-push hook and formatting, pull request [#28](https://github.com/m9sh/galley/pull/28)).
 - [CONTRIBUTING.md, Tests and lint](../../CONTRIBUTING.md#tests-and-lint).

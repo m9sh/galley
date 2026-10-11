@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-09
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: [36, 40, 45]
 tags: [review, large-reviews]
 ---
@@ -38,4 +38,4 @@ Large reviews are often large because of lockfiles, generated code, snapshots an
 
 ## References
 
-- `c33a240` and `3b3f9d7`, pull requests [#32](https://github.com/m9rc1n/galley/pull/32) and [#34](https://github.com/m9rc1n/galley/pull/34); [User guide, Large reviews](../GUIDE.md#large-reviews).
+- `c33a240` and `3b3f9d7`, pull requests [#32](https://github.com/m9sh/galley/pull/32) and [#34](https://github.com/m9sh/galley/pull/34); [User guide, Large reviews](../GUIDE.md#large-reviews).

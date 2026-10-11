@@ -35,4 +35,4 @@ Run the same tasks with the provider's own navigation as a comparison, alternati
 
 For each task: time to the evidence, whether the explanation was correct, where the reader lost their place, any connection on the map they believed that was false, whether the saved note came back, and their own sense of effort. Write it down in the session notes, with the repository and commit from the report. Do not record anything from private repositories that their owners have not agreed to share.
 
-Summarise in the RFC's discussion ([issue #49](https://github.com/m9rc1n/galley/issues/49)): what helped, what misled, which budgets or limits got in the way. Pilot targets are set from these results, not before.
+Summarise in the RFC's discussion ([issue #49](https://github.com/m9sh/galley/issues/49)): what helped, what misled, which budgets or limits got in the way. Pilot targets are set from these results, not before.

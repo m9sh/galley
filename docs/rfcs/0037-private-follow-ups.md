@@ -1,8 +1,8 @@
 ---
 status: Proposed
 created: 2026-10-10
-authors: [m9rc1n]
-discussion: https://github.com/m9rc1n/galley/issues/37
+authors: [m9sh]
+discussion: https://github.com/m9sh/galley/issues/37
 theme: Never lose the thread
 phase: Core, 2 of 3
 adrs: [2, 19]

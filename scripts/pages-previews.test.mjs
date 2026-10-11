@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { composePreviews, installPreview, previewFor, validateStaticTree } from './pages-previews.mjs';
 
-const repository = 'm9rc1n/galley';
+const repository = 'm9sh/galley';
 const run = {
   id: 101,
   event: 'pull_request',

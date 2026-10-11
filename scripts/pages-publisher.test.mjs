@@ -21,7 +21,7 @@ if (args[0] === 'run') {
   cpSync(data.incoming, args[args.indexOf('--dir') + 1], { recursive: true });
   result = '';
 } else if (path.includes('/actions/runs/')) result = data.run;
-else if (path.endsWith('/pages')) result = { html_url: 'https://m9rc1n.github.io/galley/' };
+else if (path.endsWith('/pages')) result = { html_url: 'https://m9sh.github.io/galley/' };
 else if (path.includes('/pulls?')) result = [data.pulls.filter((pull) => pull.state === 'open')];
 else if (/\/pulls\/\d+$/.test(path)) result = data.pulls.find((pull) => pull.number === Number(path.split('/').at(-1)));
 else if (args.includes('--method')) {
@@ -46,7 +46,7 @@ async function fixture(t) {
   t.after(() => rm(directory, { recursive: true, force: true }));
   const bin = join(directory, 'bin');
   const work = join(directory, 'work');
-  const remote = join(directory, 'server/m9rc1n/galley.git');
+  const remote = join(directory, 'server/m9sh/galley.git');
   const incoming = join(directory, 'incoming');
   await mkdir(bin);
   await mkdir(join(work, 'dist/site'), { recursive: true });
@@ -60,7 +60,7 @@ async function fixture(t) {
   await writeFile(join(work, 'dist/site/index.html'), 'main');
   const dataFile = join(directory, 'api.json');
   const eventFile = join(directory, 'event.json');
-  const pull = (number) => ({ number, state: 'open', base: { ref: 'main' }, head: { repo: { full_name: 'm9rc1n/galley' }, sha: `current-${number}` } });
+  const pull = (number) => ({ number, state: 'open', base: { ref: 'main' }, head: { repo: { full_name: 'm9sh/galley' }, sha: `current-${number}` } });
   const data = {
     incoming,
     comments: [{ id: 1, number: 50, user: { login: 'reviewer' }, body: '<!-- galley-mr-demo --> Human comment' }],
@@ -70,7 +70,7 @@ async function fixture(t) {
       event: 'pull_request',
       conclusion: 'success',
       path: '.github/workflows/pages.yml',
-      head_repository: { full_name: 'm9rc1n/galley' },
+      head_repository: { full_name: 'm9sh/galley' },
       head_sha: 'current-50',
       pull_requests: [{ number: 50 }],
     },
@@ -81,7 +81,7 @@ async function fixture(t) {
   const env = {
     ...process.env,
     PATH: `${bin}${delimiter}${process.env.PATH}`,
-    GITHUB_REPOSITORY: 'm9rc1n/galley',
+    GITHUB_REPOSITORY: 'm9sh/galley',
     GITHUB_SERVER_URL: `file://${directory}/server`,
     GITHUB_EVENT_PATH: eventFile,
     GITHUB_STEP_SUMMARY: join(directory, 'summary'),

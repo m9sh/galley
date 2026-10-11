@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-09
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: [42, 43]
 tags: [security, code]
 ---
@@ -39,4 +39,4 @@ Large reviews are easier when Galley says what each part is: a test file read as
 
 ## References
 
-- `c33a240`, pull request [#32](https://github.com/m9rc1n/galley/pull/32); [User guide, Test files](../GUIDE.md#test-files).
+- `c33a240`, pull request [#32](https://github.com/m9sh/galley/pull/32); [User guide, Test files](../GUIDE.md#test-files).

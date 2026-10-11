@@ -1,8 +1,8 @@
 ---
 status: Proposed
 created: 2026-10-10
-authors: [m9rc1n]
-discussion: https://github.com/m9rc1n/galley/issues/55
+authors: [m9sh]
+discussion: https://github.com/m9sh/galley/issues/55
 theme: Galley where you want it
 phase: Foundation; three parts that can ship separately
 adrs: [2, 19, 22]
@@ -16,13 +16,13 @@ Galley is all or nothing on each site. Once installed, it runs on every pull req
 
 - **Reviewers who want Galley for some repositories only.** Someone who reads their team's design docs with Galley but browses open-source pull requests during the day sees a **Read** button everywhere. Others want it everywhere except one or two repositories: a monorepo whose generated docs they skip, or a project where the platform's diff is all they need. An organisation's security review may approve the extension for its own repositories and no others. The only finer control today is the browser's own site access, which works per site, not per repository, and lives in the browser's extension settings.
 - **Reviewers who prefer the toolbar to a floating button.** The **Read** button sits over the bottom-right corner of every review page, on top of GitHub's and GitLab's own controls. × hides it for one page; it is back on the next. Some reviewers would rather open the reader from Galley's toolbar button or a keyboard shortcut, and never see a button on the page. The button also has a cost when it is ignored: to show its count, Galley lists the review's files as soon as a review page opens, which is three GitHub API requests per pull request out of the 60 an hour GitHub allows without a token ([user guide](../GUIDE.md#github-githubcom-and-enterprise-server)).
-- **Reviewers who want fewer features.** Galley has grown: chapters ([RFC 0036](0036-review-chapters.md)), code files, test plans, resume, comments from the reader, and soon project docs on repository pages ([RFC 0049](0049-repository-docs-and-project-maps.md), [#54](https://github.com/m9rc1n/galley/pull/54)). Some already have a switch in **Settings → Review** (**Code files**, **Title & description**). Others do not: **Chapters** and its route appear in every review, the reader always offers to post comments, and reading positions are always saved. A reviewer who wants a quiet Markdown reader, or who must not post from a browser extension, has no way to say so.
+- **Reviewers who want fewer features.** Galley has grown: chapters ([RFC 0036](0036-review-chapters.md)), code files, test plans, resume, comments from the reader, and soon project docs on repository pages ([RFC 0049](0049-repository-docs-and-project-maps.md), [#54](https://github.com/m9sh/galley/pull/54)). Some already have a switch in **Settings → Review** (**Code files**, **Title & description**). Others do not: **Chapters** and its route appear in every review, the reader always offers to post comments, and reading positions are always saved. A reviewer who wants a quiet Markdown reader, or who must not post from a browser extension, has no way to say so.
 
 The expected benefit, that reviewers keep Galley installed and use it where it helps instead of turning the whole extension off, is a hypothesis to validate.
 
 ## Proposal
 
-Implementation has started with **How the reader opens**, the independent second part below: the page-button switch, toolbar actions and extension shortcut. Site/repository policy and feature switches remain proposed, including the privacy and default-setting questions at the end of this RFC. [Issue #55](https://github.com/m9rc1n/galley/issues/55) tracks progress.
+Implementation has started with **How the reader opens**, the independent second part below: the page-button switch, toolbar actions and extension shortcut. Site/repository policy and feature switches remain proposed, including the privacy and default-setting questions at the end of this RFC. [Issue #55](https://github.com/m9sh/galley/issues/55) tracks progress.
 
 The first implementation's browser captures: [toolbar before](../opening-popup-before.png), [toolbar after](../opening-popup-after.png), and the settings page at [desktop](../opening-settings-desktop.png) and [phone](../opening-settings-mobile.png) widths. The toolbar is shown on the same GitLab review; the new settings page has no earlier equivalent.
 

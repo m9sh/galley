@@ -1,7 +1,7 @@
 ---
 status: Accepted
 date: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: [49]
 tags: [repository, platforms]
 ---
@@ -42,5 +42,5 @@ tags: [repository, platforms]
 
 ## References
 
-- `40a3cd4`, `e0e5cb6`, `7728518`, `9755d4c`, `b75c60c`; [RFC 0049](../rfcs/0049-repository-docs-and-project-maps.md), issue [#49](https://github.com/m9rc1n/galley/issues/49).
+- `40a3cd4`, `e0e5cb6`, `7728518`, `9755d4c`, `b75c60c`; [RFC 0049](../rfcs/0049-repository-docs-and-project-maps.md), issue [#49](https://github.com/m9sh/galley/issues/49).
 - GitHub [trees](https://docs.github.com/en/rest/git/trees#get-a-tree) and [commits](https://docs.github.com/en/rest/commits/commits#list-commits); GitLab [repository trees](https://docs.gitlab.com/api/repositories/#list-all-repository-trees-in-a-project) and [commits](https://docs.gitlab.com/api/commits/#get-a-single-commit).

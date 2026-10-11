@@ -5,13 +5,13 @@
   "description": "Galley helps teams understand GitHub pull requests and GitLab merge requests with readable documents and code, edits shown in context, and comments beside the text. Free and open source.",
   "license": "GPL-3.0-or-later",
   "author": "Marcin Urbanski",
-  "homepage": "https://github.com/m9rc1n/galley#readme",
+  "homepage": "https://github.com/m9sh/galley#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/m9rc1n/galley.git"
+    "url": "git+https://github.com/m9sh/galley.git"
   },
   "bugs": {
-    "url": "https://github.com/m9rc1n/galley/issues"
+    "url": "https://github.com/m9sh/galley/issues"
   },
   "type": "module",
   "scripts": {

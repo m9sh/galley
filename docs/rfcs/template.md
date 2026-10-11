@@ -2,7 +2,7 @@
 status: Draft
 created: YYYY-MM-DD
 authors: [your-github-handle]
-discussion: https://github.com/m9rc1n/galley/issues/NNNN
+discussion: https://github.com/m9sh/galley/issues/NNNN
 theme: Never lose the thread
 adrs: []
 ---

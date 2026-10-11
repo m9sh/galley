@@ -57,7 +57,7 @@ await writeFile(
 <body><a class="skip-link" href="#main">Skip to content</a>
 <header class="header wrap"><a class="brand" href="./"><img src="assets/icon.png" width="34" height="34" alt="">galley<span class="brand-dot">.</span></a><a class="text-link" href="./">Back to Galley <span aria-hidden="true">↗</span></a></header>
 <main class="policy wrap" id="main">${privacy}</main>
-<footer class="footer wrap"><a class="brand" href="./">galley<span class="brand-dot">.</span></a><nav aria-label="Footer navigation"><a href="./">Home</a><a href="https://github.com/m9rc1n/galley">Source ↗</a></nav></footer></body></html>`,
+<footer class="footer wrap"><a class="brand" href="./">galley<span class="brand-dot">.</span></a><nav aria-label="Footer navigation"><a href="./">Home</a><a href="https://github.com/m9sh/galley">Source ↗</a></nav></footer></body></html>`,
 );
 await writeFile(`${out}/.nojekyll`, '');
 console.log('Galley website built → dist/site (landing page, live demo, privacy policy)');

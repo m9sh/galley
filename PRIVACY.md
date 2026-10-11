@@ -2,7 +2,7 @@
 
 _Last updated: 10 October 2026_
 
-Galley is a browser extension that shows the markdown documents changed in GitHub pull requests and GitLab merge requests as readable, typeset articles, and lets you read a repository's own Markdown documentation the same way. It is open-source software published by Marcin Urbanski and contributors ("we"); the source code is at <https://github.com/m9rc1n/galley>.
+Galley is a browser extension that shows the markdown documents changed in GitHub pull requests and GitLab merge requests as readable, typeset articles, and lets you read a repository's own Markdown documentation the same way. It is open-source software published by Marcin Urbanski and contributors ("we"); the source code is at <https://github.com/m9sh/galley>.
 
 ## In short
 
@@ -56,4 +56,4 @@ If Galley's handling of data changes, we will update this page and the date at t
 
 ## Contact
 
-Questions about this policy: open an issue at <https://github.com/m9rc1n/galley/issues>.
+Questions about this policy: open an issue at <https://github.com/m9sh/galley/issues>.

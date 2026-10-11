@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-05
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: [37, 38, 39, 48, 49, 55]
 tags: [privacy, review]
 ---
@@ -39,4 +39,4 @@ Reviewers mark files as viewed, and on large reviews they come back over several
 
 ## References
 
-- `4057642` (Viewed), `a20bac7` (native GitHub Viewed), `3b3f9d7` (reading positions, pull request [#34](https://github.com/m9rc1n/galley/pull/34)).
+- `4057642` (Viewed), `a20bac7` (native GitHub Viewed), `3b3f9d7` (reading positions, pull request [#34](https://github.com/m9sh/galley/pull/34)).

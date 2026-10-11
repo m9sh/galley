@@ -57,12 +57,12 @@ stateDiagram-v2
 ---
 status: Proposed                 # see the table above
 created: 2026-10-10              # YYYY-MM-DD
-authors: [m9rc1n]
-discussion: https://github.com/m9rc1n/galley/issues/37
+authors: [m9sh]
+discussion: https://github.com/m9sh/galley/issues/37
 theme: Never lose the thread     # the initiative it belongs to
 phase: Core, 2 of 3              # optional: where it sits in the theme
 progress: …                      # optional, while Accepted
-implemented-in: [https://github.com/m9rc1n/galley/pull/50]   # optional
+implemented-in: [https://github.com/m9sh/galley/pull/50]   # optional
 adrs: [2, 19]                    # decisions it relies on or would revisit
 ---
 ```
@@ -87,21 +87,21 @@ Generated from the RFC files by `npm run docs:index`; do not edit by hand.
 <!-- rfc-index:start -->
 | RFC | Proposal | Status | Theme | Discussion | ADRs |
 | --- | --- | --- | --- | --- | --- |
-| [0036](0036-review-chapters.md) | Review chapters with a clear starting point | Accepted | Never lose the thread | [#36](https://github.com/m9rc1n/galley/issues/36) | [0021](../adr/0021-suggested-order-and-folded-files.md), [0022](../adr/0022-review-chapters-from-evidence.md) |
-| [0037](0037-private-follow-ups.md) | Private follow-ups for review questions | Proposed | Never lose the thread | [#37](https://github.com/m9rc1n/galley/issues/37) | [0002](../adr/0002-no-server-no-telemetry.md), [0019](../adr/0019-review-progress-as-fingerprints.md) |
-| [0038](0038-pause-and-resume.md) | Pause and resume the reviewer's train of thought | Proposed | Never lose the thread | [#38](https://github.com/m9rc1n/galley/issues/38) | [0019](../adr/0019-review-progress-as-fingerprints.md) |
-| [0039](0039-changes-since-last-review.md) | Show what changed since my last review | Proposed | Never lose the thread | [#39](https://github.com/m9rc1n/galley/issues/39) | [0019](../adr/0019-review-progress-as-fingerprints.md) |
-| [0040](0040-thoughtful-finish.md) | A thoughtful finish for a review | Proposed | Never lose the thread | [#40](https://github.com/m9rc1n/galley/issues/40) | [0008](../adr/0008-comment-through-platform-review-apis.md), [0021](../adr/0021-suggested-order-and-folded-files.md) |
-| [0041](0041-review-brief.md) | A review brief that explains intent and constraints | Proposed | Never lose the thread | [#41](https://github.com/m9rc1n/galley/issues/41) | — |
-| [0042](0042-inspect-related-code.md) | Inspect related code without losing your place | Proposed | Never lose the thread | [#42](https://github.com/m9rc1n/galley/issues/42) | [0002](../adr/0002-no-server-no-telemetry.md), [0020](../adr/0020-read-code-statically.md) |
-| [0043](0043-test-evidence.md) | Connect changed behavior to test evidence | Proposed | Never lose the thread | [#43](https://github.com/m9rc1n/galley/issues/43) | [0020](../adr/0020-read-code-statically.md) |
-| [0044](0044-review-lenses.md) | Review lenses for focused passes through a change | Proposed | Never lose the thread | [#44](https://github.com/m9rc1n/galley/issues/44) | — |
-| [0045](0045-search-across-a-review.md) | Search across a review, including folded content | Proposed | Never lose the thread | [#45](https://github.com/m9rc1n/galley/issues/45) | [0002](../adr/0002-no-server-no-telemetry.md), [0021](../adr/0021-suggested-order-and-folded-files.md) |
-| [0046](0046-comment-intent-and-severity.md) | Comment drafts that make intent and severity clear | Proposed | Never lose the thread | [#46](https://github.com/m9rc1n/galley/issues/46) | [0008](../adr/0008-comment-through-platform-review-apis.md) |
-| [0047](0047-shared-review-responsibilities.md) | Shared review responsibilities and explicit handoffs | Proposed | Never lose the thread | [#47](https://github.com/m9rc1n/galley/issues/47) | [0002](../adr/0002-no-server-no-telemetry.md), [0008](../adr/0008-comment-through-platform-review-apis.md) |
-| [0048](0048-personal-review-inbox.md) | A personal review inbox for deliberate workload planning | Proposed | Never lose the thread | [#48](https://github.com/m9rc1n/galley/issues/48) | [0002](../adr/0002-no-server-no-telemetry.md), [0019](../adr/0019-review-progress-as-fingerprints.md) |
-| [0049](0049-repository-docs-and-project-maps.md) | Repository docs reading, project maps and architecture exploration | Proposed | Read the project, understand the change | [#49](https://github.com/m9rc1n/galley/issues/49) | [0001](../adr/0001-record-decisions-and-proposals.md), [0009](../adr/0009-github-tokens-in-the-background-worker.md), [0011](../adr/0011-sandbox-third-party-engines.md), [0019](../adr/0019-review-progress-as-fingerprints.md), [0024](../adr/0024-read-a-repository-at-one-commit.md), [0025](../adr/0025-repository-reads-in-the-token-allowlist.md), [0026](../adr/0026-an-evidence-only-project-map.md), [0027](../adr/0027-read-configuration-statically.md), [0028](../adr/0028-private-project-notes.md) |
-| [0055](0055-choose-where-galley-runs.md) | Choose where Galley runs, how it opens and which features it offers | Proposed | Galley where you want it | [#55](https://github.com/m9rc1n/galley/issues/55) | [0002](../adr/0002-no-server-no-telemetry.md), [0019](../adr/0019-review-progress-as-fingerprints.md), [0022](../adr/0022-review-chapters-from-evidence.md) |
+| [0036](0036-review-chapters.md) | Review chapters with a clear starting point | Accepted | Never lose the thread | [#36](https://github.com/m9sh/galley/issues/36) | [0021](../adr/0021-suggested-order-and-folded-files.md), [0022](../adr/0022-review-chapters-from-evidence.md) |
+| [0037](0037-private-follow-ups.md) | Private follow-ups for review questions | Proposed | Never lose the thread | [#37](https://github.com/m9sh/galley/issues/37) | [0002](../adr/0002-no-server-no-telemetry.md), [0019](../adr/0019-review-progress-as-fingerprints.md) |
+| [0038](0038-pause-and-resume.md) | Pause and resume the reviewer's train of thought | Proposed | Never lose the thread | [#38](https://github.com/m9sh/galley/issues/38) | [0019](../adr/0019-review-progress-as-fingerprints.md) |
+| [0039](0039-changes-since-last-review.md) | Show what changed since my last review | Proposed | Never lose the thread | [#39](https://github.com/m9sh/galley/issues/39) | [0019](../adr/0019-review-progress-as-fingerprints.md) |
+| [0040](0040-thoughtful-finish.md) | A thoughtful finish for a review | Proposed | Never lose the thread | [#40](https://github.com/m9sh/galley/issues/40) | [0008](../adr/0008-comment-through-platform-review-apis.md), [0021](../adr/0021-suggested-order-and-folded-files.md) |
+| [0041](0041-review-brief.md) | A review brief that explains intent and constraints | Proposed | Never lose the thread | [#41](https://github.com/m9sh/galley/issues/41) | — |
+| [0042](0042-inspect-related-code.md) | Inspect related code without losing your place | Proposed | Never lose the thread | [#42](https://github.com/m9sh/galley/issues/42) | [0002](../adr/0002-no-server-no-telemetry.md), [0020](../adr/0020-read-code-statically.md) |
+| [0043](0043-test-evidence.md) | Connect changed behavior to test evidence | Proposed | Never lose the thread | [#43](https://github.com/m9sh/galley/issues/43) | [0020](../adr/0020-read-code-statically.md) |
+| [0044](0044-review-lenses.md) | Review lenses for focused passes through a change | Proposed | Never lose the thread | [#44](https://github.com/m9sh/galley/issues/44) | — |
+| [0045](0045-search-across-a-review.md) | Search across a review, including folded content | Proposed | Never lose the thread | [#45](https://github.com/m9sh/galley/issues/45) | [0002](../adr/0002-no-server-no-telemetry.md), [0021](../adr/0021-suggested-order-and-folded-files.md) |
+| [0046](0046-comment-intent-and-severity.md) | Comment drafts that make intent and severity clear | Proposed | Never lose the thread | [#46](https://github.com/m9sh/galley/issues/46) | [0008](../adr/0008-comment-through-platform-review-apis.md) |
+| [0047](0047-shared-review-responsibilities.md) | Shared review responsibilities and explicit handoffs | Proposed | Never lose the thread | [#47](https://github.com/m9sh/galley/issues/47) | [0002](../adr/0002-no-server-no-telemetry.md), [0008](../adr/0008-comment-through-platform-review-apis.md) |
+| [0048](0048-personal-review-inbox.md) | A personal review inbox for deliberate workload planning | Proposed | Never lose the thread | [#48](https://github.com/m9sh/galley/issues/48) | [0002](../adr/0002-no-server-no-telemetry.md), [0019](../adr/0019-review-progress-as-fingerprints.md) |
+| [0049](0049-repository-docs-and-project-maps.md) | Repository docs reading, project maps and architecture exploration | Proposed | Read the project, understand the change | [#49](https://github.com/m9sh/galley/issues/49) | [0001](../adr/0001-record-decisions-and-proposals.md), [0009](../adr/0009-github-tokens-in-the-background-worker.md), [0011](../adr/0011-sandbox-third-party-engines.md), [0019](../adr/0019-review-progress-as-fingerprints.md), [0024](../adr/0024-read-a-repository-at-one-commit.md), [0025](../adr/0025-repository-reads-in-the-token-allowlist.md), [0026](../adr/0026-an-evidence-only-project-map.md), [0027](../adr/0027-read-configuration-statically.md), [0028](../adr/0028-private-project-notes.md) |
+| [0055](0055-choose-where-galley-runs.md) | Choose where Galley runs, how it opens and which features it offers | Proposed | Galley where you want it | [#55](https://github.com/m9sh/galley/issues/55) | [0002](../adr/0002-no-server-no-telemetry.md), [0019](../adr/0019-review-progress-as-fingerprints.md), [0022](../adr/0022-review-chapters-from-evidence.md) |
 <!-- rfc-index:end -->
 
 ## How the current RFCs fit together

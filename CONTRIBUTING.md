@@ -5,7 +5,7 @@ Thanks for helping. Galley is small, so the process is too.
 ## Set up
 
 ```bash
-git clone https://github.com/m9rc1n/galley.git
+git clone https://github.com/m9sh/galley.git
 cd galley
 npm install        # also turns on the pre-push hook (.githooks/pre-push)
 npm run dev        # dev build in dist/dev with live reload; load it once via chrome://extensions → Load unpacked

@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-09
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: []
 tags: [process, ci, website]
 ---
@@ -39,4 +39,4 @@ Reviewing a change to the reader means trying it, and the demo runs the real rea
 
 ## References
 
-- `3156d0f`, pull request [#51](https://github.com/m9rc1n/galley/pull/51); [site/README.md](../../site/README.md#publish-on-github-pages).
+- `3156d0f`, pull request [#51](https://github.com/m9sh/galley/pull/51); [site/README.md](../../site/README.md#publish-on-github-pages).

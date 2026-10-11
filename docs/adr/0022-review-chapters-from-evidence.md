@@ -2,7 +2,7 @@
 status: Accepted
 date: 2026-10-09
 recorded: 2026-10-10
-deciders: [m9rc1n]
+deciders: [m9sh]
 rfcs: [36, 55]
 tags: [review, large-reviews]
 ---
@@ -39,4 +39,4 @@ tags: [review, large-reviews]
 
 ## References
 
-- `a1dba18`, pull request [#50](https://github.com/m9rc1n/galley/pull/50); [User guide, Review chapters](../GUIDE.md#review-chapters).
+- `a1dba18`, pull request [#50](https://github.com/m9sh/galley/pull/50); [User guide, Review chapters](../GUIDE.md#review-chapters).

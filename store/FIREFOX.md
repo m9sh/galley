@@ -12,7 +12,7 @@ Every release attaches three files, built by [`release.yml`](../.github/workflow
 | `galley-source-<version>.zip` | "Source code" (Mozilla asks for it because the add-on is bundled, and its third-party engines are minified) |
 | `SHA256SUMS.txt` | Not uploaded; it lets anyone check both zips |
 
-The package carries the add-on id `galley@m9rc1n.github.io` (`browser_specific_settings.gecko.id`). It identifies the add-on to Mozilla for good, so never change it, even if the repository moves.
+The package carries the add-on id `galley@m9sh.github.io` (`browser_specific_settings.gecko.id`). It identifies the add-on to Mozilla for good, so never change it, even if the repository moves.
 
 It declares `data_collection_permissions: none`, which Firefox reads from version 140 on desktop and 142 on Android, so those are the minimum versions. Android has not been tried.
 
@@ -37,10 +37,10 @@ The validator turns two things into errors, and the Firefox build now fails if e
 | Description | The **Description** block in [`LISTING.md`](LISTING.md), pasted as is |
 | Categories | Web Development (check the names offered in the form) |
 | License | GNU General Public License v3.0 |
-| Homepage | `https://m9rc1n.github.io/galley/` |
-| Support site | `https://github.com/m9rc1n/galley/issues` |
+| Homepage | `https://m9sh.github.io/galley/` |
+| Support site | `https://github.com/m9sh/galley/issues` |
 | Support email | **You** (shown publicly) |
-| Privacy policy | `https://github.com/m9rc1n/galley/blob/main/PRIVACY.md` |
+| Privacy policy | `https://github.com/m9sh/galley/blob/main/PRIVACY.md` |
 | Screenshots | `assets/screenshot-1-read.jpg` to `assets/screenshot-5-comfort.jpg` |
 
 The summary follows the product positioning in the website and `package.json`. The manifest `description` (132 characters at most, shown in Firefox's add-on manager) is shorter: `Understand GitHub and GitLab changes: readable docs and code, edits in context, and comments beside the text.`
@@ -51,7 +51,7 @@ The summary follows the product positioning in the website and `package.json`. T
 ## Notes to reviewer
 
 ```
-Galley is a reader for GitHub pull requests and GitLab merge requests: changed documents render as articles, source files with syntax colours, and review comments sit beside the text. It is open source (GPL-3.0-or-later): https://github.com/m9rc1n/galley
+Galley is a reader for GitHub pull requests and GitLab merge requests: changed documents render as articles, source files with syntax colours, and review comments sit beside the text. It is open source (GPL-3.0-or-later): https://github.com/m9sh/galley
 
 BUILD. The package is bundled with esbuild from TypeScript. Galley's own code is not minified, so content.js, highlight-frame.js, popup.js and background.js can be read as written. Only the bundled third-party diagram engine is minified: Mermaid (diagram-frame.js, about 3.6 MB) and its layout engine elkjs (elk.js, about 1.4 MB), which is a separate file because addons.mozilla.org does not scan a file over 5 MB. elk.js is loaded by a script element, from the same sandboxed frame, the first time a diagram is laid out (src/ui/sandbox/elk-shim.ts).
 The source package contains everything needed:
