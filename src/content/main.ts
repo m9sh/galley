@@ -3,10 +3,10 @@ import { loadRepository, loadSource } from '../platforms/index.ts';
 import { OPEN_READER, PAGE_STATE, type PageState } from '../platforms/page-actions.ts';
 import { TOKENS_CHANGED, type TokensChanged } from '../platforms/token-signal.ts';
 import type { ReviewSource } from '../platforms/types.ts';
-import { Launcher } from '../ui/launcher.ts';
-import { openReader } from '../ui/reader.ts';
-import { openRepository } from '../ui/repo-reader.ts';
-import { DEFAULT_SETTINGS, loadSettings, SETTINGS_KEY } from '../ui/settings.ts';
+import { Launcher } from '../ui/opening/launcher.ts';
+import { openReader } from '../ui/review/reader.ts';
+import { openRepository } from '../ui/library/repo-reader.ts';
+import { DEFAULT_SETTINGS, loadSettings, SETTINGS_KEY } from '../ui/preferences/settings.ts';
 
 const LOADED = '__galleyLoaded';
 

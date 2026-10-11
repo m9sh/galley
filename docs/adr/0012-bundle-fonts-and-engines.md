@@ -15,7 +15,7 @@ The reader's typography (Newsreader for titles and quotations, DM Sans for runni
 
 ## Decision
 
-- Newsreader (regular and italic) and DM Sans ship as Latin-subset `woff2` files in `src/ui/fonts/`, with their SIL Open Font Licences. esbuild embeds them as binary; `src/ui/fonts.ts` registers them on the document under Galley-specific names (`Galley Newsreader`, `Galley DM Sans`), so a page's own copy cannot replace them and the page's CSP does not apply.
+- Newsreader (regular and italic) and DM Sans ship as Latin-subset `woff2` files in `src/ui/components/fonts/`, with their SIL Open Font Licences. esbuild embeds them as binary; `src/ui/components/fonts.ts` registers them on the document under Galley-specific names (`Galley Newsreader`, `Galley DM Sans`), so a page's own copy cannot replace them and the page's CSP does not apply.
 - Mermaid, highlight.js, the Babel parser and every other library are bundled. Nothing is fetched at run time except the review's own files and, with consent, external images ([ADR 0010](0010-external-images-behind-consent.md)).
 - The website self-hosts the same font files.
 
@@ -31,7 +31,7 @@ The reader's typography (Newsreader for titles and quotations, DM Sans for runni
 
 ## Enforcement
 
-- `src/ui/fonts.test.ts`; `e2e/reader.mjs` waits for the three Galley faces to load and asserts the title uses Galley Newsreader.
+- `src/ui/components/fonts.test.ts`; `e2e/reader.mjs` waits for the three Galley faces to load and asserts the title uses Galley Newsreader.
 - The build writes the font licences into `THIRD_PARTY_NOTICES.txt`.
 
 ## References

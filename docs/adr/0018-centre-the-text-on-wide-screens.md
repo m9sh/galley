@@ -25,7 +25,7 @@ The reader shares a wide window between three things: the contents of the curren
 
 - **Good:** even margins frame the text; the comments column is wide enough for real cards at common laptop widths.
 - **Costs:** at 1,440 pixels the comments column narrowed from 400 to 360 pixels; heavy discussions belong in the Review layout.
-- **Costs:** the layout arithmetic lives in CSS custom properties in `src/ui/reader.css` and needs browser checks at several widths.
+- **Costs:** the layout arithmetic lives in CSS custom properties in `src/ui/components/reader.css` and needs browser checks at several widths.
 
 ## Alternatives considered
 

@@ -10,7 +10,7 @@ Useful details: the browser and version, the page type, and a minimal document o
 
 ## What matters most
 
-- Script execution from document content (a bypass of the sanitising in `src/ui/render.ts`).
+- Script execution from document content (a bypass of the sanitising in `src/ui/rendering/render.ts`).
 - Anything that sends the GitHub token, page content or browsing information to a site other than the GitHub or GitLab instance in use.
 - Permissions broader than the README and store listing describe.
 

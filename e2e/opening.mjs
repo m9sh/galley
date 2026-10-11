@@ -42,7 +42,11 @@ export async function checkOpening(executablePath, screenshots) {
       if (url.protocol === 'chrome-extension:' || url.protocol === 'data:') return void request.continue();
       if (url.hostname === 'tracker.example') unwantedRequests.push(request.url());
       if (url.hostname === 'img.shields.io') {
-        imageRequests.push({ url: request.url(), headers: request.headers() });
+        const fallback = request.frame()?.url().startsWith('chrome-extension://');
+        imageRequests.push({ url: request.url(), headers: request.headers(), fallback });
+        // Newer Chrome isolates content-script image requests from page CSP. Force its direct
+        // attempt to fail too, so every browser must exercise the real fallback frame.
+        if (!fallback) return void request.respond({ status: 404, body: '' });
         return void request.respond({
           status: 200,
           contentType: 'image/svg+xml',
@@ -142,7 +146,9 @@ export async function checkOpening(executablePath, screenshots) {
     );
     console.log('Opening: repository reader loaded.');
     assert.equal(imageRequests.length, 0, 'Badges must remain behind consent');
-    await page.evaluate(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-img-load').click());
+    await page.bringToFront();
+    const loadBadge = await page.evaluateHandle(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-img-load'));
+    await loadBadge.asElement().click();
     try {
       await page.waitForFunction(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-image-frame')?.dataset.loaded === 'true', {
         polling: 100,
@@ -157,8 +163,12 @@ export async function checkOpening(executablePath, screenshots) {
       );
       throw error;
     }
-    assert.equal(imageRequests.length, 1, 'A consented badge must load despite the host page image policy');
-    assert.ok(!imageRequests[0].headers.referer, 'Image hosts must not receive the repository address');
+    assert.equal(imageRequests.filter((request) => request.fallback).length, 1, 'A consented badge must load in its fallback frame');
+    assert.ok(imageRequests.length <= 2, 'At most one direct image attempt and one fallback are allowed');
+    assert.ok(
+      imageRequests.every((request) => !request.headers.referer),
+      'Image hosts must not receive the repository address',
+    );
     const badge = await page.evaluate(() => {
       const frame = document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-image-frame');
       const rect = frame.getBoundingClientRect();

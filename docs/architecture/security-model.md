@@ -49,7 +49,7 @@ flowchart LR
 
 | Boundary | Enforced by | Tests |
 | --- | --- | --- |
-| Content → DOM | `sanitize()` in `src/ui/render.ts`; the Biome rule `lint/no-unsanitized-html.grit` bans other HTML sinks | `render.test.ts`, `render-edges.test.ts`, `core/edges.test.ts` |
+| Content → DOM | `sanitize()` in `src/ui/rendering/render.ts`; the Biome rule `lint/no-unsanitized-html.grit` bans other HTML sinks | `render.test.ts`, `render-edges.test.ts`, `core/edges.test.ts` |
 | Content → Galley's own markup | Per-render nonce on block ids; class allowlist; no `data-*` from content; `user-content-` id prefix | `render.test.ts` |
 | Content → network | Only `<img>` may fetch, and external ones wait for consent; `srcset`, media, CSS and SVG references are removed | `render.test.ts`, `reader.test.ts`, `image.test.ts`, `image-frame.test.ts`, `e2e/opening.mjs` |
 | Content → links | Relative links decoded before resolving dot segments; thread and "View on" links limited to the review origin | `core/paths.test.ts`, `core/edges.test.ts` |

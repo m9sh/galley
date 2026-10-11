@@ -14,7 +14,7 @@ GitHub's page image policy can block document badges after the reviewer chooses 
 
 ## Decision
 
-- `src/ui/image.ts` attaches a one-time error fallback to rendered document and comment images. Direct loading remains the first path. In the extension, a blocked HTTP(S) image is replaced by `image-frame.html`, after its source has been released by the existing consent flow. Held images create no frame or request.
+- `src/ui/rendering/image.ts` attaches a one-time error fallback to rendered document and comment images. Direct loading remains the first path. In the extension, a blocked HTTP(S) image is replaced by `image-frame.html`, after its source has been released by the existing consent flow. Held images create no frame or request. A deliberate Load starts immediately instead of waiting for lazy-loading visibility; automatic images remain lazy.
 - The image frame has an opaque origin, no extension APIs or storage, and a policy that permits only packaged script, inline layout styles and HTTP(S) images. It displays one validated address as an `<img>`, never embeds fetched content as HTML or navigates to it. Credential-bearing URLs and addresses longer than 8,192 characters are refused.
 - A transferred message port carries the address and intrinsic dimensions. The reader validates finite positive dimensions up to 10,000 pixels, preserves alt text and links, scales the image to the reading column and restores the original alt text on failure or a 15-second timeout. At most 32 fallback frames are allowed per reader root. The frame closes with its document.
 - Both paths suppress referrers. No host permission, API proxy, dependency or stored data is added. The demo keeps ordinary image loading.
@@ -34,8 +34,8 @@ GitHub's page image policy can block document badges after the reviewer chooses 
 
 ## Enforcement
 
-- `src/ui/image.test.ts` validates fallback sizing, timeouts, URL caps and the ordinary demo path.
-- `src/ui/image-frame.test.ts` rejects active schemes, credentials, oversized addresses and multiple image requests; tests success and error replies.
+- `src/ui/rendering/image.test.ts` validates fallback sizing, timeouts, URL caps and the ordinary demo path.
+- `src/ui/sandbox/image-frame.test.ts` rejects active schemes, credentials, oversized addresses and multiple image requests; tests success and error replies.
 - `e2e/opening.mjs` runs the shipped extension with a restrictive host image policy, asserts no request before consent, then checks the badge dimensions, link and absent referrer.
 - `scripts/build.mjs` assembles the frame for Chrome, Firefox and the demo, and checks that token code cannot reach its bundle.
 

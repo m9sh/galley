@@ -53,7 +53,7 @@ The summary follows the product positioning in the website and `package.json`. T
 ```
 Galley is a reader for GitHub pull requests and GitLab merge requests: changed documents render as articles, source files with syntax colours, and review comments sit beside the text. It is open source (GPL-3.0-or-later): https://github.com/m9rc1n/galley
 
-BUILD. The package is bundled with esbuild from TypeScript. Galley's own code is not minified, so content.js, highlight-frame.js, popup.js and background.js can be read as written. Only the bundled third-party diagram engine is minified: Mermaid (diagram-frame.js, about 3.6 MB) and its layout engine elkjs (elk.js, about 1.4 MB), which is a separate file because addons.mozilla.org does not scan a file over 5 MB. elk.js is loaded by a script element, from the same sandboxed frame, the first time a diagram is laid out (src/ui/elk-shim.ts).
+BUILD. The package is bundled with esbuild from TypeScript. Galley's own code is not minified, so content.js, highlight-frame.js, popup.js and background.js can be read as written. Only the bundled third-party diagram engine is minified: Mermaid (diagram-frame.js, about 3.6 MB) and its layout engine elkjs (elk.js, about 1.4 MB), which is a separate file because addons.mozilla.org does not scan a file over 5 MB. elk.js is loaded by a script element, from the same sandboxed frame, the first time a diagram is laid out (src/ui/sandbox/elk-shim.ts).
 The source package contains everything needed:
   Node.js 22.12 or newer (tested on 22 and 24) and npm; the `zip` command for the package step.
   npm ci --ignore-scripts
@@ -72,7 +72,7 @@ No code is loaded from the network. No data is sent to any Galley server: there 
 SANDBOXED FRAMES. Mermaid and highlight.js run inside diagram-frame.html and highlight-frame.html, shown in an iframe with sandbox="allow-scripts" (an opaque origin with no extension APIs) and a meta Content-Security-Policy that blocks all network access. The reader exchanges messages with them and treats every reply as untrusted.
 
 INNERHTML WARNINGS. The validator lists six assignments to innerHTML. None of them takes document content:
-  content.js, src/ui/launcher.ts and src/ui/reader.ts: static templates, CSS text and icon constants bundled with the extension. A lint rule in the repository (lint/no-unsanitized-html.grit) fails the build on any other innerHTML assignment, and pull request content goes through DOMPurify (src/ui/render.ts).
+  content.js, src/ui/opening/launcher.ts and src/ui/review/reader.ts: static templates, CSS text and icon constants bundled with the extension. A lint rule in the repository (lint/no-unsanitized-html.grit) fails the build on any other innerHTML assignment, and pull request content goes through DOMPurify (src/ui/rendering/render.ts).
   content.js, DOMPurify: the sanitizer's own parser, writing into an inert document.
   highlight-frame.js, highlight.js: highlightElement, library code Galley never calls. Galley calls hljs.highlight(), which returns a string, and rebuilds every line from the text and hljs-* classes.
 

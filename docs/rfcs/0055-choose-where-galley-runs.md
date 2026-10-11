@@ -171,7 +171,7 @@ Watch whether reviewers predict what **Off** means (does Galley still read anyth
 3. **Features:** Reviews, Chapters, Comments read only and Pick up where you left off, with Code files and Title & description mirrored. Project docs joins when RFC 0049 ships.
 4. **Later:** per-repository features, managed settings, export and import.
 
-Builds on the self-hosted site controls in the popup (`src/platforms/sites.ts`) and the settings model (`src/ui/settings.ts`). Unblocks every later RFC that adds a surface: each ships with a switch here.
+Builds on the self-hosted site controls in the popup (`src/platforms/sites.ts`) and the settings model (`src/ui/preferences/settings.ts`). Unblocks every later RFC that adds a surface: each ships with a switch here.
 
 ## Related RFCs
 

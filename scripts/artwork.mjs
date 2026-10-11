@@ -55,7 +55,7 @@ const fonts = Promise.all(
     ['Galley Newsreader', 'italic', 'newsreader-italic-latin.woff2', '400 600'],
     ['Galley DM Sans', 'normal', 'dm-sans-latin.woff2', '400 700'],
   ].map(async ([family, style, file, weight]) => {
-    const bytes = await readFile(fileURLToPath(new URL(`../src/ui/fonts/${file}`, import.meta.url)));
+    const bytes = await readFile(fileURLToPath(new URL(`../src/ui/components/fonts/${file}`, import.meta.url)));
     return `@font-face{font-family:"${family}";font-style:${style};font-weight:${weight};src:url(data:font/woff2;base64,${bytes.toString('base64')}) format("woff2")}`;
   }),
 );

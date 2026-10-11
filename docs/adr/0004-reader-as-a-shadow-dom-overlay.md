@@ -15,10 +15,10 @@ The reader needs the reviewer's session on GitHub or GitLab (cookies, CSRF token
 
 ## Decision
 
-- The content script (`src/content/main.ts`) adds a floating **Read** button, the *launcher* (`src/ui/launcher.ts`), on pull and merge request pages, and re-detects the page on in-app navigation.
-- **Read** opens the reader (`src/ui/reader.ts`): one host element, `#galley-reader`, with an open shadow root, covering the window (`position: fixed; inset: 0`, z-index `2147483600`) as a modal dialog (`role="dialog"`, `aria-modal="true"`). `:host { all: initial; }` resets inherited styles, and the whole stylesheet (`src/ui/reader.css`) lives inside the shadow root.
+- The content script (`src/content/main.ts`) adds a floating **Read** button, the *launcher* (`src/ui/opening/launcher.ts`), on pull and merge request pages, and re-detects the page on in-app navigation.
+- **Read** opens the reader (`src/ui/review/reader.ts`): one host element, `#galley-reader`, with an open shadow root, covering the window (`position: fixed; inset: 0`, z-index `2147483600`) as a modal dialog (`role="dialog"`, `aria-modal="true"`). `:host { all: initial; }` resets inherited styles, and the whole stylesheet (`src/ui/components/reader.css`) lives inside the shadow root.
 - The reader takes over page scrolling while open and gives back focus and overflow when it closes. <kbd>Esc</kbd> closes the innermost layer first and finally the reader; an unsent comment keeps it open.
-- Fonts are registered on the document with unique names (`Galley Newsreader`, `Galley DM Sans`), because `@font-face` rules inside a shadow root are not portable (`src/ui/fonts.ts`).
+- Fonts are registered on the document with unique names (`Galley Newsreader`, `Galley DM Sans`), because `@font-face` rules inside a shadow root are not portable (`src/ui/components/fonts.ts`).
 - The demo (`demo/main.ts`) opens the same reader over a sample review, so everything the reader does can be tried without the extension.
 
 ## Consequences

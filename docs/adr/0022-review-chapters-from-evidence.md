@@ -35,7 +35,7 @@ tags: [review, large-reviews]
 
 ## Enforcement
 
-- `src/core/chapters.test.ts`, `src/ui/reader-chapters.test.ts`, and `e2e/chapters.mjs` (focus, accessible names, position-preserving reordering, desktop and 320 and 390 pixel layouts in light and dark).
+- `src/core/chapters.test.ts`, `src/ui/review/reader-chapters.test.ts`, and `e2e/chapters.mjs` (focus, accessible names, position-preserving reordering, desktop and 320 and 390 pixel layouts in light and dark).
 
 ## References
 

@@ -34,7 +34,7 @@ Large reviews are often large because of lockfiles, generated code, snapshots an
 
 ## Enforcement
 
-- `src/core/order.test.ts`, `src/core/quiet.test.ts`, `src/ui/reader-large.test.ts`, `src/ui/moves.test.ts` and `e2e/large.mjs`.
+- `src/core/order.test.ts`, `src/core/quiet.test.ts`, `src/ui/review/reader-large.test.ts`, `src/ui/review/moves.test.ts` and `e2e/large.mjs`.
 
 ## References
 

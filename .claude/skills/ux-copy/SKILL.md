@@ -38,4 +38,4 @@ Check each line: Is it true? Is it the shortest clear version? Does it use the r
 
 ## Where copy lives
 
-UI strings in `src/ui/reader.ts`, `src/ui/chapters.ts`, `src/ui/launcher.ts`, `src/popup/popup.html` and `popup.ts`; errors in `src/platforms/*.ts` (`ReaderError`); docs in `README.md` and `docs/GUIDE.md`; store text in `store/LISTING.md` and `store/FIREFOX.md`; screenshot captions in `scripts/artwork.mjs`; the website in `site/index.html`. Changing a label means updating every place that quotes it (search for it).
+UI strings in `src/ui/review/reader.ts`, `src/ui/review/chapters.ts`, `src/ui/opening/launcher.ts`, `src/popup/popup.html` and `popup.ts`; errors in `src/platforms/*.ts` (`ReaderError`); docs in `README.md` and `docs/GUIDE.md`; store text in `store/LISTING.md` and `store/FIREFOX.md`; screenshot captions in `scripts/artwork.mjs`; the website in `site/index.html`. Changing a label means updating every place that quotes it (search for it).

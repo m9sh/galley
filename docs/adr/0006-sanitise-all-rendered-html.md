@@ -15,7 +15,7 @@ Pull requests come from forks. A document, a comment, a pull request description
 
 ## Decision
 
-- **One sanitiser.** Every HTML string from content (documents, comments and replies, pull request descriptions) goes through `sanitize()` in `src/ui/render.ts` (DOMPurify) before it reaches the DOM. Forbidden tags include `style`, `form`, `iframe`, `object`, `embed`, `base`, `link`, `meta`, form controls and media; forbidden attributes include `style`, `srcset`, `poster`, `background` and `ping`; `data-*` attributes are dropped except the two Galley renders itself.
+- **One sanitiser.** Every HTML string from content (documents, comments and replies, pull request descriptions) goes through `sanitize()` in `src/ui/rendering/render.ts` (DOMPurify) before it reaches the DOM. Forbidden tags include `style`, `form`, `iframe`, `object`, `embed`, `base`, `link`, `meta`, form controls and media; forbidden attributes include `style`, `srcset`, `poster`, `background` and `ping`; `data-*` attributes are dropped except the two Galley renders itself.
 - **Content cannot impersonate the reader.** Block ids carry a random per-render nonce (`data-mr-u="<nonce>:<id>"`), so markup cannot claim to be a block. Classes are filtered to the ones Galley's Markdown renderer produces. Document ids and names get the `user-content-` prefix, as on GitHub, so they cannot take over the reader's own ids.
 - **Content cannot fetch.** Only `<img>` may load, and an absolute image URL is parked in `data-mr-src` until the reviewer allows it ([ADR 0010](0010-external-images-behind-consent.md)). Relative links are decoded before dot segments are resolved, so an encoded `../` cannot leave the repository (`src/core/paths.ts`). Thread and "View on" links stay on the review site's origin.
 - **Comments cannot speak for the reviewer.** The file path and quote Galley adds to a posted comment are sent as code, so content cannot add mentions, references, links or images to the reviewer's comment; quotes are capped at 1,000 characters (`src/platforms/comments.ts`).
@@ -36,7 +36,7 @@ Pull requests come from forks. A document, a comment, a pull request description
 ## Enforcement
 
 - `lint/no-unsanitized-html.grit`, a Biome plugin run by `npm run lint` and CI, outside test files.
-- Hostile-document regression tests in `src/ui/render.test.ts`, `src/ui/render-edges.test.ts`, `src/core/edges.test.ts` and `src/platforms/comments.test.ts`.
+- Hostile-document regression tests in `src/ui/rendering/render.test.ts`, `src/ui/rendering/render-edges.test.ts`, `src/core/edges.test.ts` and `src/platforms/comments.test.ts`.
 - [Security model](../architecture/security-model.md) and the `security-boundaries` agent skill list what to test when touching rendering.
 
 ## References

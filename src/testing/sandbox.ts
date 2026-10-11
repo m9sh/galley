@@ -6,7 +6,7 @@ afterEach(() => {
 });
 
 /**
- * Plays the browser's part for src/ui/sandbox.ts: waits for the frame showing `page`, then hands the
+ * Plays the browser's part for src/ui/sandbox/sandbox.ts: waits for the frame showing `page`, then hands the
  * reader's port to `serve` (the real frame script, with its engine mocked or not).
  */
 export async function connectFrame(page: string, serve: (port: MessagePort) => void, root: ParentNode = document): Promise<HTMLIFrameElement> {
