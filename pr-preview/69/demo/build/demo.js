@@ -21613,24 +21613,6 @@ ${state.error ?? this.source.viewed?.label ?? "Saved in this browser; resets whe
       omittedConnections: Math.max(0, index.edges.length - MAP_LINK_LIMIT) + outside
     };
   }
-  function mapOverview(model) {
-    let groups2 = /* @__PURE__ */ new Map(), folders = /* @__PURE__ */ new Map();
-    for (let place2 of model.places) {
-      let group = groups2.get(place2.folder) ?? [];
-      group.push(place2), groups2.set(place2.folder, group), folders.set(place2.id, place2.folder);
-    }
-    let references = /* @__PURE__ */ new Map();
-    for (let connection of model.connections) {
-      let from = folders.get(connection.from), to = folders.get(connection.to);
-      if (from === to) continue;
-      let key = pair(from, to), reference2 = references.get(key) ?? { from, to, connections: [] };
-      reference2.connections.push(connection), references.set(key, reference2);
-    }
-    return {
-      regions: [...groups2].sort(([a], [b]) => compare2(a, b)).map(([folder, places]) => ({ folder, places })),
-      references: [...references.values()].sort((a, b) => compare2(pair(a.from, a.to), pair(b.from, b.to)))
-    };
-  }
   var MapPlacement = class {
     positions = /* @__PURE__ */ new Map();
     clear() {
@@ -21669,7 +21651,7 @@ ${state.error ?? this.source.viewed?.label ?? "Saved in this browser; resets whe
 }
 /* Demo-only proposal: Galley's existing tokens, type settings, 760px phone breakpoint and sheet layer. */
 .mr-atlas {
-  --measure-max: 680px;
+  --sheet-width: clamp(320px, 34vw, 440px);
   font-family: var(--sans);
 }
 .mr-atlas.mr-root [hidden] {
@@ -21684,313 +21666,864 @@ ${state.error ?? this.source.viewed?.label ?? "Saved in this browser; resets whe
 .mr-atlas button {
   cursor: pointer;
 }
-.mr-atlas button:focus-visible,
-.mr-atlas summary:focus-visible,
-.mr-atlas-canvas:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 4px;
+.mr-atlas button:disabled {
+  cursor: default;
+  opacity: 0.45;
 }
+.mr-atlas button:focus-visible,
+.mr-atlas summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ---- top bar: where you are, finding, how to look */
 .mr-atlas-chrome {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 520px) minmax(0, 1fr);
+  border-bottom-color: var(--rule);
+}
+.mr-atlas-crumb {
+  color: var(--muted);
+}
+.mr-atlas-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  font: 500 calc(15px * var(--type)) / 1.2 var(--sans);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Reading: the way back leads the bar, and the document joins the breadcrumb. */
+.mr-atlas .mr-atlas-back {
+  gap: 2px;
+  padding: 0 12px 0 6px;
+  border: 1px solid var(--rule);
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-back .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+.mr-atlas.is-reading .mr-atlas-chrome .mr-brand,
+.mr-atlas.is-reading .mr-atlas-chrome .mr-brand + .mr-atlas-crumb {
+  display: none;
+}
+.mr-atlas-reading {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: calc(15px * var(--type));
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mr-atlas-reading::before {
+  content: "/";
+  margin-right: 8px;
+}
+.mr-atlas-search {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 24px;
-  border-bottom: 1px solid var(--rule);
+  width: 100%;
 }
-.mr-atlas-repo {
-  font-size: calc(14px * var(--type));
-}
-.mr-atlas-prototype {
-  margin-left: auto;
+.mr-atlas-search > .mr-icon {
+  position: absolute;
+  left: 13px;
+  width: 16px;
+  height: 16px;
   color: var(--muted);
-  font-size: calc(12px * var(--type));
+  pointer-events: none;
 }
-.mr-atlas-map-view {
-  max-width: 1440px;
-  margin: auto;
-  padding: 28px 24px;
-}
-.mr-atlas-head h1 {
-  margin: 0;
-  font: 400 calc(44px * var(--type)) / 1.1 var(--serif);
-  letter-spacing: -0.028em;
-}
-.mr-atlas-head p {
-  margin: 8px 0 20px;
-  color: var(--muted);
-  font-size: calc(18px * var(--type));
-}
-.mr-atlas-tools {
-  display: flex;
-  align-items: start;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.mr-atlas-choices {
-  display: flex;
-  gap: 4px;
-}
-.mr-atlas-choices [aria-pressed="true"] {
-  background: var(--selected-bg);
-  color: var(--fg);
-  border-color: var(--accent);
-}
-.mr-atlas-tools input {
-  min-height: 40px;
-  width: 240px;
-  max-width: 100%;
-  padding: 8px 14px;
+.mr-atlas-search input {
+  width: 100%;
+  height: 36px;
+  padding: 0 40px 0 38px;
   border: 1px solid var(--control-rule);
   border-radius: 999px;
   background: var(--card);
   color: var(--fg);
 }
-.mr-atlas-tools input::placeholder {
+.mr-atlas-search input::placeholder {
   color: var(--muted);
 }
-.mr-atlas-controls {
-  margin-left: auto;
-  font-size: calc(14px * var(--type));
+/* Escape clears the field; the browser's own clear button would bring a colour from outside the palette. */
+.mr-atlas-search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
 }
-.mr-atlas-controls summary {
-  cursor: pointer;
-  padding: 10px 0;
+.mr-atlas-search input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
-.mr-atlas-controls label {
+.mr-atlas-search kbd {
+  position: absolute;
+  right: 12px;
+  min-width: 20px;
+  padding: 1px 6px;
+  border: 1px solid var(--control-rule);
+  border-radius: 5px;
+  color: var(--muted);
+  font: 500 12px / 1.3 var(--sans);
+  text-align: center;
+  pointer-events: none;
+}
+.mr-atlas-search input:focus ~ kbd,
+.mr-atlas-search input:not(:placeholder-shown) ~ kbd {
+  display: none;
+}
+/* The search popup: a short ranked list under the field, never a change of view. */
+.mr-atlas-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: min(60vh, 480px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+.mr-atlas-results-heading {
+  padding: 8px 10px 4px;
+  color: var(--muted);
+  font: 600 calc(11px * var(--type)) / 1.4 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mr-atlas-result {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 8px 0;
-}
-.mr-atlas-controls select {
-  padding: 8px;
-  background: var(--card);
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border-radius: 10px;
   color: var(--fg);
-  border: 1px solid var(--control-rule);
-  border-radius: 6px;
+  cursor: pointer;
 }
-.mr-atlas-status,
-.mr-atlas-footer {
+.mr-atlas-result:hover {
+  background: var(--soft);
+}
+.mr-atlas-result[aria-selected="true"] {
+  background: var(--selected-bg);
+}
+.mr-atlas-result > .mr-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+.mr-atlas-result-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.mr-atlas-result-title,
+.mr-atlas-result-path {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mr-atlas-result-title {
+  font-size: calc(14px * var(--type));
+}
+.mr-atlas-result-path {
   color: var(--muted);
   font-size: calc(12px * var(--type));
-  line-height: 1.5;
 }
-.mr-atlas-workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 24px;
-  margin-top: 24px;
+/* A match is bold and underlined; colour stays free to mean change. */
+.mr-atlas-result mark {
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
-.mr-atlas-map-column {
+.mr-atlas-result-relation {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--control-rule);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: calc(11px * var(--type));
+  white-space: nowrap;
+}
+.mr-atlas-result.mr-atlas-result-all {
+  justify-content: center;
+  margin-top: 4px;
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-results-empty {
+  margin: 0;
+  padding: 12px 10px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-results-empty:empty {
+  display: none;
+}
+.mr-atlas-chrome .mr-atlas-choices {
+  margin-right: 6px;
+}
+.mr-atlas-choices button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-choices .mr-icon,
+.mr-atlas-choice-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.mr-atlas-choice-icon {
+  display: inline-flex;
+}
+
+/* ---- the shell: the Map, or the article, beside the details sheet */
+.mr-atlas-map-view {
+  position: relative;
   min-width: 0;
 }
 .mr-atlas-canvas {
   position: relative;
-  height: 540px;
-  overflow: auto;
-  border: 1px solid var(--rule);
-  border-radius: 20px;
-  background: var(--bg);
+  overflow: hidden;
+  background-color: var(--bg);
+  background-image: radial-gradient(color-mix(in srgb, var(--rule) 80%, transparent) 1px, transparent 1px);
+  background-size: 20px 20px;
+  cursor: grab;
+  touch-action: none;
 }
+.mr-atlas-canvas:active {
+  cursor: grabbing;
+}
+.mr-atlas-canvas:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* ---- the neighbourhood: linked from, in focus, links to */
 .mr-atlas-world {
-  transform-origin: top left;
   position: relative;
-  width: 100%;
-  min-width: 700px;
-  min-height: 490px;
-  padding: 64px 32px 32px;
-}
-.mr-atlas-neighbourhood {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-auto-rows: calc(160px * var(--type));
-  gap: 90px 80px;
-  align-content: start;
+  grid-template-columns: minmax(200px, calc(264px * var(--type))) minmax(220px, calc(300px * var(--type))) minmax(200px, calc(264px * var(--type)));
+  justify-content: center;
+  align-items: center;
+  column-gap: clamp(48px, 5vw, 96px);
+  width: 100%;
+  min-width: min-content;
+  min-height: 100%;
+  padding: 56px 40px 96px;
+  transform-origin: 0 0;
 }
-.mr-atlas-place,
-.mr-atlas-region {
+.mr-atlas-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.mr-atlas-lane-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 0 2px;
+  color: var(--muted);
+  font: 600 calc(11px * var(--type)) / 1.4 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mr-atlas-lane-head span {
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.mr-atlas-stack {
+  display: flex;
+  flex-direction: column;
+  gap: calc(12px * var(--type));
+}
+.mr-atlas-lane-empty {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--control-rule);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+  line-height: 1.45;
+}
+.mr-atlas .mr-atlas-more {
+  justify-content: center;
+}
+.mr-atlas-flow {
+  display: none;
+}
+
+/* ---- places */
+.mr-atlas-place {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: start;
-  text-align: left;
-  gap: 8px;
-  padding: 18px;
+  align-items: flex-start;
+  gap: calc(4px * var(--type));
+  width: 100%;
+  min-width: 0;
+  padding: calc(12px * var(--type)) calc(14px * var(--type));
   border: 1px solid var(--control-rule);
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--card);
   color: var(--fg);
-  min-width: 0;
+  text-align: left;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--fg) 6%, transparent);
+  transition:
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
 }
-.mr-atlas-place strong {
-  font: 400 calc(24px * var(--type)) / 1.12 var(--serif);
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.mr-atlas-place small {
-  color: var(--muted);
-  font-size: calc(12px * var(--type));
+.mr-atlas-place:hover {
+  border-color: var(--fg);
 }
 .mr-atlas-place[aria-pressed="true"] {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
-.mr-atlas-here {
-  position: absolute;
-  left: 0;
-  top: -32px;
-  color: var(--accent);
+.mr-atlas-place.is-focus {
+  padding: calc(16px * var(--type)) calc(18px * var(--type));
+  border-color: var(--fg);
+  box-shadow: var(--shadow);
+}
+.mr-atlas-place strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font: 400 calc(18px * var(--type)) / 1.25 var(--heading-font, var(--body-font));
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.mr-atlas-place.is-focus strong {
+  font-size: calc(22px * var(--type));
+}
+.mr-atlas-place small {
+  color: var(--muted);
   font-size: calc(12px * var(--type));
+}
+.mr-atlas-card-caption {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
+.mr-atlas small.mr-atlas-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  color: var(--muted);
+  font: 500 calc(11px * var(--type)) / 1.3 var(--sans);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.mr-atlas-type svg {
+  flex: none;
+  width: calc(14px * var(--type));
+  height: calc(14px * var(--type));
+}
+.mr-atlas-here {
+  position: absolute;
+  top: 0;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font: 500 calc(11px * var(--type)) / 1.5 var(--sans);
+  white-space: nowrap;
+  transform: translateY(-50%);
+}
+.mr-atlas-here::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ---- lines: neutral until a place is pointed at or selected */
 .mr-atlas-lines {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  top: 0;
+  left: 0;
+  overflow: visible;
   pointer-events: none;
 }
 .mr-atlas-line,
 .mr-atlas-arrow {
-  stroke: var(--accent);
-  stroke-width: 1.5;
   fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-.mr-atlas button.mr-atlas-edge {
+.mr-atlas-edge {
+  transition: opacity 0.14s ease;
+}
+/* Links between two neighbours are context: they appear only while one of them is pointed at or selected. */
+.mr-atlas-edge.is-context:not(.is-lit) {
+  opacity: 0;
+}
+.mr-atlas-edge.is-context:not(.is-lit) .mr-atlas-hit {
+  pointer-events: none;
+}
+.mr-atlas-edge.is-context .mr-atlas-line {
+  stroke-dasharray: 4 5;
+}
+.mr-atlas-edge.is-lit,
+.mr-atlas-edge.is-focus:hover {
+  opacity: 1;
+}
+.mr-atlas-edge.is-lit .mr-atlas-line,
+.mr-atlas-edge.is-lit .mr-atlas-arrow,
+.mr-atlas-edge:hover .mr-atlas-line,
+.mr-atlas-edge:hover .mr-atlas-arrow {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.mr-atlas-edge.is-dim {
+  opacity: 0.18;
+}
+.mr-atlas-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+/* ---- floating controls and the source line */
+.mr-atlas-controls {
   position: absolute;
-  transform: translate(-50%, -50%);
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mr-atlas-zoom {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 8%, transparent);
+}
+.mr-atlas .mr-atlas-home {
+  height: 42px;
+  padding: 0 14px 0 12px;
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 8%, transparent);
+}
+.mr-atlas-info {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  max-width: min(520px, 52%);
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  text-align: right;
+  pointer-events: none;
+}
+.mr-atlas-status,
+.mr-atlas-footer {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+  line-height: 1.5;
+}
+.mr-atlas.is-waiting .mr-atlas-info {
+  inset: 0;
+  max-width: none;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+/* ---- List: every document by folder, as rows */
+.mr-atlas-list {
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.mr-atlas-list-inner {
+  display: grid;
+  gap: 28px;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 24px 64px;
+}
+.mr-atlas-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 2px 2px 2px 14px;
   border: 1px solid var(--control-rule);
   border-radius: 999px;
-  padding: 4px 8px;
-  color: var(--fg);
-  background: var(--bg);
-  font-size: calc(11px * var(--type));
-  min-height: 32px;
+  font-size: calc(13px * var(--type));
 }
-.mr-atlas-navigation {
+.mr-atlas-folder {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 16px;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 8px;
+  font: 600 calc(13px * var(--type)) / 1.5 var(--sans);
+  overflow-wrap: anywhere;
 }
-.mr-atlas-map-column > [data-act="more"] {
-  margin-top: 12px;
+.mr-atlas-folder span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+  font-weight: 400;
+  white-space: nowrap;
 }
+.mr-atlas-list-rows {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--card);
+}
+.mr-atlas-list .mr-atlas-place {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 16px;
+  row-gap: 2px;
+  min-height: 44px;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+}
+.mr-atlas-list .mr-atlas-place:last-child {
+  border-bottom: 0;
+}
+.mr-atlas-list .mr-atlas-place:hover {
+  background: var(--soft);
+}
+.mr-atlas-list .mr-atlas-place[aria-pressed="true"] {
+  outline-offset: -2px;
+}
+.mr-atlas-list .mr-atlas-place > * {
+  grid-column: 1;
+}
+.mr-atlas-list .mr-atlas-place strong {
+  font-size: calc(17px * var(--type));
+}
+.mr-atlas-list .mr-atlas-path {
+  overflow-wrap: anywhere;
+}
+.mr-atlas-list .mr-atlas-place > .mr-atlas-counts {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+  align-self: center;
+  white-space: nowrap;
+}
+.mr-atlas-list .mr-atlas-place > .mr-atlas-here {
+  position: static;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  transform: none;
+}
+.mr-atlas-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+  line-height: 1.5;
+}
+
+/* ---- the details sheet: a fixed header and footer around one scrolling body */
 .mr-atlas-detail {
+  display: none;
+  flex-direction: column;
   min-width: 0;
-  padding-left: 24px;
-  border-left: 1px solid var(--rule);
+  background: var(--bg);
+  color: var(--fg);
   font-size: calc(14px * var(--type));
   line-height: 1.5;
 }
-.mr-atlas-kicker {
-  font-size: calc(11px * var(--type));
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
+.mr-atlas-detail.is-open {
+  display: flex;
 }
-.mr-atlas-detail h2 {
-  margin: 8px 0 12px;
-  font: 400 calc(28px * var(--type)) / 1.15 var(--serif);
+.mr-atlas-sheet-header {
+  position: relative;
+  flex: none;
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  padding: 12px 12px 14px 24px;
+  border-bottom: 1px solid var(--rule);
+}
+.mr-atlas-sheet-header > :not(.mr-atlas-sheet-top) {
+  margin-right: 12px;
+}
+.mr-atlas-sheet-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  justify-self: stretch;
+  min-height: 34px;
+}
+.mr-atlas-sheet-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.mr-atlas .mr-atlas-sheet-read {
+  gap: 6px;
+  padding: 0 12px 0 10px;
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-sheet-read .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+.mr-atlas .mr-atlas-sheet-back {
+  gap: 2px;
+  margin-left: -10px;
+  padding: 0 10px 0 4px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas .mr-atlas-sheet-back:hover {
+  color: var(--fg);
+}
+.mr-atlas-sheet-back .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+.mr-atlas-sheet-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.mr-atlas-sheet-badges .mr-atlas-here {
+  position: static;
+  transform: none;
+}
+.mr-atlas-sheet-header h2 {
+  margin: 0;
+  font: 400 calc(24px * var(--type)) / 1.2 var(--heading-font, var(--body-font));
   overflow-wrap: anywhere;
 }
+.mr-atlas-sheet-description {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+  overflow-wrap: anywhere;
+}
+.mr-atlas-tabs {
+  display: flex;
+  gap: 2px;
+  justify-self: stretch;
+  margin-top: 10px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--code-bg);
+}
+.mr-atlas .mr-atlas-tab {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-tab[aria-selected="true"] {
+  background: var(--selected-bg);
+  color: var(--fg);
+}
+.mr-atlas-tab span {
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+.mr-atlas-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 16px 24px 24px;
+}
+.mr-atlas-sheet-body:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.mr-atlas-kicker {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(11px * var(--type));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 .mr-atlas-detail h3 {
-  margin: 24px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0 4px;
   font-size: calc(14px * var(--type));
   font-weight: 500;
+}
+.mr-atlas-detail h3 span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
 }
 .mr-atlas-path {
   color: var(--muted);
   font-size: calc(12px * var(--type));
-  overflow-wrap: anywhere;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
-.mr-atlas-detail > .mr-btn {
-  margin: 8px 8px 0 0;
+.mr-atlas-why {
+  margin: 0 0 4px;
+  padding: 14px 16px 4px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--card);
 }
-.mr-atlas-detail > .mr-atlas-close-detail {
-  display: none;
+.mr-atlas-detail .mr-atlas-why h3 {
+  margin: 0;
 }
-.mr-atlas-connection {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-  gap: 4px;
-  width: 100%;
-  min-height: 44px;
-  padding: 12px 0;
-  border: 0;
-  border-bottom: 1px solid var(--rule);
-  background: var(--bg);
-  color: var(--fg);
-}
-.mr-atlas-connection strong {
-  font-weight: 500;
-}
-.mr-atlas-connection small {
-  font-size: calc(12px * var(--type));
+.mr-atlas-why-direction {
+  margin: 10px 0 0;
   color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+.mr-atlas-why > .mr-btn {
+  margin: 0 0 12px;
 }
 .mr-atlas-proof {
-  padding: 16px 0;
-  border-top: 1px solid var(--rule);
-  margin-top: 16px;
+  padding: 12px 0 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.mr-atlas-why .mr-atlas-proof {
+  padding: 6px 0 12px;
+  border-bottom: 0;
 }
 .mr-atlas-proof blockquote {
   margin: 0;
-  font: 400 calc(22px * var(--type)) / 1.3 var(--serif);
+  font: 400 calc(19px * var(--type)) / 1.35 var(--heading-font, var(--body-font));
   overflow-wrap: anywhere;
 }
-.mr-atlas-issues {
-  margin-top: 24px;
+.mr-atlas-proof .mr-atlas-path {
+  margin: 4px 0 8px;
+}
+.mr-atlas-connection {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 20px 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  background: transparent;
+  color: var(--fg);
+  text-align: left;
+}
+.mr-atlas-connection::after {
+  content: "›";
+  position: absolute;
+  top: 10px;
+  right: 2px;
   color: var(--muted);
 }
-.mr-atlas-issues summary {
-  min-height: 44px;
-  cursor: pointer;
-  padding: 12px 0;
+.mr-atlas-connection:hover strong {
+  text-decoration: underline;
 }
-.mr-atlas-overview {
-  width: auto;
-  min-width: 0;
-  min-height: 490px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  padding: 24px;
-}
-.mr-atlas-region strong {
-  font: 400 calc(22px * var(--type)) / 1.2 var(--serif);
+.mr-atlas-connection strong {
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
-.mr-atlas-region span,
-.mr-atlas-region small {
+.mr-atlas-connection small {
   color: var(--muted);
   font-size: calc(12px * var(--type));
 }
-.mr-atlas-list {
-  display: grid;
-  gap: 12px;
+.mr-atlas-detail .mr-atlas-more {
+  margin-top: 16px;
 }
-.mr-atlas-list .mr-atlas-place {
-  min-height: 100px;
+.mr-atlas-issues,
+.mr-atlas-source {
+  margin-top: 20px;
+  color: var(--muted);
 }
-.mr-atlas-list .mr-atlas-here {
-  position: static;
+.mr-atlas-issues summary,
+.mr-atlas-source summary {
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: calc(12px * var(--type));
 }
+.mr-atlas-source {
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+.mr-atlas-preview .mr-content {
+  width: 100%;
+  margin: 0 0 24px;
+}
+.mr-atlas-preview .mr-unit {
+  max-width: 100%;
+}
+.mr-atlas-preview .mr-block {
+  margin-top: var(--block-gap);
+}
+.mr-atlas-preview .mr-content h1 {
+  font-size: 1.5em;
+}
+/* With the title in the sheet's header, the document starts at its first section. */
+.mr-atlas-preview .mr-content > :first-child,
+.mr-atlas-preview .mr-content > [hidden]:first-child + * {
+  margin-top: 0;
+}
+.mr-atlas-preview .mr-content h2 {
+  margin-top: var(--heading-gap, 1.95em);
+  font-size: 1.25em;
+}
+.mr-atlas-preview .mr-content h3 {
+  display: block;
+  margin-top: var(--heading-gap, 1.95em);
+  font-size: 1.1em;
+}
+
+/* ---- reading a whole document */
 .mr-atlas-article {
   max-width: 728px;
   margin: 32px auto;
   padding: 0 24px 100px;
 }
 .mr-atlas-article .mr-content {
-  margin: 32px 0;
   width: 100%;
+  margin: 32px 0;
 }
 .mr-atlas-article .mr-unit {
   max-width: 100%;
@@ -22001,100 +22534,205 @@ ${state.error ?? this.source.viewed?.label ?? "Saved in this browser; resets whe
 .mr-atlas button.mr-atlas-backdrop {
   position: fixed;
   inset: 0;
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
-  border: 0;
   z-index: 30;
+  border: 0;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
   font-size: 0;
 }
+
+/* ---- density */
 .mr-atlas[data-density="compact"] .mr-atlas-place {
-  padding: 12px;
-  border-radius: 10px;
+  gap: calc(3px * var(--type));
+  padding: calc(9px * var(--type)) calc(12px * var(--type));
 }
-@media (min-width: 761px) and (max-width: 1279px) {
-  .mr-atlas-workspace {
-    grid-template-columns: minmax(0, 1fr) 260px;
+.mr-atlas[data-density="compact"] .mr-atlas-place.is-focus {
+  padding: calc(12px * var(--type)) calc(14px * var(--type));
+}
+.mr-atlas[data-density="compact"] .mr-atlas-stack {
+  gap: calc(8px * var(--type));
+}
+.mr-atlas[data-density="compact"] .mr-atlas-list .mr-atlas-place {
+  padding: 8px 14px;
+}
+
+/* ---- stacked: phones, and a canvas narrowed by the sheet, read top to bottom */
+.mr-atlas.is-stacked .mr-atlas-canvas {
+  cursor: default;
+  touch-action: auto;
+}
+.mr-atlas.is-stacked .mr-atlas-world {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: auto;
+  max-width: 560px;
+  min-width: 0;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 24px 20px 32px;
+}
+.mr-atlas.is-stacked .mr-atlas-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+.mr-atlas.is-stacked .mr-atlas-place.is-focus {
+  margin-top: 6px;
+}
+.mr-atlas.is-stacked .mr-atlas-zoom {
+  display: none;
+}
+
+@media (min-width: 761px) {
+  /* The top bar stays put; the Map, List, article and sheet each scroll in their own region. */
+  .mr-atlas.mr-root {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .mr-atlas-chrome {
+    flex: none;
+  }
+  /* Opening details adds a column, so the Map narrows instead of being covered. */
+  .mr-atlas-shell {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 0px;
+    grid-template-rows: minmax(0, 1fr);
+    overflow: hidden;
+    transition: grid-template-columns 0.24s ease-out;
+  }
+  .mr-atlas-shell.has-sheet {
+    grid-template-columns: minmax(0, 1fr) var(--sheet-width);
+  }
+  .mr-atlas-map-view,
+  .mr-atlas-article {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 0;
+  }
+  .mr-atlas-canvas,
+  .mr-atlas-list {
+    position: absolute;
+    inset: 0;
+  }
+  .mr-atlas.is-stacked .mr-atlas-canvas {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* The sheet keeps its full width while its column grows, so it slides in from the edge without reflowing. */
+  .mr-atlas-detail {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    width: var(--sheet-width);
+    min-height: 0;
+    border-left: 1px solid var(--rule);
+    visibility: hidden;
+    transition: visibility 0s 0.24s;
+  }
+  .mr-atlas-detail.is-open {
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  .mr-atlas-article {
+    width: 100%;
+    overflow: auto;
+    overscroll-behavior: contain;
+    margin: 0 auto;
+    padding-top: 32px;
   }
 }
 @media (max-width: 760px) {
   .mr-atlas-chrome {
-    padding: 12px 16px;
-    flex-wrap: wrap;
-    gap: 8px 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "left right"
+      "find find";
+    row-gap: 6px;
+    height: auto;
+    padding: 6px 8px 10px;
   }
-  .mr-atlas-chrome .mr-brand {
+  .mr-atlas-chrome .mr-tb-left {
+    grid-area: left;
+  }
+  .mr-atlas-chrome .mr-tb-center {
+    grid-area: find;
+    padding: 0 6px;
+  }
+  .mr-atlas-chrome .mr-tb-right {
+    grid-area: right;
+  }
+  .mr-atlas-chrome .mr-brand,
+  .mr-atlas-crumb,
+  .mr-atlas-chrome [data-act="details"],
+  .mr-atlas.is-reading .mr-atlas-title,
+  .mr-atlas.is-reading .mr-atlas-reading {
     display: none;
   }
-  .mr-atlas-prototype {
-    width: 100%;
-    margin: 0;
+  .mr-atlas-results {
+    max-height: 60dvh;
   }
-  .mr-atlas-map-view {
-    padding: 24px 16px;
+  .mr-atlas-search input {
+    height: 44px;
   }
-  .mr-atlas-navigation [data-act="zoom-in"],
-  .mr-atlas-navigation [data-act="zoom-out"] {
+  .mr-atlas-choices button > span:not(.mr-atlas-choice-icon) {
     display: none;
-  }
-  .mr-atlas-head h1 {
-    font-size: calc(38px * var(--type));
-  }
-  .mr-atlas-tools > input {
-    width: 100%;
   }
   .mr-atlas-controls {
-    width: 100%;
-    margin: 0;
+    position: static;
+    padding: 0 16px;
   }
-  .mr-atlas-workspace {
-    display: block;
-    margin-top: 16px;
+  .mr-atlas .mr-atlas-home {
+    height: 44px;
   }
-  .mr-atlas-canvas {
-    height: 730px;
+  .mr-atlas-info {
+    position: static;
+    max-width: none;
+    padding: 12px 16px 32px;
+    text-align: left;
   }
-  .mr-atlas-world {
-    width: 100%;
-    min-width: 0;
-    padding: 40px 24px 24px;
-    min-height: 690px;
+  .mr-atlas-list-inner {
+    padding: 16px 16px 48px;
   }
-  .mr-atlas-here {
-    top: 12px;
-    left: 18px;
-  }
-  .mr-atlas-place:has(.mr-atlas-here) {
-    padding-top: 32px;
-  }
-  .mr-atlas-neighbourhood {
-    grid-template-columns: minmax(0, 1fr);
-    grid-auto-rows: calc(150px * var(--type));
-    gap: 70px;
-  }
-  .mr-atlas button.mr-atlas-edge {
-    min-height: 44px;
+  .mr-atlas-list .mr-atlas-place > .mr-atlas-counts {
+    display: none;
   }
   .mr-atlas-detail {
-    display: none;
     position: fixed;
     inset: auto 0 0;
-    max-height: 75dvh;
-    overflow: auto;
-    border: 1px solid var(--rule);
-    border-radius: 20px 20px 0 0;
-    padding: 20px;
-    background: var(--bg);
     z-index: 40;
+    max-height: 85dvh;
+    border: 1px solid var(--rule);
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
     box-shadow: var(--shadow);
   }
-  .mr-atlas-detail.is-open {
-    display: block;
+  .mr-atlas-sheet-header {
+    padding: 20px 8px 12px 16px;
   }
-  .mr-atlas-detail > .mr-atlas-close-detail {
-    display: inline-flex;
-    margin: 0 0 16px;
+  /* A grab bar marks the bottom sheet; it is drawn, not a control. */
+  .mr-atlas-sheet-header::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 36px;
+    height: 4px;
+    margin-left: -18px;
+    border-radius: 2px;
+    background: var(--rule);
   }
-  .mr-atlas-overview {
-    grid-template-columns: minmax(0, 1fr);
+  .mr-atlas-sheet-body {
+    padding: 12px 16px 16px;
+  }
+  .mr-atlas-sheet-body {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
   .mr-atlas-article {
     margin-top: 24px;
@@ -22102,6 +22740,9 @@ ${state.error ?? this.source.viewed?.label ?? "Saved in this browser; resets whe
   }
 }
 @media (max-width: 760px), (hover: none) {
+  .mr-atlas .mr-icon-btn {
+    min-width: 44px;
+  }
   .mr-atlas button,
   .mr-atlas summary,
   .mr-atlas input,
@@ -22109,97 +22750,202 @@ ${state.error ?? this.source.viewed?.label ?? "Saved in this browser; resets whe
     min-height: 44px;
   }
 }
+@media (prefers-reduced-motion: no-preference) {
+  .mr-atlas-results {
+    animation: mr-pop 0.16s ease-out;
+  }
+}
+@media (prefers-reduced-motion: no-preference) and (max-width: 760px) {
+  .mr-atlas-detail.is-open {
+    animation: mr-atlas-rise 0.24s ease-out;
+  }
+}
+@keyframes mr-atlas-rise {
+  from {
+    transform: translateY(32px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mr-atlas-shell,
+  .mr-atlas-detail,
+  .mr-atlas-place,
+  .mr-atlas-edge {
+    transition: none;
+  }
+}
 `;
 
   // demo/project-map.ts
+  var SETTINGS_TABS3 = ["reading", "layout", "keys"], SHEET_TABS = ["preview", "links"], DENSITY_SECTION = `<section class="mr-settings-section" aria-label="Layout">
+  <div class="mr-set-row"><span>Density<small>Compact fits more on the screen</small></span><div class="mr-seg" data-setting="density" role="group" aria-label="Density"><button data-value="comfortable">Comfortable</button><button data-value="compact">Compact</button></div></div>
+  </section><p class="mr-settings-note">Narrow screens stack the map in one column.</p>`, STACK_BELOW = 720, PHONE_LANE = 4, ZOOM = { min: 0.5, max: 1.5 }, RESULT_LIMIT = 8, LIST_RESULTS = "*list*", SHAPES = {
+    search: "M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0zM20 20l-4.6-4.6",
+    fit: "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5",
+    locate: "M12 3v3M12 18v3M3 12h3M18 12h3M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0z",
+    panel: "M4 5h16v14H4zM14.5 5v14",
+    list: "M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01",
+    down: "M12 5v14M6 13l6 6 6-6",
+    read: "M3 5c3-1 6-1 9 1 3-2 6-2 9-1v14c-3-1-6-1-9 1-3-2-6-2-9-1zM12 6v14"
+  };
+  function cardName(title) {
+    let record = /^(ADR|RFC)\s+(\d+)\s*[:—–-]\s*(\S.*)$/i.exec(title);
+    return record ? { label: `${record[1].toUpperCase()} ${record[2]}`, name: record[3] } : { label: null, name: title };
+  }
+  function lineIcon(shape) {
+    let icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    icon.setAttribute("class", "mr-icon"), icon.setAttribute("viewBox", "0 0 24 24"), icon.setAttribute("aria-hidden", "true"), icon.setAttribute("fill", "none"), icon.setAttribute("stroke", "currentColor"), icon.setAttribute("stroke-width", "1.8"), icon.setAttribute("stroke-linecap", "round"), icon.setAttribute("stroke-linejoin", "round");
+    let path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    return path.setAttribute("d", shape), icon.append(path), icon;
+  }
+  function iconButton(act, label2, title, icon) {
+    let control = button("", act, "mr-btn mr-icon-btn");
+    return control.setAttribute("aria-label", label2), control.title = title, typeof icon == "string" ? control.innerHTML = icon : control.append(icon), control;
+  }
+  function typeIcon(kind) {
+    return lineIcon({
+      Overview: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
+      Spec: "M6 3h12v18H6zM9 8h6M9 12h6M9 16h3",
+      Decision: "M12 3l9 9-9 9-9-9zM8 12h8",
+      Architecture: "M8 3h8v6H8zM3 15h6v6H3zM15 15h6v6h-6zM12 9v3M6 15v-3h12v3",
+      Runbook: "M5 5h14v14H5zM8 9l3 3-3 3M13 15h3",
+      Guide: "M3 5c3-1 6-1 9 1 3-2 6-2 9-1v14c-3-1-6-1-9 1-3-2-6-2-9-1zM12 6v14",
+      Document: "M6 3h8l4 4v14H6zM14 3v5h4M9 12h6M9 16h6"
+    }[kind]);
+  }
+  function placeBadge(kind, label2) {
+    let badge = h("small", "mr-atlas-type", label2 ?? kind);
+    return badge.prepend(typeIcon(kind)), badge;
+  }
+  function matchScore(place2, words2) {
+    let title = place2.title.toLowerCase(), path = place2.path.toLowerCase(), score = 0;
+    for (let word of words2) {
+      let at = title.indexOf(word), inPath = path.indexOf(word);
+      if (at < 0 && inPath < 0) return -1;
+      at === 0 ? score += 100 : at > 0 ? score += /[^\p{L}\p{N}]/u.test(title[at - 1]) ? 60 : 30 : score += /[^\p{L}\p{N}]/u.test(path[inPath - 1] ?? "/") ? 15 : 5;
+    }
+    return score;
+  }
+  var searchWords = (query) => query.toLowerCase().split(/\s+/).filter(Boolean);
+  function highlight(text4, query) {
+    let lower = text4.toLowerCase(), ranges = [];
+    for (let word of searchWords(query)) {
+      let at = lower.indexOf(word);
+      at >= 0 && ranges.push([at, at + word.length]);
+    }
+    ranges.sort((a, b) => a[0] - b[0]);
+    let merged = [];
+    for (let range of ranges) {
+      let last = merged.at(-1);
+      last && range[0] <= last[1] ? last[1] = Math.max(last[1], range[1]) : merged.push(range);
+    }
+    let parts = [], from = 0;
+    for (let [start2, end] of merged)
+      start2 > from && parts.push(text4.slice(from, start2)), parts.push(h("mark", "", text4.slice(start2, end))), from = end;
+    return from < text4.length && parts.push(text4.slice(from)), parts;
+  }
   async function openMapPrototype(source2, fixture = "small") {
     document.querySelector("#galley-map-prototype")?.dispatchEvent(new Event("close-prototype"));
     let host = h("div");
     host.id = "galley-map-prototype";
-    let shadow = host.attachShadow({ mode: "open" }), styles = h("style", "", reader_default + project_map_default), root = h("div", "mr-root mr-atlas mode-clean no-top-glow");
+    let shadow = host.attachShadow({ mode: "open" }), styles = h("style", "", reader_default + project_map_default), root = h("div", "mr-root mr-atlas mode-clean no-top-glow is-waiting");
     root.tabIndex = -1, root.setAttribute("role", "dialog"), root.setAttribute("aria-modal", "true"), root.setAttribute("aria-label", "Project map prototype");
-    let top = h("header", "mr-atlas-chrome");
-    top.append(
-      button("Close prototype", "close"),
+    let top = h("header", "mr-topbar mr-atlas-chrome"), left = h("div", "mr-tb-left"), back = button("Back to map", "return", "mr-btn mr-atlas-back");
+    back.title = "Back to map (Esc)", back.hidden = !0, back.insertAdjacentHTML("afterbegin", icons.chevronLeft);
+    let reading = h("span", "mr-atlas-reading");
+    reading.hidden = !0, left.append(
+      iconButton("close", "Close prototype", "Close prototype (Esc)", icons.close),
+      back,
       h("span", "mr-brand", "galley"),
-      h("span", "mr-atlas-repo", source2.name),
-      h("span", "mr-atlas-prototype", "Design prototype · #68")
+      h("span", "mr-atlas-crumb", "/"),
+      h("h1", "mr-atlas-title", source2.name),
+      reading
     );
-    let head = h("header", "mr-atlas-head");
-    head.append(h("h1", "", "Project map"), h("p", "", "See where this fits. Follow the sources."));
-    let tools = h("div", "mr-atlas-tools"), choices = h("div", "mr-atlas-choices");
-    choices.setAttribute("role", "group"), choices.setAttribute("aria-label", "Map presentation"), choices.append(button("Map", "map"), button("List", "list"), button("Overview", "overview"));
-    let search = h("input");
-    search.type = "search", search.placeholder = "Find a place…", search.setAttribute("aria-label", "Find a place");
-    let controls = h("details", "mr-atlas-controls");
-    controls.append(h("summary", "", "Preview settings"));
-    let settings = { ...DEFAULT_SETTINGS, ...await loadSettings() };
-    settings.appearance === "auto" && (settings.appearance = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    let choose = (label2, name, values, selected) => {
-      let box = h("label", "", label2), select2 = h("select");
-      select2.dataset.setting = name;
-      for (let [value, title] of values) select2.append(option(value, title, value === selected));
-      return box.append(select2), box;
-    };
-    controls.append(
-      choose(
-        "Palette",
-        "theme",
-        THEMES.map((key) => [key, key]),
-        settings.theme
-      ),
-      choose(
-        "Appearance",
-        "appearance",
-        [
-          ["light", "Light"],
-          ["dark", "Dark"]
-        ],
-        settings.appearance === "dark" ? "dark" : "light"
-      ),
-      choose(
-        "Text size",
-        "size",
-        TEXT_SIZES.map((size, index) => [String(index), `${size} px`]),
-        String(settings.size)
-      ),
-      choose(
-        "Density",
-        "density",
-        [
-          ["comfortable", "Comfortable"],
-          ["compact", "Compact"]
-        ],
-        settings.density
-      )
-    ), tools.append(choices, search, controls);
+    let center = h("div", "mr-tb-center"), find = h("div", "mr-atlas-search"), search = h("input");
+    search.type = "search", search.placeholder = "Find a document…", search.autocomplete = "off", search.spellcheck = !1, search.setAttribute("role", "combobox"), search.setAttribute("aria-label", "Find a document"), search.setAttribute("aria-keyshortcuts", "/"), search.setAttribute("aria-autocomplete", "list"), search.setAttribute("aria-expanded", "false"), search.setAttribute("aria-controls", "mr-atlas-results-list");
+    let slash = h("kbd", "", "/");
+    slash.setAttribute("aria-hidden", "true");
+    let results = h("div", "mr-atlas-results");
+    results.hidden = !0;
+    let options = h("div", "mr-atlas-results-list");
+    options.id = "mr-atlas-results-list", options.setAttribute("role", "listbox"), options.setAttribute("aria-label", "Documents");
+    let empty = h("p", "mr-atlas-results-empty");
+    empty.setAttribute("role", "status"), results.append(options, empty), find.append(lineIcon(SHAPES.search), search, slash, results), center.append(find);
+    let right = h("div", "mr-tb-right"), choices = h("div", "mr-seg mr-atlas-choices");
+    choices.setAttribute("role", "group"), choices.setAttribute("aria-label", "Map presentation");
+    for (let [action2, label2, title] of [
+      ["map", "Map", "Places and the links between them"],
+      ["list", "List", "Every document, by folder"]
+    ]) {
+      let choice = button("", action2, "");
+      if (choice.title = title, action2 === "map") {
+        let icon = h("span", "mr-atlas-choice-icon");
+        icon.innerHTML = icons.map, choice.append(icon);
+      } else choice.append(lineIcon(SHAPES.list));
+      choice.append(h("span", "", label2)), choices.append(choice);
+    }
+    let details = iconButton("details", "Details", "Details", lineIcon(SHAPES.panel));
+    details.setAttribute("aria-expanded", "false"), details.setAttribute("aria-controls", "mr-atlas-detail");
+    let settingsButton = iconButton("settings", "Reading settings", "Reading settings (,)", icons.settings);
+    settingsButton.setAttribute("aria-haspopup", "dialog"), settingsButton.setAttribute("aria-expanded", "false"), right.append(choices, details, settingsButton), top.append(left, center, right);
+    let mapView = h("section", "mr-atlas-map-view");
+    mapView.setAttribute("aria-label", "Places and connections");
+    let canvas = h("div", "mr-atlas-canvas");
+    canvas.tabIndex = 0, canvas.setAttribute("aria-label", "Map canvas: arrow keys pan, plus and minus zoom, zero fits the map"), canvas.append(h("div", "mr-atlas-world"));
+    let controls = h("div", "mr-atlas-controls"), zoom = h("div", "mr-atlas-zoom");
+    zoom.setAttribute("role", "group"), zoom.setAttribute("aria-label", "Zoom"), zoom.append(
+      iconButton("zoom-out", "Zoom out", "Zoom out (−)", icons.minus),
+      iconButton("zoom-in", "Zoom in", "Zoom in (+)", icons.plus),
+      iconButton("fit", "Fit map", "Fit map (0)", lineIcon(SHAPES.fit))
+    );
+    let home = button("Back to my place", "home", "mr-btn mr-atlas-home");
+    home.prepend(lineIcon(SHAPES.locate)), controls.append(zoom, home);
     let status = h("p", "mr-atlas-status", "Reading the demo documents…");
     status.setAttribute("role", "status");
-    let workspace = h("div", "mr-atlas-workspace"), mapColumn = h("section", "mr-atlas-map-column");
-    mapColumn.setAttribute("aria-label", "Places and connections");
-    let canvas = h("div", "mr-atlas-canvas");
-    canvas.tabIndex = 0, canvas.setAttribute("aria-label", "Map canvas: arrow keys pan, plus and minus zoom, zero fits the map");
-    let world = h("div", "mr-atlas-world");
-    canvas.append(world);
-    let list2 = h("div", "mr-atlas-list"), navigation = h("div", "mr-atlas-navigation");
-    navigation.append(
-      button("Fit map", "fit"),
-      button("−", "zoom-out"),
-      button("+", "zoom-in"),
-      button("Back to my place", "home"),
-      button("Details", "details")
-    ), navigation.querySelector('[data-act="zoom-out"]').setAttribute("aria-label", "Zoom out"), navigation.querySelector('[data-act="zoom-in"]').setAttribute("aria-label", "Zoom in");
-    let hidden = button("", "more");
-    mapColumn.append(canvas, list2, hidden, navigation);
+    let info = h("div", "mr-atlas-info");
+    info.append(status, h("p", "mr-atlas-footer", "Prototype · #68 · Lines are links written in the documents. Select one to see its source."));
+    let list2 = h("div", "mr-atlas-list");
+    list2.hidden = !0, mapView.append(canvas, controls, info, list2);
+    let article = h("article", "mr-atlas-article");
+    article.hidden = !0;
     let backdrop = button("Close details", "close-details", "mr-atlas-backdrop");
     backdrop.hidden = !0;
     let detail = h("aside", "mr-atlas-detail");
-    detail.setAttribute("aria-label", "Selected place"), workspace.append(mapColumn, backdrop, detail);
-    let footer = h("p", "mr-atlas-footer", "Regions are source folders. Lines are explicit document links."), mapView = h("div", "mr-atlas-map-view");
-    mapView.append(head, tools, status, workspace, footer);
-    let article = h("article", "mr-atlas-article");
-    article.hidden = !0, root.append(top, mapView, article), shadow.append(styles, root), document.body.append(host), loadReaderFonts(document), root.focus();
-    let closed = !1, closeWaiting = () => {
+    detail.id = "mr-atlas-detail", detail.setAttribute("aria-label", "Selected document");
+    let shell = h("div", "mr-atlas-shell");
+    shell.append(mapView, article, backdrop, detail);
+    let sheet = h("div");
+    sheet.innerHTML = settingsSheet("Your reading preferences. Changes stay with this prototype.", [
+      { id: "reading", label: "Reading", icon: icons.book, panel: READING_SECTIONS },
+      { id: "layout", label: "Layout", icon: icons.layout, panel: DENSITY_SECTION },
+      {
+        id: "keys",
+        label: "Keys",
+        icon: icons.keyboard,
+        panel: keyGroups([
+          [
+            "Map",
+            [
+              [["/"], "Find a document"],
+              [["↑", "↓", "Enter"], "Choose a search result"],
+              [["←", "↑", "→", "↓"], "Pan the focused canvas"],
+              [["+", "−"], "Zoom the focused canvas"],
+              [["0"], "Fit the map to the canvas"],
+              [["←", "→"], "Switch Links and Preview in the details sheet"]
+            ]
+          ],
+          [
+            "Settings",
+            [
+              [[","], "Open reading settings"],
+              [["?"], "Show shortcuts"],
+              [["Esc"], "Close the innermost panel, then the prototype"]
+            ]
+          ]
+        ])
+      }
+    ]), root.append(top, shell, sheet.firstElementChild), shadow.append(styles, root), document.body.append(host), loadReaderFonts(document), root.focus();
+    let settings = { ...DEFAULT_SETTINGS, ...await loadSettings() }, closed = !1, closeWaiting = () => {
       closed = !0, host.remove();
     }, closeLoading = (event) => {
       event.target.closest('[data-act="close"]') && closeWaiting();
@@ -22231,7 +22977,7 @@ ${fixture === "dense" ? "[Next](000.md)" : ""}`
       ), closed) return;
       for (let [path, text4] of texts) path.startsWith("docs/synthetic/") && index.add(indexDocument(path, text4));
       let model = documentMap(index, { docs: /* @__PURE__ */ new Map(), folders: /* @__PURE__ */ new Map() });
-      host.removeEventListener("close-prototype", closeWaiting), root.removeEventListener("keydown", closeKey), root.removeEventListener("click", closeLoading), new Prototype(root, model, index, texts, source2, settings, host);
+      host.removeEventListener("close-prototype", closeWaiting), root.removeEventListener("keydown", closeKey), root.removeEventListener("click", closeLoading), root.classList.remove("is-waiting"), new Prototype(root, model, index, texts, source2, settings, host);
     } catch {
       status.textContent = "The demo documents could not be read. Close the prototype and reopen it to try again.";
     }
@@ -22245,26 +22991,54 @@ ${fixture === "dense" ? "[Next](000.md)" : ""}`
       this.source = source2;
       this.settings = settings;
       this.host = host;
-      this.here = model.places.find((place2) => place2.id === source2.start.path)?.id ?? "docs/architecture/overview.md", this.focus = this.selected = this.here, root.addEventListener("click", this.onClick), root.addEventListener("keydown", this.onKey), this.q("input").addEventListener("input", (event) => {
-        this.query = event.target.value, this.listLimit = 100, this.region = null, this.view = this.query ? "list" : "map", this.draw();
-      }), root.addEventListener("change", (event) => {
+      this.places = new Map(model.places.map((place2) => [place2.id, place2]));
+      for (let place2 of model.places) this.degree.set(place2.id, { incoming: 0, outgoing: 0 });
+      for (let connection of model.connections)
+        this.degree.get(connection.from).outgoing++, this.degree.get(connection.to).incoming++;
+      this.here = this.places.has(source2.start.path) ? source2.start.path : "docs/architecture/overview.md", this.palettes = new PaletteCarousel(root), this.focus = this.selected = this.here, root.addEventListener("click", this.onClick), root.addEventListener("keydown", this.onKey);
+      let search = this.q(".mr-atlas-search input");
+      search.addEventListener("input", () => this.drawResults()), search.addEventListener("focus", () => this.drawResults()), search.addEventListener("keydown", this.onSearchKey), this.q(".mr-atlas-search").addEventListener("focusout", (event) => {
+        this.q(".mr-atlas-search").contains(event.relatedTarget) || this.closeResults();
+      }), this.q(".mr-atlas-results").addEventListener("pointerdown", (event) => event.preventDefault()), root.addEventListener("change", (event) => {
         let select2 = event.target;
-        if (!select2.matches(".mr-atlas-controls select[data-setting]")) return;
-        let key = select2.dataset.setting;
-        Object.assign(settings, { [key]: key === "size" ? Number(select2.value) : select2.value }), this.applySettings(), this.draw();
+        select2.matches("#mr-typeface") && this.update({ font: select2.value });
       });
       let canvas = this.q(".mr-atlas-canvas");
       canvas.addEventListener("pointerdown", (event) => {
-        this.mobile.matches || event.target.closest("button") || (this.drag = { x: event.clientX, y: event.clientY, left: this.camera.x, top: this.camera.y }, canvas.setPointerCapture(event.pointerId));
+        this.stacked || event.target.closest("button, [data-act]") || (this.drag = { x: event.clientX, y: event.clientY, left: this.camera.x, top: this.camera.y }, canvas.setPointerCapture(event.pointerId));
       }), canvas.addEventListener("pointermove", (event) => {
         this.drag && (this.camera.x = this.drag.left + event.clientX - this.drag.x, this.camera.y = this.drag.top + event.clientY - this.drag.y, this.moveCamera());
-      }), canvas.addEventListener("pointerup", () => {
-        this.drag = null;
-      }), canvas.addEventListener("pointercancel", () => {
-        this.drag = null;
-      }), this.mobile.addEventListener("change", this.onMobile), host.addEventListener("close-prototype", this.close), this.observer = new ResizeObserver(() => {
-        this.drawMap(), this.moveCamera();
-      }), this.observer.observe(canvas), this.applySettings(), this.draw(), this.fit();
+      });
+      for (let name of ["pointerup", "pointercancel"])
+        canvas.addEventListener(name, () => {
+          this.drag = null;
+        });
+      canvas.addEventListener(
+        "wheel",
+        (event) => {
+          if (!this.stacked)
+            if (event.preventDefault(), event.ctrlKey || event.metaKey) {
+              let box = canvas.getBoundingClientRect();
+              this.zoomTo(this.camera.zoom * Math.exp(-event.deltaY / 300), { x: event.clientX - box.left, y: event.clientY - box.top });
+            } else
+              this.camera.x -= event.deltaX, this.camera.y -= event.deltaY, this.moveCamera();
+        },
+        { passive: !1 }
+      );
+      let world = this.q(".mr-atlas-world"), lightUp = (event) => {
+        let id = event.target.closest(".mr-atlas-place")?.dataset.id ?? null;
+        id !== this.hover && (this.hover = id, this.markSelection());
+      };
+      world.addEventListener("pointerover", lightUp), world.addEventListener("focusin", lightUp);
+      for (let name of ["pointerleave", "focusout"])
+        world.addEventListener(name, () => {
+          this.hover = null, this.markSelection();
+        });
+      this.mobile.addEventListener("change", this.onMobile), this.dark.addEventListener("change", this.onScheme), this.q(".mr-palette-track").addEventListener("scroll", () => this.palettes.update()), host.addEventListener("close-prototype", this.close), this.observer = new ResizeObserver(() => {
+        this.measure(), this.drawLines(), this.moveCamera();
+      }), this.observer.observe(canvas), addEventListener("popstate", this.onHistory), this.applySettings(), this.draw(), this.measure(), this.fit();
+      let path = new URLSearchParams(location.search).get("doc");
+      history.replaceState({ atlasDepth: 0 }, ""), path && this.texts.has(path) && (this.selected = path, this.read(path, void 0, void 0, !1));
     }
     root;
     model;
@@ -22276,153 +23050,429 @@ ${fixture === "dense" ? "[Next](000.md)" : ""}`
     layout = new MapPlacement();
     q = (selector) => this.root.querySelector(selector);
     here;
+    places;
+    /** Per document, how many indexed documents link to it and how many it links to. */
+    degree = /* @__PURE__ */ new Map();
     focus;
     selected;
     connection = null;
+    tab = "preview";
+    previewScroll = { path: "", top: 0 };
     view = "map";
-    neighbours = 2;
-    query = "";
+    /** List shows only documents matching this when the search popup's "See all" sent the reader there. */
+    listQuery = "";
+    /** Search results in popup order, and the one the arrow keys have reached. */
+    results = [];
+    active = -1;
+    /** This session's recently selected documents, newest first; kept in memory only. */
+    recent = [];
+    /** History entries this prototype has pushed since the map; Back to map returns through them. */
+    depth = 0;
+    /** List shows only the neighbours of this document when a lane's "more" sent the reader there. */
+    near = null;
     listLimit = 100;
     connectionLimit = 12;
-    mapScroll = 0;
+    listScroll = 0;
     drawVersion = 0;
-    region = null;
     detailsOpen = !1;
+    sheetBeforeRead = !1;
+    hover = null;
+    stacked = !1;
+    lines = [];
+    lanes = /* @__PURE__ */ new Map();
     camera = { x: 0, y: 0, zoom: 1 };
     drag = null;
     mobile = matchMedia("(max-width: 760px)");
+    dark = matchMedia("(prefers-color-scheme: dark)");
+    onScheme = () => this.applySettings();
+    palettes;
     observer;
     onMobile = () => {
       this.draw(), this.fit();
     };
-    close = () => {
-      this.observer.disconnect(), this.mobile.removeEventListener("change", this.onMobile), this.host.remove();
+    onHistory = (event) => {
+      let depth = event.state?.atlasDepth;
+      if (depth === void 0) return;
+      this.depth = depth;
+      let path = new URLSearchParams(location.search).get("doc");
+      path && this.texts.has(path) ? this.read(path, void 0, void 0, !1) : this.q(".mr-atlas-article").hidden || this.showMap();
     };
+    close = () => {
+      removeEventListener("popstate", this.onHistory), this.observer.disconnect(), this.mobile.removeEventListener("change", this.onMobile), this.dark.removeEventListener("change", this.onScheme), this.host.remove();
+    };
+    place(id) {
+      return this.places.get(id);
+    }
+    title(id) {
+      return this.place(id).title;
+    }
     applySettings() {
-      this.root.dataset.theme = this.settings.theme, this.root.dataset.font = "galley", this.root.dataset.density = this.settings.density, this.root.classList.toggle("is-dark", this.settings.appearance === "dark"), this.root.style.setProperty("--text-scale", String(TEXT_SIZES[this.settings.size] / 20)), this.root.style.setProperty("--body-size", `${TEXT_SIZES[this.settings.size]}px`);
+      this.root.dataset.theme = this.settings.theme, this.root.dataset.font = this.settings.font, this.root.dataset.density = this.settings.density, this.root.classList.toggle("is-dark", this.settings.appearance === "dark" || this.settings.appearance === "auto" && this.dark.matches), this.root.classList.toggle("no-top-glow", !this.settings.topGlow), this.root.style.setProperty("--text-scale", String(TEXT_SIZES[this.settings.size] / 20)), this.root.style.setProperty("--body-size", `${TEXT_SIZES[this.settings.size]}px`), applyReadingControls(this.root, this.settings);
+    }
+    update(patch) {
+      Object.assign(this.settings, patch), this.applySettings(), this.draw();
+    }
+    openSettings(tab = "reading") {
+      let sheet = this.q(".mr-settings");
+      sheet.hidden = !1, selectTab(sheet, tab);
+      for (let selector of [".mr-atlas-chrome", ".mr-atlas-shell"]) this.q(selector).inert = !0;
+      this.q('[data-act="settings"]').setAttribute("aria-expanded", "true"), this.palettes.reveal(this.settings.theme), this.q('.mr-settings-heading [data-act="close-settings"]').focus();
+    }
+    closeSettings() {
+      this.q(".mr-settings").hidden = !0;
+      for (let selector of [".mr-atlas-chrome", ".mr-atlas-shell"]) this.q(selector).inert = !1;
+      this.drawDetail(), this.q('[data-act="settings"]').setAttribute("aria-expanded", "false"), this.q('[data-act="settings"]').focus({ preventScroll: !0 });
     }
     draw() {
-      this.q(".mr-atlas-status").textContent = `${this.index.docs.size} of ${this.index.listed.length} documents indexed · ${this.source.commit.slice(0, 7)}${this.index.problems.length ? ` · ${this.index.problems.length} unresolved links` : ""}`, this.q(".mr-atlas-canvas").hidden = this.view === "list", this.q(".mr-atlas-list").hidden = this.view !== "list";
+      let unresolved = this.index.problems.length;
+      this.q(".mr-atlas-status").textContent = `${this.index.docs.size} of ${this.index.listed.length} documents indexed · ${this.source.commit.slice(0, 7)}${unresolved ? ` · ${unresolved} unresolved links` : ""}`, this.root.dataset.view = this.view;
+      for (let selector of [".mr-atlas-canvas", ".mr-atlas-controls", ".mr-atlas-info"]) this.q(selector).hidden = this.view === "list";
+      this.q(".mr-atlas-list").hidden = this.view !== "list";
+      let reading = !this.q(".mr-atlas-article").hidden;
       for (let choice of this.root.querySelectorAll(".mr-atlas-choices button"))
-        choice.setAttribute("aria-pressed", String(choice.dataset.act === this.view));
+        choice.setAttribute("aria-pressed", String(!reading && choice.dataset.act === this.view));
       this.drawMap(), this.drawList(), this.drawDetail();
     }
-    placeButton(place2) {
+    /** The canvas decides between three lanes and one stacked column; phones always stack. */
+    measure() {
+      let canvas = this.q(".mr-atlas-canvas"), stacked = this.mobile.matches || canvas.clientWidth > 0 && canvas.clientWidth < STACK_BELOW;
+      stacked !== this.stacked && (this.stacked = stacked, this.root.classList.toggle("is-stacked", stacked), stacked && (this.camera = { x: 0, y: 0, zoom: 1 }));
+    }
+    placeCard(place2, lane) {
       let node2 = button("", "select", "mr-atlas-place");
-      return node2.dataset.id = place2.id, node2.setAttribute("aria-pressed", String(place2.id === this.selected)), node2.setAttribute("aria-label", `${place2.title}, ${place2.kind}, ${place2.path}`), node2.append(h("strong", "", place2.title), h("small", "", place2.kind)), place2.id === this.here && node2.append(h("span", "mr-atlas-here", "● You are here")), place2.state !== "indexed" && node2.append(h("small", "", place2.state === "not-read" ? "Not indexed yet" : place2.state === "failed" ? "Could not be read" : "Too large to read")), node2;
+      node2.dataset.id = place2.id, node2.dataset.kind = place2.kind, lane && (node2.dataset.lane = lane), node2.title = place2.title, node2.setAttribute("aria-label", `${place2.title}, ${place2.kind}, ${place2.path}${place2.id === this.here ? ", you are here" : ""}`);
+      let name = cardName(place2.title);
+      node2.append(placeBadge(place2.kind, name.label), h("strong", "", name.name));
+      let caption = place2.state === "indexed" ? place2.folder || "Project root" : place2.state === "not-read" ? "Not indexed yet" : place2.state === "failed" ? "Could not be read" : "Too large to read";
+      return node2.append(h("small", "mr-atlas-card-caption", caption)), place2.id === this.here && node2.append(h("span", "mr-atlas-here", "You are here")), node2;
     }
     drawMap() {
-      if (this.view === "list") return;
-      let version = ++this.drawVersion, world = this.q(".mr-atlas-world");
-      world.replaceChildren();
-      let more = this.q('[data-act="more"]');
-      if (more.hidden = !0, this.view === "overview") {
-        world.className = "mr-atlas-world mr-atlas-overview";
-        let overview = mapOverview(this.model);
-        for (let region of overview.regions.slice(0, 12)) {
-          let item = button("", "region", "mr-atlas-region");
-          item.dataset.folder = region.folder, item.append(h("strong", "", region.folder ? `${region.folder}/` : "Top folder"), h("span", "", `${region.places.length} documents`));
-          let outgoing = overview.references.filter((reference2) => reference2.from === region.folder).reduce((sum, reference2) => sum + reference2.connections.length, 0);
-          item.append(h("small", "", `${outgoing} outgoing document references`)), world.append(item);
+      let world = this.q(".mr-atlas-world");
+      if (world.replaceChildren(), this.lanes.clear(), this.lines = [], this.view === "list") return;
+      let version = ++this.drawVersion, neighbourhood = this.layout.neighbourhood(this.model, this.focus, this.mobile.matches ? PHONE_LANE : MAP_NEIGHBOUR_LIMIT);
+      this.lines = neighbourhood.connections;
+      let incoming = /* @__PURE__ */ new Set(), outgoing = /* @__PURE__ */ new Set();
+      for (let connection of this.model.connections)
+        connection.to === this.focus && connection.from !== this.focus && incoming.add(connection.from), connection.from === this.focus && connection.to !== this.focus && outgoing.add(connection.to);
+      for (let id of incoming) outgoing.delete(id);
+      let groups2 = { incoming: [], here: [], outgoing: [] };
+      for (let position of neighbourhood.places)
+        groups2[position.lane].push(position), this.lanes.set(position.place.id, position.lane);
+      let focus = this.place(this.focus);
+      for (let lane of ["incoming", "here", "outgoing"]) {
+        let column = h("div", "mr-atlas-lane");
+        column.dataset.lane = lane;
+        let total = lane === "incoming" ? incoming.size : outgoing.size, head = h("h2", "mr-atlas-lane-head", lane === "incoming" ? "Linked from" : lane === "outgoing" ? "Links to" : "In focus");
+        lane !== "here" && head.append(h("span", "", String(total)));
+        let stack = h("div", "mr-atlas-stack");
+        for (let position of groups2[lane]) stack.append(this.placeCard(position.place, lane));
+        if (lane !== "here") {
+          total || stack.append(
+            h(
+              "p",
+              "mr-atlas-lane-empty",
+              lane === "incoming" ? "No indexed documents link here." : focus.state === "indexed" ? "No outgoing document links found." : "Outgoing links have not been indexed."
+            )
+          );
+          let hidden = total - groups2[lane].length;
+          if (hidden > 0) {
+            let more = button(`Show ${hidden} more in List`, "more", "mr-btn mr-outline mr-atlas-more");
+            more.dataset.lane = lane, stack.append(more);
+          }
         }
-        overview.regions.length > 12 && (more.hidden = !1, more.textContent = `${overview.regions.length - 12} more folders in List`);
-        return;
+        if (column.append(head, stack), world.append(column), lane !== "outgoing") {
+          let flow = h("div", "mr-atlas-flow");
+          flow.setAttribute("aria-hidden", "true"), flow.append(lineIcon(SHAPES.down), h("span", "", "links to")), world.append(flow);
+        }
       }
-      world.className = "mr-atlas-world mr-atlas-neighbourhood";
-      let neighbourhood = this.layout.neighbourhood(this.model, this.focus, this.mobile.matches ? 1 : this.neighbours);
-      for (let position of neighbourhood.places) {
-        let node2 = this.placeButton(position.place);
-        node2.dataset.lane = position.lane, node2.style.gridColumn = this.mobile.matches || position.lane === "incoming" ? "1" : position.lane === "here" ? "2" : "3", node2.style.gridRow = String(this.mobile.matches ? position.lane === "incoming" ? 1 : position.lane === "here" ? 2 : 3 : position.slot + 1), world.append(node2);
-      }
-      neighbourhood.hidden && (more.hidden = !1, more.textContent = `${neighbourhood.hidden} more connected places`), requestAnimationFrame(() => {
-        version === this.drawVersion && this.drawLines(neighbourhood.connections);
+      this.markSelection(), requestAnimationFrame(() => {
+        version === this.drawVersion && this.drawLines();
       });
     }
-    drawLines(connections) {
+    /** Lines leave the side of a card that faces the focus, so direction reads left to right, like the lane headers. */
+    drawLines() {
       let world = this.q(".mr-atlas-world");
-      if (this.view !== "map" || !world.isConnected) return;
-      world.querySelector("svg")?.remove();
-      let svg3 = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg3.classList.add("mr-atlas-lines"), svg3.setAttribute("viewBox", `0 0 ${world.scrollWidth} ${world.scrollHeight}`), svg3.setAttribute("aria-hidden", "true");
-      let nodes = new Map([...world.querySelectorAll(".mr-atlas-place")].map((node2) => [node2.dataset.id, node2]));
-      for (let connection of connections) {
-        let from = nodes.get(connection.from), to = nodes.get(connection.to);
-        if (from === to) continue;
-        let a = { x: from.offsetLeft + from.offsetWidth / 2, y: from.offsetTop + from.offsetHeight / 2 }, b = { x: to.offsetLeft + to.offsetWidth / 2, y: to.offsetTop + to.offsetHeight / 2 }, vertical = this.mobile.matches, direction = Math.sign(vertical ? b.y - a.y : b.x - a.x);
-        vertical ? (a.y += direction * from.offsetHeight / 2, b.y -= direction * to.offsetHeight / 2) : (a.x += direction * from.offsetWidth / 2, b.x -= direction * to.offsetWidth / 2);
-        let line = document.createElementNS(svg3.namespaceURI, "path");
-        line.setAttribute(
-          "d",
-          vertical ? `M ${a.x} ${a.y} L ${b.x} ${b.y}` : `M ${a.x} ${a.y} C ${(a.x + b.x) / 2} ${a.y}, ${(a.x + b.x) / 2} ${b.y}, ${b.x} ${b.y}`
-        ), line.setAttribute("class", "mr-atlas-line"), svg3.append(line);
-        let end = document.createElementNS(svg3.namespaceURI, "path");
-        if (end.setAttribute("class", "mr-atlas-arrow"), end.setAttribute(
-          "d",
-          vertical ? `M ${b.x - 4} ${b.y - direction * 7} L ${b.x} ${b.y} L ${b.x + 4} ${b.y - direction * 7}` : `M ${b.x - direction * 7} ${b.y - 4} L ${b.x} ${b.y} L ${b.x - direction * 7} ${b.y + 4}`
-        ), svg3.append(end), connection.from === this.focus || connection.to === this.focus) {
-          let label2 = button("links to", "connection", "mr-atlas-edge");
-          label2.dataset.id = connection.id, label2.setAttribute("aria-label", `${this.title(connection.from)} links to ${this.title(connection.to)}: inspect evidence`), label2.style.left = `${(a.x + b.x) / 2}px`, label2.style.top = `${(a.y + b.y) / 2}px`, world.append(label2);
+      if (world.querySelector(".mr-atlas-lines")?.remove(), this.view !== "map" || this.stacked || !world.isConnected) return;
+      let nodes = new Map([...world.querySelectorAll(".mr-atlas-place")].map((node2) => [node2.dataset.id, node2])), box = (id) => {
+        let node2 = nodes.get(id);
+        return {
+          l: node2.offsetLeft,
+          r: node2.offsetLeft + node2.offsetWidth,
+          t: node2.offsetTop,
+          b: node2.offsetTop + node2.offsetHeight,
+          y: node2.offsetTop + node2.offsetHeight / 2
+        };
+      }, SVG = "http://www.w3.org/2000/svg", svg3 = document.createElementNS(SVG, "svg");
+      svg3.classList.add("mr-atlas-lines"), svg3.setAttribute("aria-hidden", "true"), svg3.setAttribute("width", String(world.scrollWidth)), svg3.setAttribute("height", String(world.scrollHeight));
+      let focus = box(this.focus), above = (nodes.get(this.focus).closest(".mr-atlas-lane")?.offsetTop ?? focus.t) - 20, pairs = new Set(this.lines.map((connection) => `${connection.from}\0${connection.to}`)), drawn = /* @__PURE__ */ new Set(), curve = (a, b) => {
+        let mid = (a.x + b.x) / 2;
+        return `M ${a.x} ${a.y} C ${mid} ${a.y}, ${mid} ${b.y}, ${b.x} ${b.y}`;
+      };
+      for (let connection of this.lines) {
+        let key = [connection.from, connection.to].sort().join("\0");
+        if (connection.from === connection.to || drawn.has(key)) continue;
+        drawn.add(key);
+        let both = pairs.has(`${connection.to}\0${connection.from}`), d, ends, touchesFocus = connection.from === this.focus || connection.to === this.focus;
+        if (touchesFocus) {
+          let other = connection.from === this.focus ? connection.to : connection.from, place2 = box(other), towardFocus = connection.to === this.focus;
+          this.lanes.get(other) === "incoming" ? (d = curve({ x: place2.r, y: place2.y }, { x: focus.l, y: focus.y }), ends = [
+            { x: focus.l, y: focus.y, dir: 1, into: towardFocus || both },
+            { x: place2.r, y: place2.y, dir: -1, into: !towardFocus || both }
+          ]) : (d = curve({ x: focus.r, y: focus.y }, { x: place2.l, y: place2.y }), ends = [
+            { x: place2.l, y: place2.y, dir: 1, into: !towardFocus || both },
+            { x: focus.r, y: focus.y, dir: -1, into: towardFocus || both }
+          ]);
+        } else {
+          let from = box(connection.from), to = box(connection.to), fromLane = this.lanes.get(connection.from);
+          if (fromLane === this.lanes.get(connection.to)) {
+            let sign = fromLane === "incoming" ? -1 : 1, ax = sign < 0 ? from.l : from.r, bx = sign < 0 ? to.l : to.r, bulge = 28 + Math.abs(from.y - to.y) * 0.2;
+            d = `M ${ax} ${from.y} C ${ax + sign * bulge} ${from.y}, ${bx + sign * bulge} ${to.y}, ${bx} ${to.y}`, ends = [
+              { x: bx, y: to.y, dir: -sign, into: !0 },
+              { x: ax, y: from.y, dir: -sign, into: both }
+            ];
+          } else {
+            let [left, right] = fromLane === "incoming" ? [from, to] : [to, from], a = { x: left.r, y: left.y }, b = { x: right.l, y: right.y };
+            if (Math.max(a.y, b.y) < above || Math.min(a.y, b.y) > focus.b + 16) d = curve(a, b);
+            else {
+              let ry = (a.y + b.y) / 2 < focus.y ? above : focus.b + 24, m1 = (a.x + focus.l) / 2, m2 = (focus.r + b.x) / 2;
+              d = `M ${a.x} ${a.y} C ${m1} ${a.y}, ${m1} ${ry}, ${focus.l} ${ry} L ${focus.r} ${ry} C ${m2} ${ry}, ${m2} ${b.y}, ${b.x} ${b.y}`;
+            }
+            let intoRight = fromLane === "incoming";
+            ends = [
+              { x: b.x, y: b.y, dir: 1, into: intoRight || both },
+              { x: a.x, y: a.y, dir: -1, into: !intoRight || both }
+            ];
+          }
         }
+        let edge = document.createElementNS(SVG, "g");
+        edge.setAttribute("class", `mr-atlas-edge ${touchesFocus ? "is-focus" : "is-context"}`), edge.dataset.from = connection.from, edge.dataset.to = connection.to;
+        let line = document.createElementNS(SVG, "path");
+        line.setAttribute("class", "mr-atlas-line"), line.setAttribute("d", d), edge.append(line);
+        for (let end of ends.filter((end2) => end2.into)) {
+          let arrow = document.createElementNS(SVG, "path");
+          arrow.setAttribute("class", "mr-atlas-arrow"), arrow.setAttribute("d", `M ${end.x - end.dir * 7} ${end.y - 4} L ${end.x} ${end.y} L ${end.x - end.dir * 7} ${end.y + 4}`), edge.append(arrow);
+        }
+        let hit = document.createElementNS(SVG, "path");
+        hit.setAttribute("class", "mr-atlas-hit"), hit.setAttribute("d", d), hit.dataset.act = "connection", hit.dataset.id = connection.id, edge.append(hit), svg3.append(edge);
       }
-      world.prepend(svg3);
+      world.prepend(svg3), this.markSelection();
+    }
+    /** Selection and hover change classes only, so cards keep their place and keyboard focus. */
+    markSelection() {
+      for (let node2 of this.root.querySelectorAll(".mr-atlas-place"))
+        node2.setAttribute("aria-pressed", String(node2.dataset.id === this.selected)), node2.classList.toggle("is-focus", node2.dataset.lane === "here");
+      let lit = this.hover ?? (this.selected !== this.focus ? this.selected : null);
+      for (let edge of this.root.querySelectorAll(".mr-atlas-edge")) {
+        let touches = edge.dataset.from === lit || edge.dataset.to === lit;
+        edge.classList.toggle("is-lit", lit !== null && touches), edge.classList.toggle("is-dim", lit !== null && !touches);
+      }
     }
     drawList() {
       let list2 = this.q(".mr-atlas-list");
       if (list2.replaceChildren(), this.view !== "list") return;
-      let found = this.model.places.filter(
-        (place2) => (this.region === null || place2.folder === this.region) && `${place2.title} ${place2.path}`.toLowerCase().includes(this.query.toLowerCase())
-      );
-      found.length || list2.append(h("p", "", "No indexed name or path matches.")), this.index.docs.size < this.index.listed.length && list2.append(h("p", "", "Names from unindexed documents may be incomplete."));
-      for (let place2 of found.slice(0, this.listLimit)) {
-        let row = this.placeButton(place2);
-        row.append(h("small", "mr-atlas-path", place2.path)), list2.append(row);
+      let inner = h("div", "mr-atlas-list-inner");
+      list2.append(inner);
+      let candidates = this.model.places;
+      if (this.near) {
+        let near = this.near, ids = new Set(this.model.connections.flatMap((c) => c.from === near ? [c.to] : c.to === near ? [c.from] : []));
+        ids.delete(near), candidates = candidates.filter((place2) => ids.has(place2.id)), inner.append(this.filterChip(`${ids.size} documents connected to ${this.title(near)}`, "clear-near"));
       }
-      found.length > this.listLimit && list2.append(button(`Show ${Math.min(100, found.length - this.listLimit)} more of ${found.length} places`, "list-more"));
-    }
-    drawDetail() {
-      let detail = this.q(".mr-atlas-detail");
-      detail.replaceChildren(), detail.classList.toggle("is-open", this.detailsOpen), detail.setAttribute("role", this.mobile.matches ? "dialog" : "complementary");
-      let modal = this.mobile.matches && this.detailsOpen;
-      modal ? detail.setAttribute("aria-modal", "true") : detail.removeAttribute("aria-modal");
-      for (let section of [".mr-atlas-chrome", ".mr-atlas-head", ".mr-atlas-tools", ".mr-atlas-map-column"]) this.q(section).inert = modal;
-      this.q(".mr-atlas-backdrop").hidden = !modal;
-      let close = button("Close details", "close-details", "mr-btn mr-atlas-close-detail");
-      detail.append(close);
-      let place2 = this.model.places.find((item) => item.id === this.selected);
-      if (this.connection) {
-        let connection = this.connection;
-        detail.append(
-          h("p", "mr-atlas-kicker", "Selected connection"),
-          h("h2", "", `${this.title(connection.from)} → ${this.title(connection.to)}`),
-          chip(null, "Documented · links to")
-        );
-        for (let [at, proof] of connection.proof.entries()) {
-          let item = h("div", "mr-atlas-proof");
-          item.append(
-            h("blockquote", "", proof.quote),
-            h("p", "mr-atlas-path", `${proof.path} · ${proof.section || "Document"} · line ${proof.line} · ${this.source.commit.slice(0, 7)}`)
-          );
-          let open2 = button("Read source paragraph", "proof");
-          open2.dataset.at = String(at), item.append(open2), detail.append(item);
+      this.listQuery && inner.append(this.filterChip(`Matching “${this.listQuery}”`, "clear-query"));
+      let words2 = searchWords(this.listQuery), found = candidates.filter((place2) => matchScore(place2, words2) >= 0);
+      found.length || inner.append(h("p", "mr-atlas-note", "No indexed name or path matches.")), this.index.docs.size < this.index.listed.length && inner.append(h("p", "mr-atlas-note", "Names from unindexed documents may be incomplete."));
+      let folders = /* @__PURE__ */ new Map();
+      for (let place2 of found.slice(0, this.listLimit)) folders.set(place2.folder, [...folders.get(place2.folder) ?? [], place2]);
+      for (let [folder, places] of folders) {
+        let section = h("section", "mr-atlas-list-group");
+        section.dataset.folder = folder;
+        let heading2 = h("h2", "mr-atlas-folder", folder ? `${folder}/` : "Project root");
+        heading2.append(h("span", "", `${places.length} shown`));
+        let rows2 = h("div", "mr-atlas-list-rows");
+        for (let place2 of places) {
+          let row = this.placeCard(place2);
+          row.querySelector(".mr-atlas-card-caption").replaceWith(h("small", "mr-atlas-path", place2.path));
+          let degree = this.degree.get(place2.id);
+          row.append(h("small", "mr-atlas-counts", `${degree.incoming} linked from · ${degree.outgoing} links to`)), rows2.append(row);
         }
-        connection.hiddenProof && detail.append(h("p", "", `${connection.hiddenProof} additional source links beyond this preview budget.`)), detail.append(button("Back to selected place", "place-detail"));
+        section.append(heading2, rows2), inner.append(section);
+      }
+      found.length > this.listLimit && inner.append(
+        button(`Show ${Math.min(100, found.length - this.listLimit)} more of ${found.length} places`, "list-more", "mr-btn mr-outline mr-atlas-more")
+      ), this.markSelection();
+    }
+    filterChip(label2, act) {
+      let filter = h("p", "mr-atlas-filter"), clear = iconButton(act, `Remove filter: ${label2}`, "Remove filter", icons.close);
+      return filter.append(h("span", "", label2), clear), filter;
+    }
+    /** What choosing a result will do: stay on this map, or move the map to it. */
+    relation(id) {
+      let lane = this.lanes.get(id);
+      return lane === "here" ? "In focus" : lane ? "On the map" : id === this.here ? "You are here" : "";
+    }
+    /** The popup: suggestions while the field is empty, ranked matches once the reader types. */
+    drawResults() {
+      let input = this.q(".mr-atlas-search input"), list2 = this.q(".mr-atlas-results-list"), empty = this.q(".mr-atlas-results-empty"), query = input.value.trim();
+      list2.replaceChildren(), this.results = [];
+      let groups2 = [], total = 0;
+      if (query) {
+        let words2 = searchWords(query), bonus = (id) => (this.lanes.has(id) ? 8 : 0) + (id === this.here ? 4 : 0), ranked = this.model.places.map((place2) => ({ place: place2, score: matchScore(place2, words2) })).filter((match) => match.score >= 0).sort((a, b) => b.score + bonus(b.place.id) - a.score - bonus(a.place.id) || a.place.title.localeCompare(b.place.title)).map((match) => match.place);
+        total = ranked.length, groups2.push([`${total} ${total === 1 ? "match" : "matches"}`, ranked.slice(0, RESULT_LIMIT)]);
+      } else {
+        let recent = this.recent.slice(0, 4), around = [...this.lanes.keys()].filter((id) => !recent.includes(id)).slice(0, 6);
+        groups2.push(["Recent", recent.map((id) => this.place(id))], [`Around ${cardName(this.title(this.focus)).name}`, around.map((id) => this.place(id))]);
+      }
+      for (let [at, [label2, places]] of groups2.entries()) {
+        if (!places.length) continue;
+        let group = h("div", "mr-atlas-results-group"), heading2 = h("div", "mr-atlas-results-heading", label2);
+        heading2.id = `mr-atlas-results-heading-${at}`, group.setAttribute("role", "group"), group.setAttribute("aria-labelledby", heading2.id), group.append(heading2);
+        for (let place2 of places) {
+          let option2 = this.resultOption();
+          this.results.push(place2.id);
+          let text4 = h("span", "mr-atlas-result-text"), title = h("span", "mr-atlas-result-title");
+          title.append(...highlight(place2.title, query));
+          let path = h("span", "mr-atlas-result-path");
+          path.append(...highlight(place2.path, query)), text4.append(title, path), option2.append(typeIcon(place2.kind), text4);
+          let relation = this.relation(place2.id);
+          relation && option2.append(h("span", "mr-atlas-result-relation", relation)), group.append(option2);
+        }
+        list2.append(group);
+      }
+      if (total > RESULT_LIMIT) {
+        let all2 = this.resultOption();
+        this.results.push(LIST_RESULTS), all2.classList.add("mr-atlas-result-all"), all2.textContent = `See all ${total} in List`, list2.append(all2);
+      }
+      if (empty.textContent = query && !total ? `No document matches “${query}”.` : "", !this.results.length && !empty.textContent) {
+        this.closeResults();
         return;
       }
-      detail.append(h("p", "mr-atlas-kicker", "Selected place"), h("h2", "", place2.title), h("p", "mr-atlas-path", place2.path), chip(null, "Documented")), detail.append(h("p", "mr-atlas-path", `${place2.kind} · ${KIND_SOURCES[place2.kindFrom]}`)), place2.kindFrom === "reader" && detail.append(h("p", "", `The source says ${place2.sourceKind} (${KIND_SOURCES[place2.sourceKindFrom]}); you set ${place2.kind}.`));
-      for (let status of place2.statuses) detail.append(chip(null, status));
-      place2.state !== "indexed" && detail.append(h("p", "", place2.state === "not-read" ? "Not indexed: its outgoing links are unknown." : "This document could not be indexed."));
-      let read = button("Read document", "read", "mr-btn mr-primary");
-      read.dataset.id = place2.id, detail.append(read, button("Show connections", "focus"));
-      let connected = this.model.connections.filter((connection) => connection.from === place2.id || connection.to === place2.id);
-      detail.append(h("h3", "", `${connected.length} connections`));
-      for (let connection of connected.slice(0, this.connectionLimit)) {
-        let row = button("", "connection", "mr-atlas-connection");
-        row.dataset.id = connection.id, row.append(
-          h("strong", "", this.title(connection.from === place2.id ? connection.to : connection.from)),
-          h("small", "", `${this.title(connection.from)} links to ${this.title(connection.to)}`)
-        ), detail.append(row);
+      this.active = query && this.results.length ? 0 : -1, this.markResult(), this.q(".mr-atlas-results").hidden = !1, input.setAttribute("aria-expanded", "true");
+    }
+    resultOption() {
+      let option2 = h("div", "mr-atlas-result");
+      return option2.id = `mr-atlas-result-${this.results.length}`, option2.setAttribute("role", "option"), option2.setAttribute("aria-selected", "false"), option2.dataset.act = "pick", option2.dataset.index = String(this.results.length), option2;
+    }
+    markResult() {
+      let input = this.q(".mr-atlas-search input");
+      for (let option2 of this.root.querySelectorAll(".mr-atlas-result"))
+        option2.setAttribute("aria-selected", String(option2.dataset.index === String(this.active)));
+      let current = this.active >= 0 ? this.q(`#mr-atlas-result-${this.active}`) : null;
+      current ? (input.setAttribute("aria-activedescendant", current.id), current.scrollIntoView({ block: "nearest" })) : input.removeAttribute("aria-activedescendant");
+    }
+    closeResults() {
+      let input = this.q(".mr-atlas-search input");
+      this.q(".mr-atlas-results").hidden = !0, input.setAttribute("aria-expanded", "false"), input.removeAttribute("aria-activedescendant"), this.active = -1;
+    }
+    pick(index) {
+      let input = this.q(".mr-atlas-search input"), id = this.results[index], query = input.value.trim();
+      this.closeResults(), input.value = "";
+      let reading = !this.q(".mr-atlas-article").hidden;
+      if (id === LIST_RESULTS) {
+        this.listQuery = query, this.near = null, this.listLimit = 100, this.view = "list", reading ? this.returnToMap() : this.draw();
+        return;
       }
-      connected.length > this.connectionLimit && detail.append(button(`Show ${Math.min(12, connected.length - this.connectionLimit)} more connections`, "connections-more"));
+      if (reading) {
+        this.selected = id, this.read(id);
+        return;
+      }
+      this.view === "map" && !this.lanes.has(id) && (this.focus = id, this.connection = null, this.draw(), this.fit()), this.select(id), this.mobile.matches || this.focusSelected();
+    }
+    onSearchKey = (event) => {
+      let input = event.target, open2 = !this.q(".mr-atlas-results").hidden;
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault(), open2 || this.drawResults();
+        let count = this.results.length;
+        if (!count) return;
+        let step = event.key === "ArrowDown" ? 1 : -1;
+        this.active = this.active < 0 ? step > 0 ? 0 : count - 1 : (this.active + step + count) % count, this.markResult();
+      } else event.key === "Enter" && open2 && this.active >= 0 ? (event.preventDefault(), this.pick(this.active)) : event.key === "Escape" && (open2 || input.value) && (event.preventDefault(), event.stopPropagation(), open2 ? this.closeResults() : input.value = "");
+    };
+    proofItem(connection, at) {
+      let proof = connection.proof[at], item = h("div", "mr-atlas-proof"), open2 = button("Read source paragraph", "proof", "mr-btn mr-outline");
+      return open2.dataset.id = connection.id, open2.dataset.at = String(at), item.append(
+        h("blockquote", "", proof.quote),
+        h("p", "mr-atlas-path", `${proof.path} · ${proof.section || "Document"} · line ${proof.line} · ${this.source.commit.slice(0, 7)}`),
+        open2
+      ), item;
+    }
+    drawDetail() {
+      let detail = this.q(".mr-atlas-detail"), previous = detail.querySelector(".mr-atlas-sheet-body");
+      detail.dataset.tab === "preview" && previous?.getClientRects().length && (this.previewScroll = { path: detail.dataset.id, top: previous.scrollTop }), detail.classList.toggle("is-open", this.detailsOpen), this.q(".mr-atlas-shell").classList.toggle("has-sheet", this.detailsOpen), this.q('[data-act="details"]').setAttribute("aria-expanded", String(this.detailsOpen));
+      let modal = this.mobile.matches && this.detailsOpen;
+      modal ? (detail.setAttribute("role", "dialog"), detail.setAttribute("aria-modal", "true")) : (detail.removeAttribute("role"), detail.removeAttribute("aria-modal"));
+      let settingsOpen = !this.q(".mr-settings").hidden;
+      for (let section of [".mr-atlas-chrome", ".mr-atlas-map-view"]) this.q(section).inert = modal || settingsOpen;
+      if (this.q(".mr-atlas-backdrop").hidden = !modal, !this.detailsOpen) return;
+      detail.replaceChildren();
+      let place2 = this.place(this.selected);
+      detail.dataset.id = place2.id, detail.dataset.tab = this.connection ? "evidence" : this.tab, detail.setAttribute("aria-label", this.connection ? "Link evidence" : this.tab === "preview" ? "Document preview" : "Selected document");
+      let header = h("header", "mr-atlas-sheet-header"), top = h("div", "mr-atlas-sheet-top"), actions = h("div", "mr-atlas-sheet-actions"), body = h("div", "mr-atlas-sheet-body"), close = iconButton("close-details", "Close details", "Close details (Esc)", icons.close);
+      header.append(top), detail.append(header, body);
+      let commit = this.source.commit.slice(0, 7);
+      if (this.connection) {
+        let connection = this.connection, back = button("Back to document", "place-detail", "mr-btn mr-atlas-sheet-back");
+        back.insertAdjacentHTML("afterbegin", icons.chevronLeft), actions.append(close), top.append(back, actions), header.append(
+          h("p", "mr-atlas-kicker", "Documented · links to"),
+          h("h2", "", "Link evidence"),
+          h("p", "mr-atlas-sheet-description", `${this.title(connection.from)} → ${this.title(connection.to)}`)
+        );
+        for (let at of connection.proof.keys()) body.append(this.proofItem(connection, at));
+        connection.hiddenProof && body.append(h("p", "mr-atlas-note", `${connection.hiddenProof} additional source links beyond this preview budget.`));
+        return;
+      }
+      let name = cardName(place2.title), badges = h("div", "mr-atlas-sheet-badges");
+      badges.append(placeBadge(place2.kind, name.label)), place2.id === this.here && badges.append(h("span", "mr-atlas-here", "You are here")), place2.id !== this.focus && actions.append(iconButton("focus", "Show its connections", "Show its connections on the map", lineIcon(SHAPES.locate)));
+      let read = button("Read", "read", "mr-btn mr-outline mr-atlas-sheet-read");
+      read.prepend(lineIcon(SHAPES.read)), read.dataset.id = place2.id, read.title = "Read the whole document", read.disabled = !this.texts.has(place2.id), actions.append(read, close), top.append(badges, actions), header.append(h("h2", "", name.name), h("p", "mr-atlas-sheet-description", `${place2.path} · ${commit}`));
+      let connected = this.model.connections.filter((connection) => connection.from === place2.id || connection.to === place2.id), tabs = h("div", "mr-atlas-tabs");
+      tabs.setAttribute("role", "tablist"), tabs.setAttribute("aria-label", "Document details");
+      for (let id of SHEET_TABS) {
+        let tab = button(id === "links" ? "Links" : "Preview", "sheet-tab", "mr-atlas-tab");
+        id === "links" && tab.append(h("span", "", String(connected.length))), tab.dataset.tab = id, tab.id = `mr-atlas-tab-${id}`, tab.setAttribute("role", "tab"), tab.setAttribute("aria-selected", String(id === this.tab)), tab.setAttribute("aria-controls", "mr-atlas-sheet-panel"), tab.tabIndex = id === this.tab ? 0 : -1, tab.disabled = id === "preview" && !this.texts.has(place2.id), tabs.append(tab);
+      }
+      if (header.append(tabs), body.id = "mr-atlas-sheet-panel", body.setAttribute("role", "tabpanel"), body.setAttribute("aria-labelledby", `mr-atlas-tab-${this.tab}`), body.tabIndex = 0, this.tab === "preview") {
+        let content = h("div", "mr-atlas-preview"), rendered2 = this.render(place2.id).content, heading2 = rendered2.querySelector("h1");
+        heading2?.textContent?.trim() === place2.title && (heading2.hidden = !0), content.append(rendered2), body.append(content), body.scrollTop = this.previewScroll.path === place2.id ? this.previewScroll.top : 0;
+        return;
+      }
+      place2.state !== "indexed" && body.append(h("p", "mr-atlas-note", place2.state === "not-read" ? "Not indexed: its outgoing links are unknown." : "This document could not be indexed."));
+      let between = connected.filter((connection) => connection.from === this.focus || connection.to === this.focus);
+      if (place2.id !== this.focus && between.length) {
+        let why = h("section", "mr-atlas-why"), focusName = cardName(this.title(this.focus)).name;
+        why.append(h("h3", "", `How it connects to ${focusName}`));
+        for (let connection of between) {
+          why.append(h("p", "mr-atlas-why-direction", connection.from === place2.id ? `This links to ${focusName}` : `${focusName} links here`));
+          for (let at of connection.proof.keys()) at < 2 && why.append(this.proofItem(connection, at));
+          let count = connection.proof.length + connection.hiddenProof;
+          if (count > 2) {
+            let all2 = button(`See all ${count} source links`, "connection", "mr-btn mr-outline");
+            all2.dataset.id = connection.id, why.append(all2);
+          }
+        }
+        body.append(why);
+      }
+      let visible = new Set(connected.slice(0, this.connectionLimit));
+      for (let incoming of [!0, !1]) {
+        let links = connected.filter((connection) => (incoming ? connection.to : connection.from) === place2.id), group = h("section", "mr-atlas-link-group");
+        group.dataset.direction = incoming ? "incoming" : "outgoing";
+        let heading2 = h("h3", "", incoming ? "Linked from" : "Links to");
+        heading2.append(h("span", "", String(links.length))), group.append(heading2);
+        for (let connection of links.filter((connection2) => visible.has(connection2))) {
+          let target = this.place(incoming ? connection.from : connection.to), name2 = cardName(target.title), row = button("", "connection", "mr-atlas-connection");
+          row.dataset.id = connection.id, row.setAttribute("aria-label", `Inspect evidence: ${this.title(connection.from)} links to ${this.title(connection.to)}`);
+          let count = connection.proof.length + connection.hiddenProof;
+          row.append(h("strong", "", name2.name), h("small", "", `${name2.label ?? target.kind} · ${count} source ${count === 1 ? "link" : "links"}`)), group.append(row);
+        }
+        links.length || group.append(
+          h(
+            "p",
+            "mr-atlas-path",
+            incoming ? "No indexed documents link here." : place2.state === "indexed" ? "No outgoing document links found." : "Outgoing links have not been indexed."
+          )
+        ), body.append(group);
+      }
+      connected.length > this.connectionLimit && body.append(
+        button(`Show ${Math.min(12, connected.length - this.connectionLimit)} more connections`, "connections-more", "mr-btn mr-outline mr-atlas-more")
+      );
       let issues = this.index.problems.filter((problem3) => problem3.from === place2.id);
       if (issues.length) {
         let box = h("details", "mr-atlas-issues");
@@ -22435,17 +23485,20 @@ ${fixture === "dense" ? "[Next](000.md)" : ""}`
               `${issue.link.text}: ${issue.kind === "missing-anchor" ? `section “${issue.link.anchor}” was not found` : "document was not listed"} · line ${issue.link.line}`
             )
           );
-        issues.length > 12 && box.append(h("p", "", `${issues.length - 12} additional unresolved links beyond this preview budget.`)), detail.append(box);
+        issues.length > 12 && box.append(h("p", "", `${issues.length - 12} additional unresolved links beyond this preview budget.`)), body.append(box);
       }
+      let source2 = h("details", "mr-atlas-source");
+      source2.append(
+        h("summary", "", "Source and status"),
+        h("p", "mr-atlas-path", `${place2.path} · ${commit}`),
+        chip(null, "Documented"),
+        h("p", "mr-atlas-path", `${place2.kind} · ${KIND_SOURCES[place2.kindFrom]}`)
+      ), place2.kindFrom === "reader" && source2.append(h("p", "", `The source says ${place2.sourceKind} (${KIND_SOURCES[place2.sourceKindFrom]}); you set ${place2.kind}.`));
+      for (let status of place2.statuses) source2.append(chip(null, status));
+      body.append(source2);
     }
-    title(id) {
-      return this.model.places.find((place2) => place2.id === id).title;
-    }
-    read(path, proof, anchor) {
-      let text4 = this.texts.get(path);
-      if (text4 === void 0) return;
-      this.q(".mr-atlas-article").hidden && (this.mapScroll = this.root.scrollTop);
-      let rendered2 = renderDocument(document, {
+    render(path) {
+      let text4 = this.texts.get(path), rendered2 = renderDocument(document, {
         path,
         status: "modified",
         base: text4,
@@ -22453,123 +23506,233 @@ ${fixture === "dense" ? "[Next](000.md)" : ""}`
         links: this.source.links,
         origin: location.origin,
         images: "ask"
-      }), article = this.q(".mr-atlas-article");
-      article.replaceChildren(button("← Back to map", "return"), h("p", "mr-atlas-path", `${path} · ${this.source.commit.slice(0, 7)}`), rendered2.content), this.detailsOpen = !1, this.drawDetail(), this.q(".mr-atlas-map-view").hidden = !0, article.hidden = !1;
+      });
+      for (let diagram of rendered2.diagrams)
+        for (let version of diagram.versions)
+          version.view.hidden = !0, version.sourceDetails.open = !0;
+      return rendered2;
+    }
+    /** Selecting changes the sheet and the lit lines; the cards and the camera stay where the reader left them. */
+    select(id, tab = this.texts.has(id) ? "preview" : "links") {
+      this.selected = id, this.tab = tab, this.connection = null, this.connectionLimit = 12, this.detailsOpen = !0, this.recent = [id, ...this.recent.filter((other) => other !== id)].slice(0, 5), this.markSelection(), this.drawDetail(), this.mobile.matches && this.q('.mr-atlas-detail [data-act="close-details"]').focus();
+    }
+    showPreview(path, anchor) {
+      this.select(path, "preview"), anchor && [...this.q(".mr-atlas-preview").querySelectorAll("[id]")].find(
+        (el) => el.id === anchor || el.id === `user-content-${anchor}`
+      )?.scrollIntoView({ block: "start" });
+    }
+    /** Reading puts the document in the address, so it can be shared, reloaded and reached with Back and Forward. */
+    read(path, proof, anchor, push = !0) {
+      if (this.texts.get(path) === void 0) return;
+      let article = this.q(".mr-atlas-article");
+      if (article.hidden && (this.listScroll = (this.mobile.matches ? this.root : this.q(".mr-atlas-list")).scrollTop, this.sheetBeforeRead = this.detailsOpen), push) {
+        let url = new URL(location.href);
+        url.searchParams.set("doc", path), history.pushState({ atlasDepth: ++this.depth }, "", url);
+      }
+      this.closeResults();
+      let rendered2 = this.render(path);
+      article.replaceChildren(h("p", "mr-atlas-path", `${path} · ${this.source.commit.slice(0, 7)}`), rendered2.content), this.detailsOpen = !1, this.drawDetail(), this.q(".mr-atlas-map-view").hidden = !0, article.hidden = !1, this.root.classList.add("is-reading"), this.q('[data-act="return"]').hidden = !1;
+      let reading = this.q(".mr-atlas-reading");
+      reading.hidden = !1, reading.textContent = cardName(this.title(path)).name;
+      for (let choice of this.root.querySelectorAll(".mr-atlas-choices button")) choice.setAttribute("aria-pressed", "false");
       let target = (proof ? rendered2.blocks.find((block3) => block3.head && block3.head.lines[0] < proof.line && block3.head.lines[1] >= proof.line) : void 0)?.el ?? (anchor ? [...rendered2.content.querySelectorAll("[id]")].find((el) => el.id === anchor || el.id === `user-content-${anchor}`) : void 0);
-      target ? (target.classList.add("mr-flash"), target.scrollIntoView({ block: "center" })) : this.root.scrollTop = 0, article.querySelector("button").focus({ preventScroll: !0 });
-      for (let diagram of rendered2.diagrams) for (let version of diagram.versions) version.sourceDetails.open = !0;
+      target ? (target.classList.add("mr-flash"), target.scrollIntoView({ block: "center" })) : (article.scrollTop = 0, this.root.scrollTop = 0), this.q('[data-act="return"]').focus({ preventScroll: !0 });
     }
-    fit() {
-      this.camera = { x: 0, y: 0, zoom: 1 }, this.q(".mr-atlas-canvas").scrollTop = this.q(".mr-atlas-canvas").scrollLeft = 0, this.moveCamera();
-    }
-    moveCamera() {
-      this.q(".mr-atlas-world").style.transform = this.mobile.matches ? "" : `translate(${this.camera.x}px, ${this.camera.y}px) scale(${this.camera.zoom})`;
-    }
-    inspect() {
-      this.detailsOpen = !0, this.drawDetail(), this.mobile.matches ? this.q('.mr-atlas-detail [data-act="close-details"]').focus() : this.q(this.connection ? '[data-act="proof"]' : '.mr-atlas-detail [data-act="read"]').focus({ preventScroll: !0 });
-    }
+    /** Back to map retraces the entries reading added, so the browser's Back and Forward stay in step. */
     returnToMap() {
-      this.q(".mr-atlas-article").hidden = !0, this.q(".mr-atlas-map-view").hidden = !1, this.draw(), this.moveCamera(), [...this.root.querySelectorAll(".mr-atlas-place")].find(
-        (node3) => node3.getClientRects().length && node3.dataset.id === this.selected
-      )?.focus({ preventScroll: !0 }), this.root.scrollTop = this.mapScroll;
-    }
-    onClick = (event) => {
-      let link3 = event.target.closest("a[data-mr-path]");
-      if (link3 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
-        let [path, anchor] = link3.dataset.mrPath.split("#");
-        this.texts.has(path) && (event.preventDefault(), this.read(path, void 0, anchor));
+      if (this.depth > 0) {
+        history.go(-this.depth);
         return;
       }
-      let control = event.target.closest("[data-act]");
-      if (control) {
-        switch (control.dataset.act) {
-          case "close":
-            this.close();
-            return;
-          case "select":
-            this.selected = control.dataset.id, this.connection = null, this.connectionLimit = 12, this.draw(), this.inspect(), this.mobile.matches || [...this.root.querySelectorAll(".mr-atlas-place")].find((node2) => node2.getClientRects().length && node2.dataset.id === this.selected)?.focus({ preventScroll: !0 });
-            return;
-          case "connections-more":
-            this.connectionLimit += 12, this.drawDetail(), this.q(".mr-atlas-detail h3").tabIndex = -1, this.q(".mr-atlas-detail h3").focus();
-            return;
-          case "list-more":
-            this.listLimit += 100, this.drawList();
-            return;
-          case "connection":
-            this.connection = this.model.connections.find((connection) => connection.id === control.dataset.id), this.inspect();
-            return;
-          case "proof": {
-            let proof = this.connection.proof[Number(control.dataset.at)];
-            this.read(proof.path, proof);
-            return;
-          }
-          case "read":
-            this.read(control.dataset.id);
-            return;
-          case "return":
+      let url = new URL(location.href);
+      url.searchParams.delete("doc"), history.replaceState({ atlasDepth: 0 }, "", url), this.showMap();
+    }
+    /** The map as the reader left it: the same view, camera, scroll and sheet. */
+    showMap() {
+      this.q(".mr-atlas-article").hidden = !0, this.q(".mr-atlas-map-view").hidden = !1, this.root.classList.remove("is-reading"), this.q('[data-act="return"]').hidden = !0, this.q(".mr-atlas-reading").hidden = !0, this.detailsOpen = this.sheetBeforeRead, this.draw(), this.moveCamera(), (this.mobile.matches ? this.root : this.q(".mr-atlas-list")).scrollTop = this.listScroll, this.detailsOpen && this.mobile.matches ? this.q('.mr-atlas-detail [data-act="close-details"]').focus({ preventScroll: !0 }) : this.detailsOpen && this.connection ? this.q('.mr-atlas-detail [data-act="proof"]').focus({ preventScroll: !0 }) : this.detailsOpen && this.tab === "preview" ? this.q("#mr-atlas-tab-preview").focus({ preventScroll: !0 }) : this.focusSelected();
+    }
+    focusSelected() {
+      [...this.root.querySelectorAll(".mr-atlas-place")].find((node2) => node2.getClientRects().length && node2.dataset.id === this.selected)?.focus();
+    }
+    closeDetails() {
+      this.connection = null, this.tab = "preview", this.detailsOpen = !1, this.drawDetail(), this.focusSelected();
+    }
+    /** Fit shows the whole neighbourhood: at full size when it fits, otherwise scaled down and centred. */
+    fit() {
+      let canvas = this.q(".mr-atlas-canvas"), world = this.q(".mr-atlas-world");
+      if (canvas.scrollTop = canvas.scrollLeft = 0, this.stacked || !world.offsetWidth) this.camera = { x: 0, y: 0, zoom: 1 };
+      else {
+        let zoom = Math.max(ZOOM.min, Math.min(1, canvas.clientWidth / world.offsetWidth, canvas.clientHeight / world.offsetHeight));
+        this.camera = {
+          x: Math.round((canvas.clientWidth - world.offsetWidth * zoom) / 2),
+          y: Math.round((canvas.clientHeight - world.offsetHeight * zoom) / 2),
+          zoom
+        };
+      }
+      this.moveCamera();
+    }
+    /** Zoom keeps the point under the pointer (or the canvas centre) still. */
+    zoomTo(level, at) {
+      let canvas = this.q(".mr-atlas-canvas"), point = at ?? { x: canvas.clientWidth / 2, y: canvas.clientHeight / 2 }, zoom = Math.round(Math.min(ZOOM.max, Math.max(ZOOM.min, level)) * 100) / 100;
+      this.camera.x = point.x - (point.x - this.camera.x) * zoom / this.camera.zoom, this.camera.y = point.y - (point.y - this.camera.y) * zoom / this.camera.zoom, this.camera.zoom = zoom, this.moveCamera();
+    }
+    moveCamera() {
+      this.q(".mr-atlas-world").style.transform = this.stacked ? "" : `translate(${this.camera.x}px, ${this.camera.y}px) scale(${this.camera.zoom})`, this.q('[data-act="zoom-in"]').disabled = this.camera.zoom >= ZOOM.max, this.q('[data-act="zoom-out"]').disabled = this.camera.zoom <= ZOOM.min;
+    }
+    refocus(id) {
+      this.focus = this.selected = id, this.view = "map", this.connection = null, this.draw(), this.fit();
+    }
+    onClick = (event) => {
+      let target = event.target, setting = target.closest("[data-setting] [data-value]");
+      if (setting) {
+        this.update({ [setting.closest("[data-setting]").dataset.setting]: setting.dataset.value });
+        return;
+      }
+      let tab = target.closest("[data-settings-tab]");
+      if (tab) {
+        selectTab(this.q(".mr-settings"), tab.dataset.settingsTab);
+        return;
+      }
+      let link3 = target.closest("a[data-mr-path]");
+      if (link3 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+        let [path, anchor] = link3.dataset.mrPath.split("#");
+        this.texts.has(path) && (event.preventDefault(), link3.closest(".mr-atlas-preview") ? this.showPreview(path, anchor) : this.read(path, void 0, anchor));
+        return;
+      }
+      let control = target.closest("[data-act]");
+      if (!control) return;
+      let data = control.dataset;
+      switch (data.act) {
+        case "settings":
+          this.openSettings();
+          return;
+        case "close-settings":
+          this.closeSettings();
+          return;
+        case "smaller":
+          this.update({ size: Math.max(0, this.settings.size - 1) });
+          return;
+        case "larger":
+          this.update({ size: Math.min(TEXT_SIZES.length - 1, this.settings.size + 1) });
+          return;
+        case "top-glow":
+          this.update({ topGlow: !this.settings.topGlow });
+          return;
+        case "palette-prev":
+        case "palette-next":
+        case "palette-page":
+          this.palettes.onClick(data.act, control);
+          return;
+        case "close":
+          this.close();
+          return;
+        case "select":
+          this.select(data.id);
+          return;
+        case "sheet-tab":
+          this.tab = data.tab, this.drawDetail(), this.q(`#mr-atlas-tab-${this.tab}`).focus();
+          return;
+        case "connections-more":
+          this.connectionLimit += 12, this.drawDetail(), this.q(".mr-atlas-detail h3").tabIndex = -1, this.q(".mr-atlas-detail h3").focus();
+          return;
+        case "list-more":
+          this.listLimit += 100, this.drawList();
+          return;
+        case "connection":
+          this.connection = this.model.connections.find((connection) => connection.id === data.id), this.detailsOpen = !0, this.drawDetail(), this.q(this.mobile.matches ? '.mr-atlas-detail [data-act="close-details"]' : '.mr-atlas-detail [data-act="proof"]').focus({ preventScroll: !0 });
+          return;
+        case "proof": {
+          let proof = this.model.connections.find((connection) => connection.id === data.id).proof[Number(data.at)];
+          this.read(proof.path, proof);
+          return;
+        }
+        case "read":
+          this.read(data.id);
+          return;
+        case "return":
+          this.returnToMap();
+          return;
+        case "place-detail":
+          this.connection = null, this.tab = "links", this.drawDetail(), this.q("#mr-atlas-tab-links").focus({ preventScroll: !0 });
+          return;
+        case "close-details":
+          this.closeDetails();
+          return;
+        case "details":
+          this.detailsOpen ? this.closeDetails() : this.select(this.selected, this.tab);
+          return;
+        case "map":
+        case "list":
+          if (this.view = data.act, this.near = null, this.listQuery = "", !this.q(".mr-atlas-article").hidden) {
             this.returnToMap();
             return;
-          case "place-detail":
-            this.connection = null, this.inspect();
-            return;
-          case "close-details":
-            this.detailsOpen = !1, this.drawDetail(), [...this.root.querySelectorAll(".mr-atlas-place")].find((node2) => node2.getClientRects().length && node2.dataset.id === this.selected)?.focus();
-            return;
-          case "details":
-            this.inspect();
-            return;
-          case "map":
-            this.view = "map";
-            break;
-          case "list":
-            this.view = "list", this.region = null;
-            break;
-          case "overview":
-            this.view = "overview";
-            break;
-          case "region":
-            this.region = control.dataset.folder, this.view = "list", this.query = "", this.q("input").value = "";
-            break;
-          case "focus":
-            this.focus = this.selected, this.view = "map", this.connection = null, this.detailsOpen = !1, this.neighbours = 2;
-            break;
-          case "home":
-            this.focus = this.selected = this.here, this.view = "map", this.connection = null, this.neighbours = 2;
-            break;
-          case "more":
-            this.mobile.matches || this.view === "overview" || this.neighbours === 8 ? (this.view = "list", this.region = null) : this.neighbours = 8;
-            break;
-          case "fit":
-            this.fit();
-            return;
-          case "zoom-in":
-            this.camera.zoom = Math.min(1.5, this.camera.zoom + 0.1), this.moveCamera();
-            return;
-          case "zoom-out":
-            this.camera.zoom = Math.max(0.75, this.camera.zoom - 0.1), this.moveCamera();
-            return;
-        }
-        this.draw(), ["focus", "home", "overview"].includes(control.dataset.act) && this.fit();
+          }
+          this.draw(), this.view === "map" && this.fit();
+          return;
+        case "pick":
+          this.pick(Number(data.index));
+          return;
+        case "clear-query":
+          this.listQuery = "", this.listLimit = 100, this.drawList(), this.q(".mr-atlas-list .mr-atlas-place").focus();
+          return;
+        case "clear-near":
+          this.near = null, this.listLimit = 100, this.drawList(), this.q(".mr-atlas-list .mr-atlas-place").focus();
+          return;
+        case "focus":
+          this.refocus(this.selected);
+          return;
+        case "home":
+          this.refocus(this.here);
+          return;
+        case "more":
+          this.near = this.focus, this.listLimit = 100, this.view = "list", this.draw();
+          return;
+        case "fit":
+          this.fit();
+          return;
+        case "zoom-in":
+          this.zoomTo(this.camera.zoom + 0.1);
+          return;
+        case "zoom-out":
+          this.zoomTo(this.camera.zoom - 0.1);
+          return;
       }
     };
     onKey = (event) => {
+      let settingsOpen = !this.q(".mr-settings").hidden;
       if (event.key === "Escape") {
-        this.q(".mr-atlas-article").hidden ? this.detailsOpen ? this.q('.mr-atlas-detail [data-act="close-details"]').click() : this.view !== "map" ? (this.view = "map", this.draw()) : this.q('[data-act="close"]').click() : this.returnToMap(), event.preventDefault();
+        settingsOpen ? this.closeSettings() : this.q(".mr-atlas-article").hidden ? this.detailsOpen ? this.closeDetails() : this.view !== "map" ? (this.view = "map", this.near = null, this.listQuery = "", this.draw(), this.fit()) : this.close() : this.returnToMap(), event.preventDefault();
         return;
       }
-      if (event.key === "Tab" && this.mobile.matches && this.detailsOpen) {
-        let buttons = [...this.q(".mr-atlas-detail").querySelectorAll("button,summary")].filter((node2) => node2.getClientRects().length), active3 = this.root.getRootNode(), first = buttons[0], last = buttons.at(-1);
-        event.shiftKey && active3.activeElement === first ? (event.preventDefault(), last.focus()) : !event.shiftKey && active3.activeElement === last && (event.preventDefault(), first.focus());
+      let target = event.target, settingsTab = target.matches("[data-settings-tab]") ? nextTab(SETTINGS_TABS3, target.dataset.settingsTab, event.key) : null;
+      if (settingsTab) {
+        event.preventDefault(), selectTab(this.q(".mr-settings"), settingsTab, !0);
+        return;
       }
-      if (event.key === "Tab" && !(this.mobile.matches && this.detailsOpen)) {
-        let controls = [...this.root.querySelectorAll('button, input, select, summary, a[href], [tabindex="0"]')].filter(
-          (node2) => node2.getClientRects().length && !node2.closest("[inert]")
+      let sheetTab = target.matches(".mr-atlas-tab") ? nextTab(SHEET_TABS, target.dataset.tab, event.key) : null;
+      if (sheetTab && !(sheetTab === "preview" && !this.texts.has(this.selected))) {
+        event.preventDefault(), this.tab = sheetTab, this.drawDetail(), this.q(`#mr-atlas-tab-${sheetTab}`).focus();
+        return;
+      }
+      let typing = target.matches("input,select,textarea");
+      if (!typing && !settingsOpen && event.key === "/") {
+        event.preventDefault(), this.q("input").focus();
+        return;
+      }
+      if (!typing && [",", "?"].includes(event.key)) {
+        event.preventDefault(), this.openSettings(event.key === "?" ? "keys" : "reading");
+        return;
+      }
+      if (event.key === "Tab") {
+        let controls = [...(this.mobile.matches && this.detailsOpen ? this.q(".mr-atlas-detail") : this.root).querySelectorAll('button, input, select, summary, a[href], [tabindex="0"]')].filter(
+          (node2) => node2.getClientRects().length && !node2.closest("[inert]") && !node2.matches(':disabled,[tabindex="-1"]')
         ), active3 = this.root.getRootNode().activeElement;
         event.shiftKey && active3 === controls[0] ? (event.preventDefault(), controls.at(-1).focus()) : !event.shiftKey && active3 === controls.at(-1) && (event.preventDefault(), controls[0].focus());
+        return;
       }
-      if (event.target !== this.q(".mr-atlas-canvas") || this.mobile.matches) return;
+      if (event.target !== this.q(".mr-atlas-canvas") || this.stacked) return;
       let moves = { ArrowLeft: [60, 0], ArrowRight: [-60, 0], ArrowUp: [0, 60], ArrowDown: [0, -60] };
-      moves[event.key] ? (event.preventDefault(), this.camera.x += moves[event.key][0], this.camera.y += moves[event.key][1], this.moveCamera()) : event.key === "0" ? this.fit() : (event.key === "+" || event.key === "-") && this.q(`[data-act="zoom-${event.key === "+" ? "in" : "out"}"]`).click();
+      moves[event.key] ? (event.preventDefault(), this.camera.x += moves[event.key][0], this.camera.y += moves[event.key][1], this.moveCamera()) : event.key === "0" ? this.fit() : event.key === "+" || event.key === "=" ? this.zoomTo(this.camera.zoom + 0.1) : event.key === "-" && this.zoomTo(this.camera.zoom - 0.1);
     };
   };
 
