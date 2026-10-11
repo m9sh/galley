@@ -32,17 +32,17 @@ const bundles = [
   { name: 'popup', entryPoints: ['src/popup/popup.ts'], outfile: 'dist/.build/popup.js', shipped: true },
   { name: 'options', entryPoints: ['src/options/options.ts'], outfile: 'dist/.build/options.js', shipped: true },
   { name: 'background', entryPoints: ['src/background/worker.ts'], outfile: 'dist/.build/background.js', shipped: true },
-  // Mermaid and highlight.js run only inside sandboxed frames (src/ui/sandbox.ts), never in the page.
+  // Mermaid and highlight.js run only inside sandboxed frames (src/ui/sandbox/sandbox.ts), never in the page.
   // Mermaid, unmodified from npm, is minified: readable it is over 10 MB, and addons.mozilla.org does not
   // scan a file over 5 MB. Minified it is still 5.2 MB, so its layout engine, elkjs, is a script of its
-  // own that src/ui/elk-shim.ts loads on first use. Our own bundles stay readable.
+  // own that src/ui/sandbox/elk-shim.ts loads on first use. Our own bundles stay readable.
   {
     name: 'diagram-frame',
-    entryPoints: ['src/ui/diagram-frame.ts'],
+    entryPoints: ['src/ui/sandbox/diagram-frame.ts'],
     outfile: 'dist/.build/diagram-frame.js',
     shipped: true,
     minify: true,
-    alias: { 'elkjs/lib/elk.bundled.js': './src/ui/elk-shim.ts' },
+    alias: { 'elkjs/lib/elk.bundled.js': './src/ui/sandbox/elk-shim.ts' },
   },
   {
     name: 'elk',
@@ -52,13 +52,14 @@ const bundles = [
     minify: true,
     globalName: '__galleyELK',
   },
-  { name: 'highlight-frame', entryPoints: ['src/ui/highlight-frame.ts'], outfile: 'dist/.build/highlight-frame.js', shipped: true },
-  { name: 'spec-frame', entryPoints: ['src/ui/spec-frame.ts'], outfile: 'dist/.build/spec-frame.js', shipped: true },
-  // The YAML parser reads repository configuration only inside its frame (src/ui/configs.ts).
-  { name: 'config-frame', entryPoints: ['src/ui/config-frame.ts'], outfile: 'dist/.build/config-frame.js', shipped: true },
+  { name: 'highlight-frame', entryPoints: ['src/ui/sandbox/highlight-frame.ts'], outfile: 'dist/.build/highlight-frame.js', shipped: true },
+  { name: 'spec-frame', entryPoints: ['src/ui/sandbox/spec-frame.ts'], outfile: 'dist/.build/spec-frame.js', shipped: true },
+  // The YAML parser reads repository configuration only inside its frame (src/ui/library/configs.ts).
+  { name: 'config-frame', entryPoints: ['src/ui/sandbox/config-frame.ts'], outfile: 'dist/.build/config-frame.js', shipped: true },
+  { name: 'image-frame', entryPoints: ['src/ui/sandbox/image-frame.ts'], outfile: 'dist/.build/image-frame.js', shipped: true },
   { name: 'demo', entryPoints: ['demo/main.ts'], outfile: 'demo/build/demo.js', shipped: false },
 ];
-const FRAMES = ['diagram-frame', 'highlight-frame', 'spec-frame', 'config-frame'];
+const FRAMES = ['diagram-frame', 'highlight-frame', 'spec-frame', 'config-frame', 'image-frame'];
 const metafiles = new Map();
 
 /** License texts of every npm package that ends up inside the shipped bundles. */
@@ -80,7 +81,7 @@ async function thirdPartyNotices() {
   }
   for (const font of ['Newsreader', 'DM-Sans']) {
     text += `${'-'.repeat(72)}\n${font} — SIL Open Font License 1.1\n\n`;
-    text += `${(await readFile(`${root}src/ui/fonts/${font}-OFL.txt`, 'utf8')).trim()}\n\n`;
+    text += `${(await readFile(`${root}src/ui/components/fonts/${font}-OFL.txt`, 'utf8')).trim()}\n\n`;
   }
   return text;
 }
@@ -100,7 +101,7 @@ async function assemble() {
   await mkdir(`${root}demo/build`, { recursive: true });
   for (const frame of FRAMES) {
     await cp(`${root}dist/.build/${frame}.js`, `${root}demo/build/${frame}.js`);
-    await cp(`${root}src/ui/${frame}.html`, `${root}demo/build/${frame}.html`);
+    await cp(`${root}src/ui/sandbox/${frame}.html`, `${root}demo/build/${frame}.html`);
   }
   await cp(`${root}dist/.build/elk.js`, `${root}demo/build/elk.js`);
   const manifest = JSON.parse(await readFile(`${root}src/manifest.json`, 'utf8'));
@@ -113,7 +114,7 @@ async function assemble() {
     await cp(`${root}dist/.build/content.js`, `${out}/content.js`);
     for (const frame of FRAMES) {
       await cp(`${root}dist/.build/${frame}.js`, `${out}/${frame}.js`);
-      await cp(`${root}src/ui/${frame}.html`, `${out}/${frame}.html`);
+      await cp(`${root}src/ui/sandbox/${frame}.html`, `${out}/${frame}.html`);
     }
     await cp(`${root}dist/.build/elk.js`, `${out}/elk.js`);
     await cp(`${root}dist/.build/popup.js`, `${out}/popup.js`);

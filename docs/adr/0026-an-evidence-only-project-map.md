@@ -33,7 +33,7 @@ A project map is useful only if the reader can trust it. Maps drawn from guesses
 
 ## Enforcement
 
-- `src/core/docindex.test.ts`, `src/core/architecture.test.ts` (origins, suggestions capped and whole-word, conflicting statuses kept), `src/ui/repo-map.test.ts` and `src/ui/repo-lenses.test.ts`.
+- `src/core/docindex.test.ts`, `src/core/architecture.test.ts` (origins, suggestions capped and whole-word, conflicting statuses kept), `src/ui/library/repo-map.test.ts` and `src/ui/library/repo-lenses.test.ts`.
 - `e2e/repo.mjs` checks the map's columns, its evidence and its phone layout in Chrome.
 
 ## References

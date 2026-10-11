@@ -14,7 +14,7 @@ tags: [privacy, storage, repository]
 
 ## Decision
 
-- Notes, proposed entities and connections, and the types a reader sets are one `Thinking` value per repository (`src/core/notes.ts`), stored in `chrome.storage.local` (the demo uses `localStorage`) under **`galley:project:<sha256 of the repository id>`** (`src/ui/project-store.ts`). The key names no repository. The value holds what the reader wrote and, for each anchored note, the document's path, its title and heading as a label, the commit and a SHA-256 of the section; no other document content.
+- Notes, proposed entities and connections, and the types a reader sets are one `Thinking` value per repository (`src/core/notes.ts`), stored in `chrome.storage.local` (the demo uses `localStorage`) under **`galley:project:<sha256 of the repository id>`** (`src/ui/library/project-store.ts`). The key names no repository. The value holds what the reader wrote and, for each anchored note, the document's path, its title and heading as a label, the commit and a SHA-256 of the section; no other document content.
 - **Saving is explicit.** Changes are kept as a **draft** in the same entry a second after each change and when the reader closes; a draft from an earlier visit is **offered for recovery**, never applied by itself. Writes are queued, so a draft never overwrites a save. Storage that refuses a write is said, and the notes stay open and unsaved. At most 500 notes per repository and 1,000,000 stored characters; past that, saving says so.
 - **Anchors** keep the document path, heading, commit and section fingerprint. At another commit a note is "unchanged", "changed: reconfirm" or "gone: detach"; Galley never moves a note to another section by itself.
 - **Deleting all notes** asks first and removes the entry. Single notes are deleted from the open notes and from storage on the next save.
@@ -36,7 +36,7 @@ tags: [privacy, storage, repository]
 
 ## Enforcement
 
-- `src/ui/project-store.test.ts` (fingerprinted key, drafts and saves in order, failures said, size limit), `src/core/notes.test.ts` (validation, anchors, exports), `src/ui/repo-notes.test.ts` (save, recover, discard, delete all, export preview, issue link).
+- `src/ui/library/project-store.test.ts` (fingerprinted key, drafts and saves in order, failures said, size limit), `src/core/notes.test.ts` (validation, anchors, exports), `src/ui/library/repo-notes.test.ts` (save, recover, discard, delete all, export preview, issue link).
 - [PRIVACY.md](../../PRIVACY.md) and the [storage inventory](../architecture/storage.md) must list the key; reviewers treat a new key or field as a privacy change.
 
 ## References

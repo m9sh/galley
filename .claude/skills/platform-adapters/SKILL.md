@@ -26,7 +26,7 @@ The reader never talks to a platform directly. Each platform returns a `ReviewSo
 - **Pin every read to a revision** (a SHA), so a moving branch cannot mix versions; check the revision is current before any write.
 - **Retry reads, never writes.** Reads retry twice for network errors, 408 and 5xx, and short `Retry-After` cooldowns; quota, SSO, permission and not-found errors fail at once with a helpful `ReaderError(message, hint, needsToken)`.
 - **Count your requests.** Unauthenticated GitHub allows 60 an hour; the [user guide](../../../docs/GUIDE.md#github-githubcom-and-enterprise-server) states what a review costs. Keep it true.
-- **Stay on the platform's origin.** Thread and "View on platform" links go through `platformLink()` in `src/ui/render.ts`; no other host is contacted.
+- **Stay on the platform's origin.** Thread and "View on platform" links go through `platformLink()` in `src/ui/rendering/render.ts`; no other host is contacted.
 - **Keep both platforms working.** A new `ReviewSource` member is optional; implement it for GitLab or show that it is GitHub-only in the interface.
 - **Self-hosted parity:** GitHub Enterprise Server uses `/api/v3` and `/api/graphql` on its own origin; GitLab instances can live under a sub-path. Test both shapes.
 

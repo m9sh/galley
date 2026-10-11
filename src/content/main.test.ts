@@ -18,9 +18,9 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock('../platforms/detect.ts', () => ({ detectContext: mocks.detectContext, detectRepository: mocks.detectRepository }));
 vi.mock('../platforms/index.ts', () => ({ loadSource: mocks.loadSource, loadRepository: mocks.loadRepository }));
-vi.mock('../ui/reader.ts', () => ({ openReader: mocks.openReader }));
-vi.mock('../ui/repo-reader.ts', () => ({ openRepository: mocks.openRepository }));
-vi.mock('../ui/launcher.ts', () => ({
+vi.mock('../ui/review/reader.ts', () => ({ openReader: mocks.openReader }));
+vi.mock('../ui/library/repo-reader.ts', () => ({ openRepository: mocks.openRepository }));
+vi.mock('../ui/opening/launcher.ts', () => ({
   Launcher: class {
     show = mocks.show;
     hide = mocks.hide;
@@ -190,7 +190,7 @@ it('keeps the error launcher when the retry fails too, without an unhandled reje
   expect(mocks.show).toHaveBeenCalledOnce();
 });
 
-it('offers repository pages Read docs without fetching anything until it is chosen', async () => {
+it('offers repository pages Read the project without fetching anything until it is chosen', async () => {
   context = null;
   const page = (path: string): RepoContext => ({
     platform: 'github',

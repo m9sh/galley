@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, expect, vi } from 'vitest';
 import type { RepoDiscovery } from '../core/discovery.ts';
 import { ReaderError, type RepositorySource } from '../platforms/types.ts';
-import { storageIdle } from '../ui/project-store.ts';
-import { openRepository, type RepoReaderHandle } from '../ui/repo-reader.ts';
+import { storageIdle } from '../ui/library/project-store.ts';
+import { openRepository, type RepoReaderHandle } from '../ui/library/repo-reader.ts';
 
 /** A small handbook: a README, a decision that links to a spec, and the spec. */
 export const handbook: Record<string, string> = {

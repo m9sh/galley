@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, vi } from 'vitest';
-import { openReader, type ReaderHandle } from '../ui/reader.ts';
+import { openReader, type ReaderHandle } from '../ui/review/reader.ts';
 import type { DocContents, DocRef, ReviewSource } from '../platforms/types.ts';
 
 export function deferred<T>() {

@@ -34,7 +34,7 @@ Large reviews are easier when Galley says what each part is: a test file read as
 
 ## Enforcement
 
-- `src/ui/spec-frame.test.ts`, `src/ui/specs.test.ts`, `src/ui/symbols.test.ts`, and `e2e/specs.mjs` in Chrome.
+- `src/ui/sandbox/spec-frame.test.ts`, `src/ui/rendering/specs.test.ts`, `src/ui/rendering/symbols.test.ts`, and `e2e/specs.mjs` in Chrome.
 - Reviewers reject any `eval`, `Function` or dynamic `import()` of reviewed content.
 
 ## References
