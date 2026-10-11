@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.15.0](https://github.com/m9sh/galley/compare/v0.14.0...v0.15.0) (2026-10-11)
+
+
+### Features
+
+* **reader:** connect chapters to project context ([40ce249](https://github.com/m9sh/galley/commit/40ce249203530ffafa9bd0606f2fb4c9abd28305))
+* **reader:** connect chapters to project context ([3934a10](https://github.com/m9sh/galley/commit/3934a100a47e01705777a1f3ca673a89f963d6d8))
+
 ## [0.14.0](https://github.com/m9sh/galley/compare/v0.13.0...v0.14.0) (2026-10-11)
 
 
