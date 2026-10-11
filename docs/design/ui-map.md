@@ -36,7 +36,7 @@ Below 1,280 pixels the contents rail disappears and cards sit under the paragrap
 
 | Surface | What the reviewer sees | Code | States and notes | Tested in |
 | --- | --- | --- | --- | --- |
-| Launcher | **Read** button with a count, bottom right of a pull or merge request | `src/ui/launcher.ts`, `#galley-launcher` | Count of documents, or of code files when there are no documents; **!** in red when loading failed (click retries); **×** hides it for this page; orange **DEV** tag in the development build | `launcher.test.ts`, `launcher.dev.test.ts` |
+| Launcher | **Read** button with a count, bottom right of a pull or merge request | `src/ui/opening/launcher.ts`, `#galley-launcher` | Count of documents, or of code files when there are no documents; **!** in red when loading failed (click retries); **×** hides it for this page; orange **DEV** tag in the development build | `launcher.test.ts`, `launcher.dev.test.ts` |
 | Toolbar popup | Galley's icon in the browser toolbar | `src/popup/popup.html`, `popup.ts`, `popup.css` | **Read this review** or **Read the project** first, with the page's name and no file-list request; **Enable on <site>** for self-hosted GitLab or GitHub Enterprise; **GitHub token** form on GitHub sites (**Save token**, status line); **Settings…** beside the wordmark, key hints in the footer | `popup.test.ts`, `popup.dev.test.ts`, `e2e/opening.mjs` |
 | Extension settings | **Galley settings**, **Opening the reader**, **Read button on the page** | `src/options/`, `options_ui` in the manifest | Page buttons start on; off means no eager file-list request, while the toolbar and shortcut remain available; read/write failures explain what was not saved | `options.test.ts`, `settings.test.ts`, `e2e/opening.mjs` |
 | Extension shortcut | **Read this page in Galley** | `src/manifest.json`, `src/background/worker.ts`, `src/content/main.ts` | Suggested <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>R</kbd>, configurable in the browser; opens the current review or repository reader, or focuses an already open reader without replacing drafts | `worker.test.ts`, `main.test.ts` |
@@ -64,7 +64,7 @@ Below 1,280 pixels the contents rail disappears and cards sit under the paragrap
 | Surface | What the reviewer sees | Code | States and notes |
 | --- | --- | --- | --- |
 | Document menu | Every changed file with folder and status, under the request title; "1 of 3 viewed" | `.mr-menu.mr-files`, `role="menu"` | Tags and counts folded files (`.mr-files-folded`); closes on outside click and <kbd>Esc</kbd> |
-| Chapter map | **Start here** or **Continue here**, chapters with their reason and files, **All files**, **Edit chapters**, **New chapter**, **Reset chapters** | `src/ui/chapters.ts` (`ChapterMap`, `.mr-chapters`), grouping in `src/core/chapters.ts` | Route bar (`.mr-chapter-route`) and **Next chapter** for six or more files; **Other changed files** link to the platform diff; edits last for the session ([ADR 0022](../adr/0022-review-chapters-from-evidence.md)) |
+| Chapter map | **Start here** or **Continue here**, chapters with their reason and files, **All files**, **Edit chapters**, **New chapter**, **Reset chapters** | `src/ui/review/chapters.ts` (`ChapterMap`, `.mr-chapters`), grouping in `src/core/chapters.ts` | Route bar (`.mr-chapter-route`) and **Next chapter** for six or more files; **Other changed files** link to the platform diff; edits last for the session ([ADR 0022](../adr/0022-review-chapters-from-evidence.md)) |
 | Settings sheet | **Reading settings**, four tabs: **Reading**, **Layout**, **Review**, **Keys** | `.mr-settings` → `.mr-settings-panel` (`role="dialog"`, `aria-modal`) | Changes apply at once and persist (`updateSettings()` merges only the changed choice); the page behind is `inert`; arrow keys move between tabs; bottom sheet on phones. Contents in the [user guide](../GUIDE.md#settings) |
 | Enlarged diagram | The diagram over the whole window with a zoom bar | `.mr-lightbox` | Fit on open; pinch, ⌘/Ctrl + scroll, double-click, <kbd>+</kbd> <kbd>−</kbd> <kbd>0</kbd>, arrow keys and drag; closes on backdrop, **×** or <kbd>Esc</kbd> |
 
@@ -86,22 +86,22 @@ Every changed file is a `section.mr-document` with `aria-label` set to its path 
 | Part | What the reviewer sees | Code | States and notes |
 | --- | --- | --- | --- |
 | Word edits | Inserted words highlighted, removed words struck through | `ins.mr-ins`, `del.mr-del` (`src/core/highlight.ts`) | Clean mode (<kbd>C</kbd>) hides them |
-| Rewritten and new blocks | A block rewritten by more than 60% as old then new (`.mr-rewritten`); new blocks marked only by the margin bar; added table rows (`.mr-row-added`) | `src/ui/render.ts` | Removed blocks stay in place, muted, under a small label |
-| Unchanged blocks | **N unchanged blocks**, one toggle per folded stretch | `src/ui/reading.ts` (`.mr-context-toggle`, `.mr-context-gap`) | <kbd>A</kbd> switches **Changed parts** and **Whole files** |
+| Rewritten and new blocks | A block rewritten by more than 60% as old then new (`.mr-rewritten`); new blocks marked only by the margin bar; added table rows (`.mr-row-added`) | `src/ui/rendering/render.ts` | Removed blocks stay in place, muted, under a small label |
+| Unchanged blocks | **N unchanged blocks**, one toggle per folded stretch | `src/ui/rendering/reading.ts` (`.mr-context-toggle`, `.mr-context-gap`) | <kbd>A</kbd> switches **Changed parts** and **Whole files** |
 | Link changes | The new destination named in the text | `.mr-link-note` | For links whose text stayed the same |
 | Held image | Host name and **Load** | `.mr-img-hold`, `.mr-img-load` | [ADR 0010](../adr/0010-external-images-behind-consent.md) |
 | Alerts, tasks, tables, footnotes, front matter | GitHub-style alerts, task boxes, tables with cell edits, a metadata card | `.mr-alert-*`, `.mr-task`, `.mr-table`, `.mr-meta` | Front matter renders as a card |
-| Diagram | A Mermaid figure; **Before** and **After** when edited; **View source** | `src/ui/diagrams.ts` (`.mr-diagram-view`, `.mr-diagram-version`, `.mr-diagram-source`) | Opens enlarged on click; invalid diagrams keep their source |
+| Diagram | A Mermaid figure; **Before** and **After** when edited; **View source** | `src/ui/rendering/diagrams.ts` (`.mr-diagram-view`, `.mr-diagram-version`, `.mr-diagram-source`) | Opens enlarged on click; invalid diagrams keep their source |
 
 ### Inside a code file
 
 | Part | What the reviewer sees | Code | States and notes |
 | --- | --- | --- | --- |
-| Code lines | Old and new line numbers, `+` / `−`, the line, wrapped under its indentation | `src/ui/code.ts`, `code-files.ts` (`.mr-code-line`, `.mr-code-number`, `.mr-code-sign`, `.mr-code-text`) | Two context lines around changes; signs optional (`no-signs`); syntax colours arrive later from the highlight frame |
-| In this file | One quiet line naming changed functions, classes, methods and types | `src/ui/symbols.ts` (`.mr-symbol-plan`) | JavaScript and TypeScript with more than one change; each name links to its first changed line |
-| Moved code | Its own tint, and **Moved to …** / **Moved from …** notes that link to the other end | `src/ui/moves.ts` (`.mr-move-note`, `.mr-move-link`) | At least two distinctive lines and 40 characters |
-| Code comments | Comments as formatted notes beside their code, labelled with their lines | `src/ui/source-comments.ts` (`.mr-source-comment`) | **Settings → Review → Code comments → Source** shows them as written |
-| Test plan | Summary, counts, **Browse tests**, suites as headings, each test as a card | `src/ui/specs.ts` (`.mr-spec-plan`, `.mr-spec-summary`, `.mr-spec-browse`) | **Whole file (raw)** switch per file; **Settings → Review → Test files** for all |
+| Code lines | Old and new line numbers, `+` / `−`, the line, wrapped under its indentation | `src/ui/rendering/code.ts`, `code-files.ts` (`.mr-code-line`, `.mr-code-number`, `.mr-code-sign`, `.mr-code-text`) | Two context lines around changes; signs optional (`no-signs`); syntax colours arrive later from the highlight frame |
+| In this file | One quiet line naming changed functions, classes, methods and types | `src/ui/rendering/symbols.ts` (`.mr-symbol-plan`) | JavaScript and TypeScript with more than one change; each name links to its first changed line |
+| Moved code | Its own tint, and **Moved to …** / **Moved from …** notes that link to the other end | `src/ui/review/moves.ts` (`.mr-move-note`, `.mr-move-link`) | At least two distinctive lines and 40 characters |
+| Code comments | Comments as formatted notes beside their code, labelled with their lines | `src/ui/rendering/source-comments.ts` (`.mr-source-comment`) | **Settings → Review → Code comments → Source** shows them as written |
+| Test plan | Summary, counts, **Browse tests**, suites as headings, each test as a card | `src/ui/rendering/specs.ts` (`.mr-spec-plan`, `.mr-spec-summary`, `.mr-spec-browse`) | **Whole file (raw)** switch per file; **Settings → Review → Test files** for all |
 
 ### Comments
 
@@ -125,11 +125,11 @@ Every changed file is a `section.mr-document` with `aria-label` set to its path 
 
 ## The repository reader
 
-Its own shadow root under `#galley-repo-reader` (`#galley-repo-reader-dev` in development), with the reader's palettes, typography and components (`src/ui/repo-reader.ts`, `src/ui/repo.css`; views built in `src/ui/repo-views.ts` from the shared builders in `src/ui/dom.ts`). Clicks go through `RepoReader.onClick()`, changes through `onChange()`, forms through `onSubmit()`, by `data-act`.
+Its own shadow root under `#galley-repo-reader` (`#galley-repo-reader-dev` in development), with the reader's palettes, typography and components (`src/ui/library/repo-reader.ts`, `src/ui/library/repo.css`; views built in `src/ui/library/repo-views.ts` from the shared builders in `src/ui/components/dom.ts`). Clicks go through `RepoReader.onClick()`, changes through `onChange()`, forms through `onSubmit()`, by `data-act`.
 
 | Surface | What the reader sees | Code | States and notes | Tested in |
 | --- | --- | --- | --- | --- |
-| Launcher | **Read the project**, no count, on repository, folder and Markdown file pages | `src/ui/launcher.ts` | **×** "Hide for this repository" | `launcher.test.ts`, `e2e/repo.mjs` |
+| Launcher | **Read the project**, no count, on repository, folder and Markdown file pages | `src/ui/opening/launcher.ts` | **×** "Hide for this repository" | `launcher.test.ts`, `e2e/repo.mjs` |
 | Top bar | Close, wordmark, **Back** / **Forward**, the document name (the documents list), the views, the commit, settings | `.mr-topbar`, `.mr-repo-history`, `.mr-repo-views`, `.mr-repo-commit` | Views **This review** (only from a review), **Read**, **Map** (<kbd>M</kbd>), **Notes** (<kbd>N</kbd>): words on wide screens, icons up to 760 pixels; the commit is a refresh button, disabled when pinned. Opened from a review, close reads "Back to the review (Esc)" | `repo-reader.test.ts`, `repo-review.test.ts` |
 | Project library browser | Outline of folders, search, what the listing could not cover | `.mr-repo-docs`, `.mr-repo-outline`, `.mr-repo-search` | <kbd>/</kbd>; documents a review changes carry **Changed** (`.mr-chip.is-modified`) | `repo-map.test.ts` |
 | Settings sheet | **Reading settings**, three tabs: **Reading** (the review reader's own, plus **External images**), **Layout** and **Keys** | `settingsSheet()` from `settings-sheet.ts` → `.mr-settings` → `.mr-settings-panel` | Shared sheet and Reading preferences; `layoutPanel('library')` from `layout-controls.ts` offers Focus / Balanced / Wide text with `LibraryLayout` session state; <kbd>L</kbd> cycles them without changing the review; keys <kbd>,</kbd> and <kbd>?</kbd>; the reader behind is `inert` | `repo-reader.test.ts` |

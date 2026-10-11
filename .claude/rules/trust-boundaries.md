@@ -1,10 +1,10 @@
 ---
 paths:
-  - "src/ui/render.ts"
-  - "src/ui/sandbox*.ts"
-  - "src/ui/*-frame.*"
-  - "src/ui/diagrams.ts"
-  - "src/ui/code.ts"
+  - "src/ui/rendering/render.ts"
+  - "src/ui/sandbox/**"
+  - "src/ui/rendering/image.ts"
+  - "src/ui/rendering/diagrams.ts"
+  - "src/ui/rendering/code.ts"
   - "src/core/paths.ts"
   - "src/core/limits.ts"
   - "src/platforms/**"

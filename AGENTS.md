@@ -29,7 +29,7 @@ npm run build            # dist/chrome and dist/firefox
 Each is an accepted decision; breaking one needs a new ADR, not an exception.
 
 - **No server, telemetry, analytics or remote code.** Galley talks only to the GitHub or GitLab site in use ([ADR 0002](docs/adr/0002-no-server-no-telemetry.md)).
-- **Never write a string as HTML.** Content goes through `sanitize()` in `src/ui/render.ts` or becomes text nodes; the Biome rule `lint/no-unsanitized-html.grit` enforces it ([ADR 0006](docs/adr/0006-sanitise-all-rendered-html.md)).
+- **Never write a string as HTML.** Content goes through `sanitize()` in `src/ui/rendering/render.ts` or becomes text nodes; the Biome rule `lint/no-unsanitized-html.grit` enforces it ([ADR 0006](docs/adr/0006-sanitise-all-rendered-html.md)).
 - **GitHub tokens never enter the page.** Only `src/background/worker.ts` uses them, for the calls allowed in `src/platforms/github-api.ts` ([ADR 0009](docs/adr/0009-github-tokens-in-the-background-worker.md)).
 - **Third-party engines run in sandbox frames; repository code never runs** ([ADR 0011](docs/adr/0011-sandbox-third-party-engines.md), [ADR 0020](docs/adr/0020-read-code-statically.md)).
 - **Platform writes happen once, on an explicit action, and are never retried** ([ADR 0008](docs/adr/0008-comment-through-platform-review-apis.md)).

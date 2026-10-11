@@ -16,8 +16,8 @@ Reviewers mark files as viewed, and on large reviews they come back over several
 ## Decision
 
 - **With a GitHub token**, Viewed reads and updates GitHub's native state (GraphQL `markFileAsViewed` and `unmarkFileAsViewed`), after checking the review revision is current. A failure keeps the previous state and says so.
-- **Otherwise** (no token, and on GitLab), Viewed is stored in extension storage under `galley:viewed:<sha256>`, a fingerprint of the review address, the file's paths and status, and **both versions' contents** (`src/ui/viewed.ts`). A changed file gets a new key, so progress resets for that file only. No content is stored.
-- **Reading position** ("pick up where you left off") keeps, per review, a fingerprint of the review address, a fingerprint of the file's path, a scroll offset and a time, for the **50 most recent reviews** (`galley:positions`, `src/ui/positions.ts`). Never the address or path themselves.
+- **Otherwise** (no token, and on GitLab), Viewed is stored in extension storage under `galley:viewed:<sha256>`, a fingerprint of the review address, the file's paths and status, and **both versions' contents** (`src/ui/review/viewed.ts`). A changed file gets a new key, so progress resets for that file only. No content is stored.
+- **Reading position** ("pick up where you left off") keeps, per review, a fingerprint of the review address, a fingerprint of the file's path, a scroll offset and a time, for the **50 most recent reviews** (`galley:positions`, `src/ui/review/positions.ts`). Never the address or path themselves.
 - The Viewed button's tooltip says where progress is saved. Save failures are surfaced, never reported as saved.
 - Only explicit actions count as progress: marking Viewed. Scrolling does not.
 
@@ -34,7 +34,7 @@ Reviewers mark files as viewed, and on large reviews they come back over several
 
 ## Enforcement
 
-- `src/ui/viewed.test.ts`, `src/ui/positions.test.ts`, `src/platforms/github-viewed.test.ts` and the resume tests in `src/ui/reader-large.test.ts`.
+- `src/ui/review/viewed.test.ts`, `src/ui/review/positions.test.ts`, `src/platforms/github-viewed.test.ts` and the resume tests in `src/ui/review/reader-large.test.ts`.
 - [PRIVACY.md](../../PRIVACY.md) (Viewed progress, Reading position) and [the storage inventory](../architecture/storage.md) must match the code; reviewers treat a new key as a privacy change.
 
 ## References

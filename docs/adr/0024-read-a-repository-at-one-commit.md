@@ -37,7 +37,7 @@ tags: [repository, platforms]
 ## Enforcement
 
 - `src/platforms/github-repo.test.ts` and `src/platforms/gitlab-repo.test.ts`: one commit for every read, shortest-first refs, re-listing a truncated tree, pinned commit pages.
-- `src/core/discovery.test.ts` (budgets and their messages), `src/core/docindex.test.ts` (passes), `src/ui/repo-map.test.ts` ("checking for a newer commit keeps the snapshot when nothing moved, and starts over when it did").
+- `src/core/discovery.test.ts` (budgets and their messages), `src/core/docindex.test.ts` (passes), `src/ui/library/repo-map.test.ts` ("checking for a newer commit keeps the snapshot when nothing moved, and starts over when it did").
 - `e2e/repo.mjs` checks the commit shown in the byline and top bar in Chrome.
 
 ## References

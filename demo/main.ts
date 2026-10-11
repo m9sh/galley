@@ -6,10 +6,10 @@
 //   (in a review, Project library opens the same sample repository at the merge request's base or head)
 import { structuredPatch } from 'diff';
 import type { DocRef, RepositorySource, ReviewSource, Thread } from '../src/platforms/types.ts';
-import { Launcher } from '../src/ui/launcher.ts';
-import { openReader } from '../src/ui/reader.ts';
-import { openRepository } from '../src/ui/repo-reader.ts';
-import { loadSettings, saveSettings } from '../src/ui/settings.ts';
+import { Launcher } from '../src/ui/opening/launcher.ts';
+import { openReader } from '../src/ui/review/reader.ts';
+import { openRepository } from '../src/ui/library/repo-reader.ts';
+import { loadSettings, saveSettings } from '../src/ui/preferences/settings.ts';
 
 const params = new URLSearchParams(location.search);
 

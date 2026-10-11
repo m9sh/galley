@@ -14,7 +14,7 @@ Every source file is covered 100%: statements, branches, functions, lines. No ig
 | Pure logic (diffs, parsing, order, paths) | `src/core/<module>.test.ts` | Node |
 | Platform requests and errors | `src/platforms/<module>.test.ts` with `mockFetch` | Node, in-memory IndexedDB |
 | Worker and token checks | `src/background/worker.test.ts` | Node |
-| Rendering and the reader's DOM behaviour | `src/ui/<module>.test.ts`, `src/ui/reader-*.test.ts` | jsdom |
+| Rendering and the reader's DOM behaviour | `src/ui/<area>/<module>.test.ts`, `src/ui/review/reader-*.test.ts` | jsdom |
 | Development-build marks (`__GALLEY_DEV__`) | `*.dev.test.ts` | jsdom, `dev-build` project |
 | Layout, focus, selection, contrast, real fonts | `e2e/*.mjs` | Chrome |
 | Scripts (`scripts/*.mjs`) | `scripts/*.test.mjs` with `node --test` | Node |
@@ -40,7 +40,7 @@ Every source file is covered 100%: statements, branches, functions, lines. No ig
 1. `npm run test:coverage`, then open `coverage/index.html` (or `node scripts/coverage-summary.mjs`) to find the line or branch.
 2. Ask: can a real user, document or platform response reach it? If yes, write that test.
 3. If nothing can reach it, **delete it** (or the guard around it) and let the types or a comment carry the reason. This is how the codebase got to 100%.
-4. Running one project with coverage fails the per-file gate for the others; iterate with `npx vitest run --project ui src/ui/render` and check coverage with the full `npm run test:coverage`.
+4. Running one project with coverage fails the per-file gate for the others; iterate with `npx vitest run --project ui src/ui/rendering/render` and check coverage with the full `npm run test:coverage`.
 
 ## Browser checks
 

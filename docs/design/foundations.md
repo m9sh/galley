@@ -1,6 +1,6 @@
 # Design foundations
 
-The building blocks of the reader's look, as implemented in `src/ui/reader.css` and `src/ui/settings.ts`. Use these values and tokens; do not introduce new raw colours, sizes or breakpoints without adding them here.
+The building blocks of the reader's look, as implemented in `src/ui/components/reader.css` and `src/ui/preferences/settings.ts`. Use these values and tokens; do not introduce new raw colours, sizes or breakpoints without adding them here.
 
 - [Colour](#colour)
 - [Typography](#typography)
@@ -174,10 +174,10 @@ Motion explains a change of place; it never decorates.
 
 ## Icons
 
-Icons are inline SVG strings in `src/ui/icons.ts`: `settings`, `close`, `plus`, `minus`, `check`, `layout`, `keyboard`, `comment`, `reply`, `viewed`, `chevronDown`, `chevronLeft`, `chevronRight`, `up`, `down` and `book`. They draw at 18 pixels (`.mr-icon`) in `currentColor`. An icon-only button always has an `aria-label` and a `title` that names its shortcut ("Close reader (Esc)").
+Icons are inline SVG strings in `src/ui/components/icons.ts`: `settings`, `close`, `plus`, `minus`, `check`, `layout`, `keyboard`, `comment`, `reply`, `viewed`, `chevronDown`, `chevronLeft`, `chevronRight`, `up`, `down` and `book`. They draw at 18 pixels (`.mr-icon`) in `currentColor`. An icon-only button always has an `aria-label` and a `title` that names its shortcut ("Close reader (Esc)").
 
 ## Other surfaces
 
-- **Launcher** (`src/ui/launcher.ts`): its own shadow root and inline styles; a near-black pill (near-white in dark) at the bottom right, 44 pixels high, with the document count; red count on error.
+- **Launcher** (`src/ui/opening/launcher.ts`): its own shadow root and inline styles; a near-black pill (near-white in dark) at the bottom right, 44 pixels high, with the document count; red count on error.
 - **Popup** (`src/popup/`): its own small token set (`--bg`, `--fg`, `--muted`, `--rule`, `--soft`, `--accent`) following the system appearance, 380 pixels wide with 24-pixel side padding, system font. The full-width Read action has 12 pixels of space before the page label; section padding is 16 pixels. Popup spacing is scoped separately from the extension settings page.
 - **Website** (`site/`): Newsreader headlines and DM Sans text, self-hosted; see [site/README.md](../../site/README.md).

@@ -18,10 +18,10 @@ Galley's interface exists so a reviewer can understand a change and say somethin
 
 ## Where things are
 
-- `src/ui/reader.ts`: the `Reader` class. `TEMPLATE` holds the fixed markup (top bar, settings sheet, lightbox, toast, pill); `onClick()` dispatches on `data-act`; `onKey()` handles shortcuts; `update()` → `applySettings()` applies settings; `schedule()` batches layout.
-- `src/ui/reader.css`: one deliberate cascade. Tokens and palettes at the top, then chrome, layout, typography, changes, rail, comments, threads, syntax colours, layouts and density, code views. Find the section by its `/* ---- name */` header.
-- `src/ui/settings.ts`: the settings model and storage.
-- `src/ui/icons.ts`, `src/ui/fonts.ts`, `src/ui/chapters.ts`, `src/ui/launcher.ts`, `src/popup/`, `site/`.
+- `src/ui/review/reader.ts`: the `Reader` class. `TEMPLATE` holds the fixed markup (top bar, settings sheet, lightbox, toast, pill); `onClick()` dispatches on `data-act`; `onKey()` handles shortcuts; `update()` → `applySettings()` applies settings; `schedule()` batches layout.
+- `src/ui/components/reader.css`: one deliberate cascade. Tokens and palettes at the top, then chrome, layout, typography, changes, rail, comments, threads, syntax colours, layouts and density, code views. Find the section by its `/* ---- name */` header.
+- `src/ui/preferences/settings.ts`: the settings model and storage.
+- `src/ui/components/icons.ts`, `src/ui/components/fonts.ts`, `src/ui/review/chapters.ts`, `src/ui/opening/launcher.ts`, `src/popup/`, `site/`.
 
 ## How to make a change
 

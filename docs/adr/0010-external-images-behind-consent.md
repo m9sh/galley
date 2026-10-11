@@ -15,7 +15,7 @@ A document can embed an image from any host. Loading it tells that host the read
 
 ## Decision
 
-- Images hosted on the GitHub or GitLab site under review (and GitHub's user-content hosts) load normally (`isPlatformUrl()` in `src/ui/render.ts`).
+- Images hosted on the GitHub or GitLab site under review (and GitHub's user-content hosts) load normally (`isPlatformUrl()` in `src/ui/rendering/render.ts`).
 - Any other absolute image URL is parked by the sanitiser in `data-mr-src` and shown as a placeholder naming its host, with a **Load** button.
 - **Settings → Review → External images** offers **Ask** (the default) or **Load**.
 - Galley never sends the address of the page being read with these requests.
@@ -33,7 +33,7 @@ A document can embed an image from any host. Loading it tells that host the read
 
 ## Enforcement
 
-- `src/ui/render.test.ts` and `src/ui/reader.test.ts` cover held images, the Load button and the setting.
+- `src/ui/rendering/render.test.ts` and `src/ui/review/reader.test.ts` cover held images, the Load button and the setting.
 - [PRIVACY.md, Content from other websites](../../PRIVACY.md#content-from-other-websites) describes the behaviour; a change to it is a privacy change.
 
 ## References

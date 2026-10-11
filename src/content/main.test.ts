@@ -18,9 +18,9 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock('../platforms/detect.ts', () => ({ detectContext: mocks.detectContext, detectRepository: mocks.detectRepository }));
 vi.mock('../platforms/index.ts', () => ({ loadSource: mocks.loadSource, loadRepository: mocks.loadRepository }));
-vi.mock('../ui/reader.ts', () => ({ openReader: mocks.openReader }));
-vi.mock('../ui/repo-reader.ts', () => ({ openRepository: mocks.openRepository }));
-vi.mock('../ui/launcher.ts', () => ({
+vi.mock('../ui/review/reader.ts', () => ({ openReader: mocks.openReader }));
+vi.mock('../ui/library/repo-reader.ts', () => ({ openRepository: mocks.openRepository }));
+vi.mock('../ui/opening/launcher.ts', () => ({
   Launcher: class {
     show = mocks.show;
     hide = mocks.hide;
