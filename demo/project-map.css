@@ -4,7 +4,7 @@
 }
 /* Demo-only proposal: Galley's existing tokens, type settings, 760px phone breakpoint and sheet layer. */
 .mr-atlas {
-  --measure-max: 680px;
+  --sheet-width: clamp(320px, 34vw, 440px);
   font-family: var(--sans);
 }
 .mr-atlas.mr-root [hidden] {
@@ -19,313 +19,864 @@
 .mr-atlas button {
   cursor: pointer;
 }
-.mr-atlas button:focus-visible,
-.mr-atlas summary:focus-visible,
-.mr-atlas-canvas:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 4px;
+.mr-atlas button:disabled {
+  cursor: default;
+  opacity: 0.45;
 }
+.mr-atlas button:focus-visible,
+.mr-atlas summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ---- top bar: where you are, finding, how to look */
 .mr-atlas-chrome {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 520px) minmax(0, 1fr);
+  border-bottom-color: var(--rule);
+}
+.mr-atlas-crumb {
+  color: var(--muted);
+}
+.mr-atlas-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  font: 500 calc(15px * var(--type)) / 1.2 var(--sans);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Reading: the way back leads the bar, and the document joins the breadcrumb. */
+.mr-atlas .mr-atlas-back {
+  gap: 2px;
+  padding: 0 12px 0 6px;
+  border: 1px solid var(--rule);
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-back .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+.mr-atlas.is-reading .mr-atlas-chrome .mr-brand,
+.mr-atlas.is-reading .mr-atlas-chrome .mr-brand + .mr-atlas-crumb {
+  display: none;
+}
+.mr-atlas-reading {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: calc(15px * var(--type));
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mr-atlas-reading::before {
+  content: "/";
+  margin-right: 8px;
+}
+.mr-atlas-search {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 24px;
-  border-bottom: 1px solid var(--rule);
+  width: 100%;
 }
-.mr-atlas-repo {
-  font-size: calc(14px * var(--type));
-}
-.mr-atlas-prototype {
-  margin-left: auto;
+.mr-atlas-search > .mr-icon {
+  position: absolute;
+  left: 13px;
+  width: 16px;
+  height: 16px;
   color: var(--muted);
-  font-size: calc(12px * var(--type));
+  pointer-events: none;
 }
-.mr-atlas-map-view {
-  max-width: 1440px;
-  margin: auto;
-  padding: 28px 24px;
-}
-.mr-atlas-head h1 {
-  margin: 0;
-  font: 400 calc(44px * var(--type)) / 1.1 var(--serif);
-  letter-spacing: -0.028em;
-}
-.mr-atlas-head p {
-  margin: 8px 0 20px;
-  color: var(--muted);
-  font-size: calc(18px * var(--type));
-}
-.mr-atlas-tools {
-  display: flex;
-  align-items: start;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.mr-atlas-choices {
-  display: flex;
-  gap: 4px;
-}
-.mr-atlas-choices [aria-pressed="true"] {
-  background: var(--selected-bg);
-  color: var(--fg);
-  border-color: var(--accent);
-}
-.mr-atlas-tools input {
-  min-height: 40px;
-  width: 240px;
-  max-width: 100%;
-  padding: 8px 14px;
+.mr-atlas-search input {
+  width: 100%;
+  height: 36px;
+  padding: 0 40px 0 38px;
   border: 1px solid var(--control-rule);
   border-radius: 999px;
   background: var(--card);
   color: var(--fg);
 }
-.mr-atlas-tools input::placeholder {
+.mr-atlas-search input::placeholder {
   color: var(--muted);
 }
-.mr-atlas-controls {
-  margin-left: auto;
-  font-size: calc(14px * var(--type));
+/* Escape clears the field; the browser's own clear button would bring a colour from outside the palette. */
+.mr-atlas-search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
 }
-.mr-atlas-controls summary {
-  cursor: pointer;
-  padding: 10px 0;
+.mr-atlas-search input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
-.mr-atlas-controls label {
+.mr-atlas-search kbd {
+  position: absolute;
+  right: 12px;
+  min-width: 20px;
+  padding: 1px 6px;
+  border: 1px solid var(--control-rule);
+  border-radius: 5px;
+  color: var(--muted);
+  font: 500 12px / 1.3 var(--sans);
+  text-align: center;
+  pointer-events: none;
+}
+.mr-atlas-search input:focus ~ kbd,
+.mr-atlas-search input:not(:placeholder-shown) ~ kbd {
+  display: none;
+}
+/* The search popup: a short ranked list under the field, never a change of view. */
+.mr-atlas-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: min(60vh, 480px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+.mr-atlas-results-heading {
+  padding: 8px 10px 4px;
+  color: var(--muted);
+  font: 600 calc(11px * var(--type)) / 1.4 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mr-atlas-result {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 8px 0;
-}
-.mr-atlas-controls select {
-  padding: 8px;
-  background: var(--card);
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border-radius: 10px;
   color: var(--fg);
-  border: 1px solid var(--control-rule);
-  border-radius: 6px;
+  cursor: pointer;
 }
-.mr-atlas-status,
-.mr-atlas-footer {
+.mr-atlas-result:hover {
+  background: var(--soft);
+}
+.mr-atlas-result[aria-selected="true"] {
+  background: var(--selected-bg);
+}
+.mr-atlas-result > .mr-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+.mr-atlas-result-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.mr-atlas-result-title,
+.mr-atlas-result-path {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mr-atlas-result-title {
+  font-size: calc(14px * var(--type));
+}
+.mr-atlas-result-path {
   color: var(--muted);
   font-size: calc(12px * var(--type));
-  line-height: 1.5;
 }
-.mr-atlas-workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 24px;
-  margin-top: 24px;
+/* A match is bold and underlined; colour stays free to mean change. */
+.mr-atlas-result mark {
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
-.mr-atlas-map-column {
+.mr-atlas-result-relation {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--control-rule);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: calc(11px * var(--type));
+  white-space: nowrap;
+}
+.mr-atlas-result.mr-atlas-result-all {
+  justify-content: center;
+  margin-top: 4px;
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-results-empty {
+  margin: 0;
+  padding: 12px 10px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-results-empty:empty {
+  display: none;
+}
+.mr-atlas-chrome .mr-atlas-choices {
+  margin-right: 6px;
+}
+.mr-atlas-choices button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-choices .mr-icon,
+.mr-atlas-choice-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.mr-atlas-choice-icon {
+  display: inline-flex;
+}
+
+/* ---- the shell: the Map, or the article, beside the details sheet */
+.mr-atlas-map-view {
+  position: relative;
   min-width: 0;
 }
 .mr-atlas-canvas {
   position: relative;
-  height: 540px;
-  overflow: auto;
-  border: 1px solid var(--rule);
-  border-radius: 20px;
-  background: var(--bg);
+  overflow: hidden;
+  background-color: var(--bg);
+  background-image: radial-gradient(color-mix(in srgb, var(--rule) 80%, transparent) 1px, transparent 1px);
+  background-size: 20px 20px;
+  cursor: grab;
+  touch-action: none;
 }
+.mr-atlas-canvas:active {
+  cursor: grabbing;
+}
+.mr-atlas-canvas:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* ---- the neighbourhood: linked from, in focus, links to */
 .mr-atlas-world {
-  transform-origin: top left;
   position: relative;
-  width: 100%;
-  min-width: 700px;
-  min-height: 490px;
-  padding: 64px 32px 32px;
-}
-.mr-atlas-neighbourhood {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-auto-rows: calc(160px * var(--type));
-  gap: 90px 80px;
-  align-content: start;
+  grid-template-columns: minmax(200px, calc(264px * var(--type))) minmax(220px, calc(300px * var(--type))) minmax(200px, calc(264px * var(--type)));
+  justify-content: center;
+  align-items: center;
+  column-gap: clamp(48px, 5vw, 96px);
+  width: 100%;
+  min-width: min-content;
+  min-height: 100%;
+  padding: 56px 40px 96px;
+  transform-origin: 0 0;
 }
-.mr-atlas-place,
-.mr-atlas-region {
+.mr-atlas-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.mr-atlas-lane-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 0 2px;
+  color: var(--muted);
+  font: 600 calc(11px * var(--type)) / 1.4 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mr-atlas-lane-head span {
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.mr-atlas-stack {
+  display: flex;
+  flex-direction: column;
+  gap: calc(12px * var(--type));
+}
+.mr-atlas-lane-empty {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--control-rule);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+  line-height: 1.45;
+}
+.mr-atlas .mr-atlas-more {
+  justify-content: center;
+}
+.mr-atlas-flow {
+  display: none;
+}
+
+/* ---- places */
+.mr-atlas-place {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: start;
-  text-align: left;
-  gap: 8px;
-  padding: 18px;
+  align-items: flex-start;
+  gap: calc(4px * var(--type));
+  width: 100%;
+  min-width: 0;
+  padding: calc(12px * var(--type)) calc(14px * var(--type));
   border: 1px solid var(--control-rule);
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--card);
   color: var(--fg);
-  min-width: 0;
+  text-align: left;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--fg) 6%, transparent);
+  transition:
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
 }
-.mr-atlas-place strong {
-  font: 400 calc(24px * var(--type)) / 1.12 var(--serif);
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.mr-atlas-place small {
-  color: var(--muted);
-  font-size: calc(12px * var(--type));
+.mr-atlas-place:hover {
+  border-color: var(--fg);
 }
 .mr-atlas-place[aria-pressed="true"] {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
-.mr-atlas-here {
-  position: absolute;
-  left: 0;
-  top: -32px;
-  color: var(--accent);
+.mr-atlas-place.is-focus {
+  padding: calc(16px * var(--type)) calc(18px * var(--type));
+  border-color: var(--fg);
+  box-shadow: var(--shadow);
+}
+.mr-atlas-place strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font: 400 calc(18px * var(--type)) / 1.25 var(--heading-font, var(--body-font));
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.mr-atlas-place.is-focus strong {
+  font-size: calc(22px * var(--type));
+}
+.mr-atlas-place small {
+  color: var(--muted);
   font-size: calc(12px * var(--type));
+}
+.mr-atlas-card-caption {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
+.mr-atlas small.mr-atlas-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  color: var(--muted);
+  font: 500 calc(11px * var(--type)) / 1.3 var(--sans);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.mr-atlas-type svg {
+  flex: none;
+  width: calc(14px * var(--type));
+  height: calc(14px * var(--type));
+}
+.mr-atlas-here {
+  position: absolute;
+  top: 0;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font: 500 calc(11px * var(--type)) / 1.5 var(--sans);
+  white-space: nowrap;
+  transform: translateY(-50%);
+}
+.mr-atlas-here::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ---- lines: neutral until a place is pointed at or selected */
 .mr-atlas-lines {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  top: 0;
+  left: 0;
+  overflow: visible;
   pointer-events: none;
 }
 .mr-atlas-line,
 .mr-atlas-arrow {
-  stroke: var(--accent);
-  stroke-width: 1.5;
   fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-.mr-atlas button.mr-atlas-edge {
+.mr-atlas-edge {
+  transition: opacity 0.14s ease;
+}
+/* Links between two neighbours are context: they appear only while one of them is pointed at or selected. */
+.mr-atlas-edge.is-context:not(.is-lit) {
+  opacity: 0;
+}
+.mr-atlas-edge.is-context:not(.is-lit) .mr-atlas-hit {
+  pointer-events: none;
+}
+.mr-atlas-edge.is-context .mr-atlas-line {
+  stroke-dasharray: 4 5;
+}
+.mr-atlas-edge.is-lit,
+.mr-atlas-edge.is-focus:hover {
+  opacity: 1;
+}
+.mr-atlas-edge.is-lit .mr-atlas-line,
+.mr-atlas-edge.is-lit .mr-atlas-arrow,
+.mr-atlas-edge:hover .mr-atlas-line,
+.mr-atlas-edge:hover .mr-atlas-arrow {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.mr-atlas-edge.is-dim {
+  opacity: 0.18;
+}
+.mr-atlas-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+/* ---- floating controls and the source line */
+.mr-atlas-controls {
   position: absolute;
-  transform: translate(-50%, -50%);
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mr-atlas-zoom {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 8%, transparent);
+}
+.mr-atlas .mr-atlas-home {
+  height: 42px;
+  padding: 0 14px 0 12px;
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 8%, transparent);
+}
+.mr-atlas-info {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  max-width: min(520px, 52%);
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  text-align: right;
+  pointer-events: none;
+}
+.mr-atlas-status,
+.mr-atlas-footer {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+  line-height: 1.5;
+}
+.mr-atlas.is-waiting .mr-atlas-info {
+  inset: 0;
+  max-width: none;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+/* ---- List: every document by folder, as rows */
+.mr-atlas-list {
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.mr-atlas-list-inner {
+  display: grid;
+  gap: 28px;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 24px 64px;
+}
+.mr-atlas-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 2px 2px 2px 14px;
   border: 1px solid var(--control-rule);
   border-radius: 999px;
-  padding: 4px 8px;
-  color: var(--fg);
-  background: var(--bg);
-  font-size: calc(11px * var(--type));
-  min-height: 32px;
+  font-size: calc(13px * var(--type));
 }
-.mr-atlas-navigation {
+.mr-atlas-folder {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 16px;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 8px;
+  font: 600 calc(13px * var(--type)) / 1.5 var(--sans);
+  overflow-wrap: anywhere;
 }
-.mr-atlas-map-column > [data-act="more"] {
-  margin-top: 12px;
+.mr-atlas-folder span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+  font-weight: 400;
+  white-space: nowrap;
 }
+.mr-atlas-list-rows {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--card);
+}
+.mr-atlas-list .mr-atlas-place {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 16px;
+  row-gap: 2px;
+  min-height: 44px;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+}
+.mr-atlas-list .mr-atlas-place:last-child {
+  border-bottom: 0;
+}
+.mr-atlas-list .mr-atlas-place:hover {
+  background: var(--soft);
+}
+.mr-atlas-list .mr-atlas-place[aria-pressed="true"] {
+  outline-offset: -2px;
+}
+.mr-atlas-list .mr-atlas-place > * {
+  grid-column: 1;
+}
+.mr-atlas-list .mr-atlas-place strong {
+  font-size: calc(17px * var(--type));
+}
+.mr-atlas-list .mr-atlas-path {
+  overflow-wrap: anywhere;
+}
+.mr-atlas-list .mr-atlas-place > .mr-atlas-counts {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+  align-self: center;
+  white-space: nowrap;
+}
+.mr-atlas-list .mr-atlas-place > .mr-atlas-here {
+  position: static;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  transform: none;
+}
+.mr-atlas-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+  line-height: 1.5;
+}
+
+/* ---- the details sheet: a fixed header and footer around one scrolling body */
 .mr-atlas-detail {
+  display: none;
+  flex-direction: column;
   min-width: 0;
-  padding-left: 24px;
-  border-left: 1px solid var(--rule);
+  background: var(--bg);
+  color: var(--fg);
   font-size: calc(14px * var(--type));
   line-height: 1.5;
 }
-.mr-atlas-kicker {
-  font-size: calc(11px * var(--type));
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
+.mr-atlas-detail.is-open {
+  display: flex;
 }
-.mr-atlas-detail h2 {
-  margin: 8px 0 12px;
-  font: 400 calc(28px * var(--type)) / 1.15 var(--serif);
+.mr-atlas-sheet-header {
+  position: relative;
+  flex: none;
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  padding: 12px 12px 14px 24px;
+  border-bottom: 1px solid var(--rule);
+}
+.mr-atlas-sheet-header > :not(.mr-atlas-sheet-top) {
+  margin-right: 12px;
+}
+.mr-atlas-sheet-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  justify-self: stretch;
+  min-height: 34px;
+}
+.mr-atlas-sheet-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.mr-atlas .mr-atlas-sheet-read {
+  gap: 6px;
+  padding: 0 12px 0 10px;
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-sheet-read .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+.mr-atlas .mr-atlas-sheet-back {
+  gap: 2px;
+  margin-left: -10px;
+  padding: 0 10px 0 4px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas .mr-atlas-sheet-back:hover {
+  color: var(--fg);
+}
+.mr-atlas-sheet-back .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+.mr-atlas-sheet-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.mr-atlas-sheet-badges .mr-atlas-here {
+  position: static;
+  transform: none;
+}
+.mr-atlas-sheet-header h2 {
+  margin: 0;
+  font: 400 calc(24px * var(--type)) / 1.2 var(--heading-font, var(--body-font));
   overflow-wrap: anywhere;
 }
+.mr-atlas-sheet-description {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+  overflow-wrap: anywhere;
+}
+.mr-atlas-tabs {
+  display: flex;
+  gap: 2px;
+  justify-self: stretch;
+  margin-top: 10px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--code-bg);
+}
+.mr-atlas .mr-atlas-tab {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-tab[aria-selected="true"] {
+  background: var(--selected-bg);
+  color: var(--fg);
+}
+.mr-atlas-tab span {
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+.mr-atlas-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 16px 24px 24px;
+}
+.mr-atlas-sheet-body:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.mr-atlas-kicker {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(11px * var(--type));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 .mr-atlas-detail h3 {
-  margin: 24px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0 4px;
   font-size: calc(14px * var(--type));
   font-weight: 500;
+}
+.mr-atlas-detail h3 span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
 }
 .mr-atlas-path {
   color: var(--muted);
   font-size: calc(12px * var(--type));
-  overflow-wrap: anywhere;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
-.mr-atlas-detail > .mr-btn {
-  margin: 8px 8px 0 0;
+.mr-atlas-why {
+  margin: 0 0 4px;
+  padding: 14px 16px 4px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--card);
 }
-.mr-atlas-detail > .mr-atlas-close-detail {
-  display: none;
+.mr-atlas-detail .mr-atlas-why h3 {
+  margin: 0;
 }
-.mr-atlas-connection {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-  gap: 4px;
-  width: 100%;
-  min-height: 44px;
-  padding: 12px 0;
-  border: 0;
-  border-bottom: 1px solid var(--rule);
-  background: var(--bg);
-  color: var(--fg);
-}
-.mr-atlas-connection strong {
-  font-weight: 500;
-}
-.mr-atlas-connection small {
-  font-size: calc(12px * var(--type));
+.mr-atlas-why-direction {
+  margin: 10px 0 0;
   color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+.mr-atlas-why > .mr-btn {
+  margin: 0 0 12px;
 }
 .mr-atlas-proof {
-  padding: 16px 0;
-  border-top: 1px solid var(--rule);
-  margin-top: 16px;
+  padding: 12px 0 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.mr-atlas-why .mr-atlas-proof {
+  padding: 6px 0 12px;
+  border-bottom: 0;
 }
 .mr-atlas-proof blockquote {
   margin: 0;
-  font: 400 calc(22px * var(--type)) / 1.3 var(--serif);
+  font: 400 calc(19px * var(--type)) / 1.35 var(--heading-font, var(--body-font));
   overflow-wrap: anywhere;
 }
-.mr-atlas-issues {
-  margin-top: 24px;
+.mr-atlas-proof .mr-atlas-path {
+  margin: 4px 0 8px;
+}
+.mr-atlas-connection {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 20px 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  background: transparent;
+  color: var(--fg);
+  text-align: left;
+}
+.mr-atlas-connection::after {
+  content: "›";
+  position: absolute;
+  top: 10px;
+  right: 2px;
   color: var(--muted);
 }
-.mr-atlas-issues summary {
-  min-height: 44px;
-  cursor: pointer;
-  padding: 12px 0;
+.mr-atlas-connection:hover strong {
+  text-decoration: underline;
 }
-.mr-atlas-overview {
-  width: auto;
-  min-width: 0;
-  min-height: 490px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  padding: 24px;
-}
-.mr-atlas-region strong {
-  font: 400 calc(22px * var(--type)) / 1.2 var(--serif);
+.mr-atlas-connection strong {
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
-.mr-atlas-region span,
-.mr-atlas-region small {
+.mr-atlas-connection small {
   color: var(--muted);
   font-size: calc(12px * var(--type));
 }
-.mr-atlas-list {
-  display: grid;
-  gap: 12px;
+.mr-atlas-detail .mr-atlas-more {
+  margin-top: 16px;
 }
-.mr-atlas-list .mr-atlas-place {
-  min-height: 100px;
+.mr-atlas-issues,
+.mr-atlas-source {
+  margin-top: 20px;
+  color: var(--muted);
 }
-.mr-atlas-list .mr-atlas-here {
-  position: static;
+.mr-atlas-issues summary,
+.mr-atlas-source summary {
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: calc(12px * var(--type));
 }
+.mr-atlas-source {
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+.mr-atlas-preview .mr-content {
+  width: 100%;
+  margin: 0 0 24px;
+}
+.mr-atlas-preview .mr-unit {
+  max-width: 100%;
+}
+.mr-atlas-preview .mr-block {
+  margin-top: var(--block-gap);
+}
+.mr-atlas-preview .mr-content h1 {
+  font-size: 1.5em;
+}
+/* With the title in the sheet's header, the document starts at its first section. */
+.mr-atlas-preview .mr-content > :first-child,
+.mr-atlas-preview .mr-content > [hidden]:first-child + * {
+  margin-top: 0;
+}
+.mr-atlas-preview .mr-content h2 {
+  margin-top: var(--heading-gap, 1.95em);
+  font-size: 1.25em;
+}
+.mr-atlas-preview .mr-content h3 {
+  display: block;
+  margin-top: var(--heading-gap, 1.95em);
+  font-size: 1.1em;
+}
+
+/* ---- reading a whole document */
 .mr-atlas-article {
   max-width: 728px;
   margin: 32px auto;
   padding: 0 24px 100px;
 }
 .mr-atlas-article .mr-content {
-  margin: 32px 0;
   width: 100%;
+  margin: 32px 0;
 }
 .mr-atlas-article .mr-unit {
   max-width: 100%;
@@ -336,100 +887,205 @@
 .mr-atlas button.mr-atlas-backdrop {
   position: fixed;
   inset: 0;
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
-  border: 0;
   z-index: 30;
+  border: 0;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
   font-size: 0;
 }
+
+/* ---- density */
 .mr-atlas[data-density="compact"] .mr-atlas-place {
-  padding: 12px;
-  border-radius: 10px;
+  gap: calc(3px * var(--type));
+  padding: calc(9px * var(--type)) calc(12px * var(--type));
 }
-@media (min-width: 761px) and (max-width: 1279px) {
-  .mr-atlas-workspace {
-    grid-template-columns: minmax(0, 1fr) 260px;
+.mr-atlas[data-density="compact"] .mr-atlas-place.is-focus {
+  padding: calc(12px * var(--type)) calc(14px * var(--type));
+}
+.mr-atlas[data-density="compact"] .mr-atlas-stack {
+  gap: calc(8px * var(--type));
+}
+.mr-atlas[data-density="compact"] .mr-atlas-list .mr-atlas-place {
+  padding: 8px 14px;
+}
+
+/* ---- stacked: phones, and a canvas narrowed by the sheet, read top to bottom */
+.mr-atlas.is-stacked .mr-atlas-canvas {
+  cursor: default;
+  touch-action: auto;
+}
+.mr-atlas.is-stacked .mr-atlas-world {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: auto;
+  max-width: 560px;
+  min-width: 0;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 24px 20px 32px;
+}
+.mr-atlas.is-stacked .mr-atlas-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+.mr-atlas.is-stacked .mr-atlas-place.is-focus {
+  margin-top: 6px;
+}
+.mr-atlas.is-stacked .mr-atlas-zoom {
+  display: none;
+}
+
+@media (min-width: 761px) {
+  /* The top bar stays put; the Map, List, article and sheet each scroll in their own region. */
+  .mr-atlas.mr-root {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .mr-atlas-chrome {
+    flex: none;
+  }
+  /* Opening details adds a column, so the Map narrows instead of being covered. */
+  .mr-atlas-shell {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 0px;
+    grid-template-rows: minmax(0, 1fr);
+    overflow: hidden;
+    transition: grid-template-columns 0.24s ease-out;
+  }
+  .mr-atlas-shell.has-sheet {
+    grid-template-columns: minmax(0, 1fr) var(--sheet-width);
+  }
+  .mr-atlas-map-view,
+  .mr-atlas-article {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 0;
+  }
+  .mr-atlas-canvas,
+  .mr-atlas-list {
+    position: absolute;
+    inset: 0;
+  }
+  .mr-atlas.is-stacked .mr-atlas-canvas {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* The sheet keeps its full width while its column grows, so it slides in from the edge without reflowing. */
+  .mr-atlas-detail {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    width: var(--sheet-width);
+    min-height: 0;
+    border-left: 1px solid var(--rule);
+    visibility: hidden;
+    transition: visibility 0s 0.24s;
+  }
+  .mr-atlas-detail.is-open {
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  .mr-atlas-article {
+    width: 100%;
+    overflow: auto;
+    overscroll-behavior: contain;
+    margin: 0 auto;
+    padding-top: 32px;
   }
 }
 @media (max-width: 760px) {
   .mr-atlas-chrome {
-    padding: 12px 16px;
-    flex-wrap: wrap;
-    gap: 8px 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "left right"
+      "find find";
+    row-gap: 6px;
+    height: auto;
+    padding: 6px 8px 10px;
   }
-  .mr-atlas-chrome .mr-brand {
+  .mr-atlas-chrome .mr-tb-left {
+    grid-area: left;
+  }
+  .mr-atlas-chrome .mr-tb-center {
+    grid-area: find;
+    padding: 0 6px;
+  }
+  .mr-atlas-chrome .mr-tb-right {
+    grid-area: right;
+  }
+  .mr-atlas-chrome .mr-brand,
+  .mr-atlas-crumb,
+  .mr-atlas-chrome [data-act="details"],
+  .mr-atlas.is-reading .mr-atlas-title,
+  .mr-atlas.is-reading .mr-atlas-reading {
     display: none;
   }
-  .mr-atlas-prototype {
-    width: 100%;
-    margin: 0;
+  .mr-atlas-results {
+    max-height: 60dvh;
   }
-  .mr-atlas-map-view {
-    padding: 24px 16px;
+  .mr-atlas-search input {
+    height: 44px;
   }
-  .mr-atlas-navigation [data-act="zoom-in"],
-  .mr-atlas-navigation [data-act="zoom-out"] {
+  .mr-atlas-choices button > span:not(.mr-atlas-choice-icon) {
     display: none;
-  }
-  .mr-atlas-head h1 {
-    font-size: calc(38px * var(--type));
-  }
-  .mr-atlas-tools > input {
-    width: 100%;
   }
   .mr-atlas-controls {
-    width: 100%;
-    margin: 0;
+    position: static;
+    padding: 0 16px;
   }
-  .mr-atlas-workspace {
-    display: block;
-    margin-top: 16px;
+  .mr-atlas .mr-atlas-home {
+    height: 44px;
   }
-  .mr-atlas-canvas {
-    height: 730px;
+  .mr-atlas-info {
+    position: static;
+    max-width: none;
+    padding: 12px 16px 32px;
+    text-align: left;
   }
-  .mr-atlas-world {
-    width: 100%;
-    min-width: 0;
-    padding: 40px 24px 24px;
-    min-height: 690px;
+  .mr-atlas-list-inner {
+    padding: 16px 16px 48px;
   }
-  .mr-atlas-here {
-    top: 12px;
-    left: 18px;
-  }
-  .mr-atlas-place:has(.mr-atlas-here) {
-    padding-top: 32px;
-  }
-  .mr-atlas-neighbourhood {
-    grid-template-columns: minmax(0, 1fr);
-    grid-auto-rows: calc(150px * var(--type));
-    gap: 70px;
-  }
-  .mr-atlas button.mr-atlas-edge {
-    min-height: 44px;
+  .mr-atlas-list .mr-atlas-place > .mr-atlas-counts {
+    display: none;
   }
   .mr-atlas-detail {
-    display: none;
     position: fixed;
     inset: auto 0 0;
-    max-height: 75dvh;
-    overflow: auto;
-    border: 1px solid var(--rule);
-    border-radius: 20px 20px 0 0;
-    padding: 20px;
-    background: var(--bg);
     z-index: 40;
+    max-height: 85dvh;
+    border: 1px solid var(--rule);
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
     box-shadow: var(--shadow);
   }
-  .mr-atlas-detail.is-open {
-    display: block;
+  .mr-atlas-sheet-header {
+    padding: 20px 8px 12px 16px;
   }
-  .mr-atlas-detail > .mr-atlas-close-detail {
-    display: inline-flex;
-    margin: 0 0 16px;
+  /* A grab bar marks the bottom sheet; it is drawn, not a control. */
+  .mr-atlas-sheet-header::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 36px;
+    height: 4px;
+    margin-left: -18px;
+    border-radius: 2px;
+    background: var(--rule);
   }
-  .mr-atlas-overview {
-    grid-template-columns: minmax(0, 1fr);
+  .mr-atlas-sheet-body {
+    padding: 12px 16px 16px;
+  }
+  .mr-atlas-sheet-body {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
   .mr-atlas-article {
     margin-top: 24px;
@@ -437,10 +1093,37 @@
   }
 }
 @media (max-width: 760px), (hover: none) {
+  .mr-atlas .mr-icon-btn {
+    min-width: 44px;
+  }
   .mr-atlas button,
   .mr-atlas summary,
   .mr-atlas input,
   .mr-atlas select {
     min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mr-atlas-results {
+    animation: mr-pop 0.16s ease-out;
+  }
+}
+@media (prefers-reduced-motion: no-preference) and (max-width: 760px) {
+  .mr-atlas-detail.is-open {
+    animation: mr-atlas-rise 0.24s ease-out;
+  }
+}
+@keyframes mr-atlas-rise {
+  from {
+    transform: translateY(32px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mr-atlas-shell,
+  .mr-atlas-detail,
+  .mr-atlas-place,
+  .mr-atlas-edge {
+    transition: none;
   }
 }

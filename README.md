@@ -155,7 +155,7 @@ Tell us what makes your reviews harder: a long document, missing context, an acc
 
 ### Project map design prototype
 
-For [issue #68](https://github.com/m9sh/galley/issues/68), run `npm run demo` and open `http://localhost:4173/?atlas`. The demo uses the real local document index and safe renderer; it does not change the extension's Map. `?atlas=dense` adds 300 linked demo documents, `?atlas=sparse` adds 30 disconnected documents, and `?atlas=partial` leaves the real handbook partly indexed. Preview settings stay in the session.
+For [issue #68](https://github.com/m9sh/galley/issues/68), run `npm run demo` and open `http://localhost:4173/?atlas`. The demo uses the real local document index and safe renderer; it does not change the extension's Map. `?atlas=dense` adds 300 linked demo documents, `?atlas=sparse` adds 30 disconnected documents, and `?atlas=partial` leaves the real handbook partly indexed. Add `&doc=docs/adr/0003-queue-for-reviews.md` to open a document directly. Preview settings stay in the session.
 
 The [design proposal](docs/design/project-map-reimagining.md) and [Proposed ADR 0030](docs/adr/0030-spatial-project-map-with-an-equivalent-list.md) explain the decision and reader-validation gates before production adoption.
 
