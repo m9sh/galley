@@ -4,6 +4,7 @@ Learn how to read changes in context, discuss them with your team and adjust Gal
 
 - [Opening a review](#opening-a-review)
 - [The reader](#the-reader)
+- [Search the review](#search-the-review)
 - [Settings](#settings)
 - [Documents](#documents)
 - [Code](#code)
@@ -33,6 +34,16 @@ Optionally, the request's own title and description come first (**Settings → R
 - **Unchanged content** folds. By default you see the changed parts and the headings above them; each folded stretch has one **N unchanged blocks** toggle, even when it crosses lists or quotes. Press <kbd>A</kbd> (or **Settings → Review → Context → Whole files**) to read everything.
 - **Files follow one another** on one page. Each opens with its place in the review, such as **File 3 of 8**, under a hairline that ends the file before it.
 - **Pick up where you left off.** Galley remembers which file you were reading and how far into it, for your 50 most recent reviews, in this browser (as fingerprints: no addresses or paths are stored). Open a review again and **Continue** takes you back there; scroll on, or choose ×, to start from the top.
+
+## Search the review
+
+Find a phrase anywhere in the review, including the parts Galley folds away: unchanged text hidden by **Changed parts**, folded files, files you folded yourself, the old version of edited text, comments and your unsent drafts. Press <kbd>/</kbd> or choose the search icon in the top bar (on a narrow phone, **Search this review** in the document menu).
+
+- **What it matches.** The exact phrase, in any case. Spaces in your search match any spacing in the text, so a phrase still matches where a line wraps.
+- **The results** are listed in reading order, grouped by file. Each says what it is (**Document**, **Code**, **Test**, **Comment**, **Description** or **Your draft**, which only you can see), where it is (the heading above it, or the line), and **Old version** or **New version** when only one version has it. Text both versions share is listed once. Use the chips to show only **Documents**, **Code**, **Comments** or **Your drafts**, and **Changed parts only** to leave out unchanged text.
+- **Choose a result** with the arrow keys and <kbd>Enter</kbd>, or by pointing. Galley opens what folds it, marks the words and moves focus there. Showing a result never marks a file **Viewed** or touches a draft. Old text in **Clean** mode turns change marks on, and says so.
+- **The results bar** at the bottom says where you are in the results, steps to the next and previous one, and **Back to where you were** returns to the place you were reading before you searched. <kbd>Esc</kbd> closes the search, then the bar.
+- **What is not searched is said.** Code files are not loaded while **Code files** is off, so the search says how many it left out, with **Turn on Code files**. It also says how many files are still loading or could not be loaded. Search runs in your browser on what Galley has already loaded; it never sends your search anywhere or loads anything you did not ask for.
 
 ## Settings
 

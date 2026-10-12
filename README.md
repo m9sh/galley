@@ -90,6 +90,7 @@ The [user guide](docs/GUIDE.md) covers every setting, token and platform detail.
 | <kbd>N</kbd> <kbd>P</kbd> | Next / previous conversation |
 | <kbd>]</kbd> <kbd>[</kbd> | Next / previous file |
 | <kbd>F</kbd> | Go to a file |
+| <kbd>/</kbd> | Search the review, including folded parts |
 | <kbd>R</kbd> | Comment on the selection, or on the paragraph in focus |
 | <kbd>⌘</kbd>/<kbd>Ctrl</kbd> <kbd>Enter</kbd> | Post the comment or reply |
 | <kbd>V</kbd> | Mark the file viewed |
