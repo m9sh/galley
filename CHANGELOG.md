@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.17.0](https://github.com/m9sh/galley/compare/v0.16.0...v0.17.0) (2026-10-12)
+
+
+### Features
+
+* **reader:** search the review, including folded parts ([20ef978](https://github.com/m9sh/galley/commit/20ef978274d77e781b9a19ca84a69269b1370782))
+* **reader:** search the review, including folded parts ([25fbf35](https://github.com/m9sh/galley/commit/25fbf354c96965e2a2b995657da689ee2fde7ce8)), closes [#45](https://github.com/m9sh/galley/issues/45)
+
 ## [0.16.0](https://github.com/m9sh/galley/compare/v0.15.0...v0.16.0) (2026-10-11)
 
 
