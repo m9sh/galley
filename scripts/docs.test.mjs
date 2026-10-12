@@ -67,14 +67,16 @@ test('requires decisions and proposals to link to each other, and writes their i
     'docs/rfcs/README.md': RFC_README,
     'docs/adr/0002-render-in-the-browser.md': adr('status: Accepted\ndate: 2026-10-04\nrfcs: [36]'),
     'docs/rfcs/0036-review-chapters.md': rfc(
-      'status: Implemented\ncreated: 2026-10-10\ntheme: Never lose the thread\ndiscussion: https://github.com/o/r/issues/36\nadrs: []',
+      'status: Implemented\ncreated: 2026-10-10\ntheme: Never lose the thread\ndiscussion: https://github.com/o/r/issues/36\nimplemented-in: [https://github.com/o/r/pull/50]\nadrs: []',
     ),
   });
   assert.deepEqual(run(root, { write: true }), ['docs/rfcs/0036-review-chapters.md: list ADR 2 under adrs, since it cites this RFC']);
 
   await writeFile(
     join(root, 'docs/rfcs/0036-review-chapters.md'),
-    rfc('status: Implemented\ncreated: 2026-10-10\ntheme: Never lose the thread\ndiscussion: https://github.com/o/r/issues/36\nadrs: [2]'),
+    rfc(
+      'status: Implemented\ncreated: 2026-10-10\ntheme: Never lose the thread\ndiscussion: https://github.com/o/r/issues/36\nimplemented-in: [https://github.com/o/r/pull/50]\nadrs: [2]',
+    ),
   );
   assert.deepEqual(run(root, { write: true }), []);
   assert.match(
@@ -100,6 +102,9 @@ test('checks statuses, dates, names, headings and supersession', async (t) => {
     'docs/adr/0006-bad-yaml.md': '---\n- stray\n---\n\n# ADR 0006: Bad\n',
     'docs/adr/Notes.md': '# Notes\n',
     'docs/rfcs/0040-proposal.md': '---\nstatus: Pending\ncreated: soon\ndiscussion: http://example.com\nadrs: [3, 8]\n---\n\n# RFC 0040: Proposal\n',
+    // The pull request that meets the criteria carries the status: an implemented proposal names the pull requests.
+    'docs/rfcs/0041-done.md': '---\nstatus: Implemented\ncreated: 2026-10-10\n---\n\n# RFC 0041: Done\n',
+    'docs/rfcs/0042-done.md': '---\nstatus: Implemented\ncreated: 2026-10-10\nimplemented-in: [pull 71]\n---\n\n# RFC 0042: Done\n',
   });
   assert.deepEqual(run(root), [
     'docs/adr/0004-wrong-heading.md: the first heading must be "# ADR 0004: Title"',
@@ -115,6 +120,8 @@ test('checks statuses, dates, names, headings and supersession', async (t) => {
     'docs/rfcs/0040-proposal.md: discussion must be an https link',
     "docs/adr/0003-later.md: list RFC 40 under rfcs, since it records this RFC's decision",
     'docs/rfcs/0040-proposal.md: ADR 8 does not exist',
+    'docs/rfcs/0041-done.md: an implemented RFC lists its pull requests in implemented-in',
+    'docs/rfcs/0042-done.md: implemented-in must list https links to pull requests',
     'docs/adr/README.md: the index is out of date; run npm run docs:index',
   ]);
 });

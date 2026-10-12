@@ -48,7 +48,12 @@ stateDiagram-v2
 2. **Add the text.** Copy [template.md](template.md) to `docs/rfcs/NNNN-short-title.md` (four digits, the issue number) and open a pull request. Link the file from the issue. From then on the file is the proposal: edits go through pull requests, and Galley is a good way to review them.
 3. **Discuss.** Comments go on the issue, or beside the text in the pull request.
 4. **Decide.** The maintainer sets `status:` and swaps the issue's `rfc:` label to match (`rfc: accepted`, `rfc: postponed`). Effort, gain and order live on the [Galley roadmap](https://github.com/users/m9sh/projects/2) board, not in the RFC. When the decision shapes the architecture, write an [ADR](../adr/README.md) that cites the RFC in `rfcs:` and add it to the RFC's `adrs:`.
-5. **Build.** Implementation pull requests say `Refs #NNNN`. Keep `progress:` current while the work spans several pull requests; when the acceptance criteria are met, set `Implemented` and list the pull requests in `implemented-in:`.
+5. **Build.** The RFC changes in the same pull request as the work, never in a follow-up:
+   - A pull request that does part of the work says `Refs #NNNN`, updates `progress:` (what is done, what is open) and adds itself to `implemented-in:`.
+   - The pull request that meets the acceptance criteria sets `status: Implemented`, ticks the criteria and says where they were met, lists every pull request in `implemented-in:` (itself included: push that commit once the pull request exists), records the answers to open questions it settled, and says `Closes #NNNN`.
+   - A `Proposed` RFC is accepted in the pull request that implements it: the diff sets `Accepted` or `Implemented`, the description says so first, and the maintainer's merge is the decision.
+
+   `npm run docs:check` refuses an `Implemented` RFC without `implemented-in:`.
 6. **Index.** Run `npm run docs:index` to refresh the table below, and `npm run docs:check` before pushing (`npm run check` includes it).
 
 ### Front matter
@@ -96,7 +101,7 @@ Generated from the RFC files by `npm run docs:index`; do not edit by hand.
 | [0042](0042-inspect-related-code.md) | Inspect related code without losing your place | Proposed | Never lose the thread | [#42](https://github.com/m9sh/galley/issues/42) | [0002](../adr/0002-no-server-no-telemetry.md), [0020](../adr/0020-read-code-statically.md) |
 | [0043](0043-test-evidence.md) | Connect changed behavior to test evidence | Proposed | Never lose the thread | [#43](https://github.com/m9sh/galley/issues/43) | [0020](../adr/0020-read-code-statically.md) |
 | [0044](0044-review-lenses.md) | Review lenses for focused passes through a change | Proposed | Never lose the thread | [#44](https://github.com/m9sh/galley/issues/44) | — |
-| [0045](0045-search-across-a-review.md) | Search across a review, including folded content | Proposed | Never lose the thread | [#45](https://github.com/m9sh/galley/issues/45) | [0002](../adr/0002-no-server-no-telemetry.md), [0021](../adr/0021-suggested-order-and-folded-files.md) |
+| [0045](0045-search-across-a-review.md) | Search across a review, including folded content | Implemented | Never lose the thread | [#45](https://github.com/m9sh/galley/issues/45) | [0002](../adr/0002-no-server-no-telemetry.md), [0021](../adr/0021-suggested-order-and-folded-files.md) |
 | [0046](0046-comment-intent-and-severity.md) | Comment drafts that make intent and severity clear | Proposed | Never lose the thread | [#46](https://github.com/m9sh/galley/issues/46) | [0008](../adr/0008-comment-through-platform-review-apis.md) |
 | [0047](0047-shared-review-responsibilities.md) | Shared review responsibilities and explicit handoffs | Proposed | Never lose the thread | [#47](https://github.com/m9sh/galley/issues/47) | [0002](../adr/0002-no-server-no-telemetry.md), [0008](../adr/0008-comment-through-platform-review-apis.md) |
 | [0048](0048-personal-review-inbox.md) | A personal review inbox for deliberate workload planning | Proposed | Never lose the thread | [#48](https://github.com/m9sh/galley/issues/48) | [0002](../adr/0002-no-server-no-telemetry.md), [0019](../adr/0019-review-progress-as-fingerprints.md) |

@@ -217,6 +217,10 @@ export function checkRecords(adrs, rfcs) {
     if (!RFC_STATUSES.includes(status)) problems.push(`${rfc.where}: status must be one of ${RFC_STATUSES.join(', ')}`);
     if (!DATE.test(created ?? '')) problems.push(`${rfc.where}: created must be YYYY-MM-DD`);
     if (discussion && !/^https:\/\//.test(discussion)) problems.push(`${rfc.where}: discussion must be an https link`);
+    // The pull request that meets the acceptance criteria sets Implemented and names itself here, in the same change.
+    const implementedIn = [rfc.data['implemented-in'] ?? []].flat();
+    if (status === 'Implemented' && !implementedIn.length) problems.push(`${rfc.where}: an implemented RFC lists its pull requests in implemented-in`);
+    if (implementedIn.some((link) => !/^https:\/\//.test(link))) problems.push(`${rfc.where}: implemented-in must list https links to pull requests`);
     for (const n of numbers(rfc.data.adrs)) {
       const adr = adrBy.get(n);
       if (!adr) problems.push(`${rfc.where}: ADR ${n} does not exist`);
