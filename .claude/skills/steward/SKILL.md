@@ -20,6 +20,8 @@ Run what CI runs. `npm run check` is the minimum for every push (the pre-push ho
 | PR title (`pr-title.yml`) | — | Conventional Commit title, see below |
 | Website (`pages.yml`), for site or demo changes | `npm run build:site && npm run test:site` | — |
 
+**An RFC this change implements is updated in this pull request,** not later: `progress:`, or `status: Implemented` with ticked criteria and `implemented-in:` listing this pull request (commit it once `gh pr create` has given the URL). A Proposed RFC is accepted in the same diff, and the description says so first. Details: `decision-records` skill.
+
 Also: look at UI changes (`npm run screenshots`), update the docs that describe changed behaviour, and re-read your diff for anything outside the task.
 
 ## Commits and pull request titles
@@ -36,7 +38,7 @@ Scopes in use: `reader` and `github`, and `deps` on Dependabot titles; name the 
 
 ## The pull request description
 
-Follow the shape of the existing ones: what the reviewer gets and why (a short paragraph), what changed (grouped bullets with the real control labels), anything reviewers must know (reversed decisions, follow-ups, activation steps), and **Checks** listing what you ran with counts (`npm run check`: N tests, 100% coverage; `npm run test:e2e`; screenshots inspected). Link RFCs with `Refs #NN` and ADRs by path. Include before and after screenshots for visual changes.
+Follow the shape of the existing ones: what the reviewer gets and why (a short paragraph), what changed (grouped bullets with the real control labels), anything reviewers must know (reversed decisions, follow-ups, activation steps), and **Checks** listing what you ran with counts (`npm run check`: N tests, 100% coverage; `npm run test:e2e`; screenshots inspected). Link RFCs with `Refs #NN` (or `Closes #NN` when this pull request meets the acceptance criteria) and ADRs by path. Include before and after screenshots for visual changes.
 
 ## When something fails
 

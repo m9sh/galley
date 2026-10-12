@@ -7,7 +7,7 @@ Humans and agents share the same documentation. This file is the short version; 
 ## Before you change anything
 
 1. **Read the decisions for the area.** [docs/adr/README.md](docs/adr/README.md) has an index by area. If your change contradicts an ADR, stop and propose a superseding ADR instead of working around it.
-2. **Check the proposals.** [docs/rfcs/README.md](docs/rfcs/README.md) lists open RFCs. Work that implements one says `Refs #NN` and follows its acceptance criteria; work that overlaps one should not quietly decide its open questions.
+2. **Check the proposals.** [docs/rfcs/README.md](docs/rfcs/README.md) lists open RFCs. Work that implements one says `Refs #NN`, follows its acceptance criteria and updates the RFC in the same pull request (`progress:`, or `Implemented` with `implemented-in:` when the criteria are met); work that overlaps one should not quietly decide its open questions.
 3. **Find the code.** [Architecture](docs/architecture/README.md) maps modules; the [UI map](docs/design/ui-map.md) maps every surface a reviewer sees to its code; the [glossary](docs/glossary.md) maps product words to code names.
 
 ## Commands

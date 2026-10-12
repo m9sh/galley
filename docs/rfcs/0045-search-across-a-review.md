@@ -1,11 +1,11 @@
 ---
-status: Proposed
+status: Implemented
 created: 2026-10-10
 authors: [m9sh]
 discussion: https://github.com/m9sh/galley/issues/45
 theme: Never lose the thread
 phase: Exploratory follow-up; outside the three proposed core RFCs
-progress: First version built for review; searches loaded content, including folded parts, without new reads; reader sessions not yet run
+implemented-in: [https://github.com/m9sh/galley/pull/71]
 adrs: [2, 21]
 ---
 
@@ -23,17 +23,19 @@ Selecting a result reveals the necessary context and preserves a return path to 
 
 Start with a bounded, local search over content Galley already has. Additional provider reads should be an explicit expansion of search scope, respect the code-files preference and report progress, failures and limits.
 
-## Proposed acceptance criteria
+## Acceptance criteria
 
-- [ ] Search can find content inside available folded sections without manually opening every section.
-- [ ] Results distinguish old/new source versions and private/public content.
-- [ ] Selecting a result reveals and focuses its actual context, with a route back.
-- [ ] Navigation does not silently mark files Viewed or discard drafts.
-- [ ] The UI states scope and distinguishes no matches from unsearched/unavailable content.
-- [ ] Searching disabled code content does not silently enable Code files or fetch extra files.
-- [ ] Large queries/results are bounded and cancellable so the reader remains responsive.
-- [ ] Queries and results are processed locally and not sent to an external search service.
-- [ ] Keyboard, mobile, hidden-content and partial-load cases are verified.
+Met in [pull request 71](https://github.com/m9sh/galley/pull/71) (2026-10-11):
+
+- [x] Search can find content inside available folded sections without manually opening every section.
+- [x] Results distinguish old/new source versions and private/public content.
+- [x] Selecting a result reveals and focuses its actual context, with a route back.
+- [x] Navigation does not silently mark files Viewed or discard drafts.
+- [x] The UI states scope and distinguishes no matches from unsearched/unavailable content.
+- [x] Searching disabled code content does not silently enable Code files or fetch extra files.
+- [x] Large queries/results are bounded and cancellable so the reader remains responsive.
+- [x] Queries and results are processed locally and not sent to an external search service.
+- [x] Keyboard, mobile, hidden-content and partial-load cases are verified.
 
 ## Alternatives and tradeoffs
 
@@ -52,6 +54,8 @@ Browser find has low interaction cost but limited review-specific context. A ful
 - **Design (2026-10-11):** the field lives in the top bar and opens with <kbd>/</kbd>; ⌘/Ctrl+F stays the browser's own find. Narrow phones open it from the document menu.
 
 ## Validation
+
+Not yet run (2026-10-11): the sessions below remain open, as do timings on very large reviews.
 
 Give reviewers lookup tasks spanning folded files, an old-version passage, a test and an existing discussion. Measure successful retrieval, time, lost reading position and mistaken interpretations of incomplete search. Include large and partially loaded MRs. Collect these observations through research sessions without product telemetry.
 
