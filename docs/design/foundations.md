@@ -148,9 +148,9 @@ Inside the reader's root, in order:
 | 1, 2, 3 | The document, the margin bars (`.mr-gutter`), the comment button beside a block |
 | 5 | Contents rail |
 | 15 | Top bar (which holds the change-navigation pill); the Viewed feedback line |
-| 20 | Document menu |
+| 20 | Document menu; search popup |
 | 25 | Selection **Comment** chip |
-| 30 | Progress bar, toast, resume offer |
+| 30 | Progress bar, toast, resume offer, search results bar |
 | 40 | Settings sheet; enlarged diagram |
 | 45 | Chapter map |
 
@@ -174,7 +174,7 @@ Motion explains a change of place; it never decorates.
 
 ## Icons
 
-Icons are inline SVG strings in `src/ui/components/icons.ts`: `settings`, `close`, `plus`, `minus`, `check`, `layout`, `keyboard`, `comment`, `reply`, `viewed`, `chevronDown`, `chevronLeft`, `chevronRight`, `up`, `down` and `book`. They draw at 18 pixels (`.mr-icon`) in `currentColor`. An icon-only button always has an `aria-label` and a `title` that names its shortcut ("Close reader (Esc)").
+Icons are inline SVG strings in `src/ui/components/icons.ts`: `settings`, `close`, `plus`, `minus`, `check`, `layout`, `keyboard`, `comment`, `reply`, `viewed`, `chevronDown`, `chevronLeft`, `chevronRight`, `up`, `down`, `book` and `search`. They draw at 18 pixels (`.mr-icon`) in `currentColor`. An icon-only button always has an `aria-label` and a `title` that names its shortcut ("Close reader (Esc)").
 
 ## Other surfaces
 

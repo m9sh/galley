@@ -5,6 +5,7 @@ authors: [m9sh]
 discussion: https://github.com/m9sh/galley/issues/45
 theme: Never lose the thread
 phase: Exploratory follow-up; outside the three proposed core RFCs
+progress: First version built for review; searches loaded content, including folded parts, without new reads; reader sessions not yet run
 adrs: [2, 21]
 ---
 
@@ -41,9 +42,14 @@ Browser find has low interaction cost but limited review-specific context. A ful
 ## Open questions
 
 - **Engineering, blocking:** Which content is available without extra reads, and how can search limits be reported accurately?
+  - *Answered for the first version (2026-10-11):* every loaded document, including text Changed parts hides, files folded as skippable (loaded, not yet rendered: searched in their source lines) and files the reviewer folded; both versions of every block; loaded comments; unsent drafts; and the request description when shown. Code files are not loaded while Code files is off, so they are counted as not searched, with an explicit **Turn on Code files**. Files still loading and files that failed are counted too. The review reader has no private notes yet ([RFC 0037](0037-private-follow-ups.md)); unsent drafts are its private content.
 - **Design:** Should private notes and discussions appear together with code by default?
+  - *Decided (2026-10-11):* one list in reading order, each result labelled (**Document**, **Code**, **Test**, **Comment**, **Description**, **Your draft** with **Only you can see it**), with filter chips to narrow it.
 - **Product:** Are exact text matches sufficient for the first version?
+  - *Decided (2026-10-11):* yes: the exact phrase in any case, with any whitespace matching any whitespace, and no further options.
 - **Engineering:** What indexing and cancellation strategy keeps large reviews responsive?
+  - *First version:* no index. Each query walks the loaded content in reading order, pausing every few milliseconds; a newer query or closing the reader stops an older one. At most 200 results are listed and the total is reported. Large-review timings remain to be measured.
+- **Design (2026-10-11):** the field lives in the top bar and opens with <kbd>/</kbd>; ⌘/Ctrl+F stays the browser's own find. Narrow phones open it from the document menu.
 
 ## Validation
 

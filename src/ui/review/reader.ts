@@ -20,7 +20,7 @@ import { ChapterMap, type ChapterFileState } from './chapters.ts';
 import { loadPosition, savePosition } from './positions.ts';
 import { MoveFinder, showMove } from './moves.ts';
 import { enhanceSymbols, refreshSymbols } from '../rendering/symbols.ts';
-import { enhanceSpecs } from '../rendering/specs.ts';
+import { enhanceSpecs, isSpecPath } from '../rendering/specs.ts';
 import { renderSourceComments, showCommentSource } from '../rendering/source-comments.ts';
 import { isPalette, PALETTE_KEYS, type DiagramPalette } from '../rendering/diagram-palette.ts';
 import { renderDiagrams } from '../rendering/diagrams.ts';
@@ -32,7 +32,8 @@ import { layoutPanel, LAYOUT_NAMES } from '../components/layout-controls.ts';
 import css from '../components/reader.css';
 import { loadReaderFonts } from '../components/fonts.ts';
 import { loadImage, platformLink, renderDocument, renderSnippet, type RenderedBlock, type RenderedDoc } from '../rendering/render.ts';
-import { filterDocument, paragraphTarget, selectionTarget } from '../rendering/reading.ts';
+import { filterDocument, paragraphTarget, readableText, revealContext, selectionTarget, textRange } from '../rendering/reading.ts';
+import { ReviewSearch, type SearchKind, type SearchMatch, type SearchScope, type SearchTarget } from './search.ts';
 import { DEFAULT_SETTINGS, LAYOUTS, TEXT_SIZES, loadSettings, updateSettings, type Settings } from '../preferences/settings.ts';
 import {
   applyReadingControls,
@@ -62,6 +63,7 @@ const SHORTCUTS: Shortcuts = [
       [['N', 'P'], 'Next / previous conversation'],
       [[']', '['], 'Next / previous file'],
       [['F'], 'Go to a file'],
+      [['/'], 'Search this review, including folded parts'],
       [['M'], 'Open the chapter map'],
     ],
   ],
@@ -131,6 +133,7 @@ const TEMPLATE = `
       </button>
     </div>
     <div class="mr-tb-right">
+      <button type="button" class="mr-btn mr-icon-btn mr-search-btn" data-act="search" hidden aria-haspopup="dialog" aria-expanded="false" title="Search this review (/)" aria-label="Search this review">${icons.search}</button>
       <button type="button" class="mr-btn mr-project-btn" data-act="project" hidden aria-haspopup="menu" aria-expanded="false" title="Read project material at this review’s base or head" aria-label="Project library">${icons.book}<span class="mr-project-label">Library</span></button>
       <button type="button" class="mr-btn mr-chapters-toggle" hidden aria-haspopup="dialog" aria-expanded="false">Chapters</button>
       <button class="mr-btn mr-icon-btn mr-viewed" data-act="viewed" aria-pressed="false" disabled hidden>${icons.viewed}</button>
@@ -302,6 +305,13 @@ interface Hit {
   el: HTMLElement;
 }
 
+/** Where a search result is: one version of a block, a line of a folded file, a comment or the description, or a draft. */
+type SearchAt =
+  | { type: 'block'; view: View; block: RenderedBlock; side: 'base' | 'head' }
+  | { type: 'line'; view: View; side: 'base' | 'head'; line: number }
+  | { type: 'text'; view: View | null; el: HTMLElement; card: HTMLElement | null }
+  | { type: 'draft'; editor: Editor };
+
 /** A text box inside a card, for a new comment or a reply. Each keeps its own draft and posting state. */
 interface Editor {
   form: HTMLFormElement;
@@ -385,6 +395,11 @@ class Reader {
   private index = 0;
   private readonly loading = new Set<DocRef>();
   private readonly cache = new Map<DocRef, Promise<DocContents>>();
+  /** Both versions of each loaded file: search reads files folded before they render. */
+  private readonly contentsOf = new Map<DocRef, DocContents>();
+  private readonly search: ReviewSearch<SearchAt>;
+  /** Watches the element holding the marked search result, to mark it again when its text is redrawn. */
+  private found: MutationObserver | null = null;
   private rendered: RenderedDoc | null = null;
   private headings: Array<{ el: HTMLElement; link: HTMLElement }> = [];
   private markTargets: HTMLElement[] = [];
@@ -503,6 +518,17 @@ class Reader {
         });
       },
     });
+    this.search = new ReviewSearch<SearchAt>({
+      root: this.root,
+      toggle: q('[data-act="search"]') as HTMLButtonElement,
+      beforeOpen: () => this.closeMenus(),
+      targets: () => this.searchTargets(),
+      scope: () => this.searchScope(),
+      reveal: (match) => this.revealMatch(match),
+      remember: () => this.rememberPlace(),
+      forget: () => this.unmark(),
+      showCode: () => this.update({ codeFiles: true }),
+    });
     this.commentBtn.type = 'button';
     this.commentBtn.dataset.act = 'comment-block';
     // biome-ignore lint/plugin: a bundled icon constant.
@@ -603,6 +629,7 @@ class Reader {
       return;
     }
     this.index = Math.min(Math.max(start, 0), all.length - 1);
+    this.shadow.querySelector<HTMLElement>('[data-act="search"]')!.hidden = false;
     this.views = all.map((doc, i) => {
       const section = h(
         'section',
@@ -648,6 +675,8 @@ class Reader {
     this.dark.removeEventListener('change', this.onSchemeChange);
     document.removeEventListener('selectionchange', this.onSelectionChange);
     clearTimeout(this.toastTimer);
+    this.search.destroy();
+    this.unmark();
     CSS.highlights?.delete('galley-quote');
     this.host.remove();
     document.documentElement.style.overflow = this.prevOverflow;
@@ -706,6 +735,7 @@ class Reader {
     try {
       const contents = await this.load(view.doc);
       if (this.closed) return;
+      this.contentsOf.set(view.doc, contents);
       // Files most reviewers skip start folded, one click away. A file with a discussion on it never does.
       const quiet = view.open || !this.settings.fold || this.threads.some((thread) => thread.doc === view.doc) ? null : quietFile(view.doc, contents);
       if (quiet) {
@@ -713,6 +743,7 @@ class Reader {
         view.section.classList.add('is-quiet');
         view.section.replaceChildren(this.quietCard(view));
         this.schedule(true);
+        this.search.refresh();
         // Release the loading slot before progress storage resolves: a newly arrived discussion
         // may need to open this folded file immediately.
         if (!this.source!.viewed) void this.initLocalViewed(view.doc, contents);
@@ -772,6 +803,7 @@ class Reader {
         this.buildToc(r);
       }
       this.schedule(true);
+      this.search.refresh();
       if (!this.source!.viewed) await this.initLocalViewed(view.doc, contents);
       else {
         this.updateViewed();
@@ -789,6 +821,7 @@ class Reader {
       box.append(actionButton('Try again', 'retry-doc', 'mr-outline'));
       view.section.replaceChildren(box);
       view.failed = true;
+      this.search.refresh();
       this.chapters.update();
       this.schedule(true);
     } finally {
@@ -937,12 +970,12 @@ class Reader {
     this.schedule(true);
   }
 
-  private openQuiet(index: number): void {
+  private openQuiet(index: number): Promise<void> {
     const view = this.views[index];
     view.open = true;
     view.section.classList.remove('is-quiet');
     view.section.replaceChildren(this.skeleton());
-    void this.loadView(index);
+    return this.loadView(index);
   }
 
   private show(index: number): void {
@@ -1156,7 +1189,15 @@ class Reader {
     const folded = this.views.filter((view) => !view.section.hidden && ((view.quiet && !view.open) || view.folded)).length;
     if (folded) meta.append(h('span', 'mr-files-folded', `${folded} folded`));
     head.append(meta);
-    menu.append(head);
+    // Narrow phones have no room for search in the top bar; it opens from here instead (reader.css).
+    const find = h('button', 'mr-menu-item mr-files-search');
+    find.type = 'button';
+    find.setAttribute('role', 'menuitem');
+    find.dataset.act = 'search';
+    // biome-ignore lint/plugin: a bundled icon constant.
+    find.innerHTML = icons.search;
+    find.append(h('span', 'mr-menu-name', 'Search this review'));
+    menu.append(head, find);
     docs.forEach((d) => {
       const i = this.views.findIndex((view) => view.doc === d);
       const item = h('button', 'mr-menu-item');
@@ -1281,7 +1322,8 @@ class Reader {
 
   private closeMenus(): boolean {
     const drawerOpen = !this.el.settings.hidden;
-    const wasOpen = drawerOpen || !this.el.files.hidden || !this.el.project.hidden;
+    const searchOpen = this.search.close();
+    const wasOpen = drawerOpen || searchOpen || !this.el.files.hidden || !this.el.project.hidden;
     this.el.files.hidden = this.el.project.hidden = this.el.settings.hidden = true;
     for (const b of this.shadow.querySelectorAll('.mr-topbar [aria-expanded]')) b.setAttribute('aria-expanded', 'false');
     if (drawerOpen) {
@@ -1447,7 +1489,7 @@ class Reader {
     // Turning folding off opens every folded file; turned on, it folds files as they load.
     if (!s.fold)
       this.views.forEach((view, index) => {
-        if (view.quiet && !view.open) this.openQuiet(index);
+        if (view.quiet && !view.open) void this.openQuiet(index);
       });
     if (this.source && s.order !== this.orderedBy) this.orderViews();
     r.classList.toggle('no-signs', !s.signs);
@@ -1647,16 +1689,20 @@ class Reader {
 
   // ---------------------------------------------------------------- navigation
 
-  private scrollToEl(el: Element, line = FOCUS_LINE, flash = true): void {
+  /** `glide` scrolls smoothly unless reduced motion asks otherwise; search jumps, as find in a browser does. */
+  private scrollToEl(el: Element, line = FOCUS_LINE, flash = true, glide = true): void {
     const top = this.root.scrollTop + el.getBoundingClientRect().top - this.root.clientHeight * line;
-    const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const smooth = glide && !matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.root.scrollTo({ top: Math.max(0, top), behavior: smooth ? 'smooth' : 'auto' });
-    if (flash) {
-      el.classList.remove('mr-flash');
-      void (el as HTMLElement).offsetWidth;
-      el.classList.add('mr-flash');
-      setTimeout(() => el.classList.remove('mr-flash'), 1700);
-    }
+    if (flash) this.flash(el);
+  }
+
+  /** Point something out once: a short tint that fades (reader.css). */
+  private flash(el: Element): void {
+    el.classList.remove('mr-flash');
+    void (el as HTMLElement).offsetWidth;
+    el.classList.add('mr-flash');
+    setTimeout(() => el.classList.remove('mr-flash'), 1700);
   }
 
   private visibleChanges(): HTMLElement[] {
@@ -1693,10 +1739,7 @@ class Reader {
       return;
     }
     this.scrollToEl(threads.find((thread) => thread.card === card)!.anchor, FOCUS_LINE, false);
-    card.classList.remove('mr-flash');
-    void card.offsetWidth;
-    card.classList.add('mr-flash');
-    setTimeout(() => card.classList.remove('mr-flash'), 1700);
+    this.flash(card);
   }
 
   /** The next element in reading order after the focus line, or the one before it. */
@@ -1756,6 +1799,237 @@ class Reader {
     if (next !== undefined) this.show(next);
   }
 
+  // ---------------------------------------------------------------- search
+
+  /** Everything search reads without loading anything, in reading order: the description, then each file with its comments and drafts. */
+  private *searchTargets(): Generator<SearchTarget<SearchAt>> {
+    if (this.overview && !this.overview.hidden && this.source!.overview!.description.trim()) {
+      const el = this.overview.querySelector<HTMLElement>('.mr-content')!;
+      yield {
+        kind: 'description',
+        path: null,
+        place: '',
+        version: null,
+        changed: true,
+        text: readableText(el).text,
+        at: { type: 'text', view: null, el, card: null },
+      };
+    }
+    for (const view of this.views) {
+      if (view.section.hidden || view.failed) continue;
+      const kind: SearchKind = view.doc.kind !== 'code' ? 'document' : isSpecPath(view.doc.path) ? 'test' : 'code';
+      if (view.rendered) yield* this.blockTargets(view, kind);
+      else if (view.quiet) yield* this.lineTargets(view, kind);
+      yield* this.commentTargets(view);
+    }
+  }
+
+  /** Each block in the versions it has: a match in text both versions share is reported once, in the new one. */
+  private *blockTargets(view: View, kind: SearchKind): Generator<SearchTarget<SearchAt>> {
+    const r = view.rendered!;
+    let heading = '';
+    for (const block of r.blocks) {
+      // Code comments are read in the view Reading settings → Review shows; the other view holds the same lines.
+      if (block.el.closest('[data-mr-comment-view][hidden]')) continue;
+      const target = (side: 'base' | 'head', version: 'old' | 'new' | null, text: string, alsoNew?: string): SearchTarget<SearchAt> => {
+        const line = block[side]!.lines[0] + 1;
+        return {
+          kind,
+          path: view.doc.path,
+          place: r.isCode ? placeName(side, line, line) : heading,
+          version,
+          changed: block.kind !== 'same',
+          text,
+          alsoNew,
+          at: { type: 'block', view, block, side },
+        };
+      };
+      const head = block.head ? readableText(block.el, 'head').text : '';
+      // The nearest heading above, as the page shows it: a deleted document keeps its old headings.
+      if (!r.isCode && (block.head ?? block.base)!.kind === 'heading') heading = (block.head ? head : readableText(block.el, 'base').text).trim();
+      if (block.kind === 'removed') yield target('base', 'old', readableText(block.el, 'base').text);
+      else if (block.kind === 'same') yield target('head', null, head);
+      else {
+        yield target('head', 'new', head);
+        if (block.kind === 'modified') yield target('base', 'old', readableText(block.el, 'base').text, head);
+      }
+    }
+  }
+
+  /** A folded file that has not been shown is searched in its source lines; a line in only one version says which. */
+  private *lineTargets(view: View, kind: SearchKind): Generator<SearchTarget<SearchAt>> {
+    const { base, head } = this.contentsOf.get(view.doc)!;
+    const before = base.split('\n');
+    const after = head.split('\n');
+    const inBefore = new Set(before);
+    const inAfter = new Set(after);
+    const target = (side: 'base' | 'head', line: number, text: string, version: 'old' | 'new' | null): SearchTarget<SearchAt> => ({
+      kind,
+      path: view.doc.path,
+      place: placeName(side, line, line),
+      version,
+      changed: version !== null,
+      text,
+      at: { type: 'line', view, side, line },
+    });
+    for (const [i, text] of after.entries()) yield target('head', i + 1, text, inBefore.has(text) ? null : 'new');
+    for (const [i, text] of before.entries()) if (!inAfter.has(text)) yield target('base', i + 1, text, 'old');
+  }
+
+  /** Comments on the file, each on its own, then the reviewer's unsent drafts, which only they can see. */
+  private *commentTargets(view: View): Generator<SearchTarget<SearchAt>> {
+    for (const card of this.searchCards(view)) {
+      const thread = this.threadByCard.get(card)!;
+      for (const item of card.querySelectorAll<HTMLElement>('.mr-thread-comment')) {
+        const el = item.querySelector<HTMLElement>('.mr-thread-body')!;
+        const author = item.querySelector('.mr-thread-author')!.textContent;
+        yield {
+          kind: 'comment',
+          path: view.doc.path,
+          place: thread.line === null ? `${author} · on the file` : `${author} · ${placeName(thread.side, thread.line, thread.line)}`,
+          version: null,
+          changed: true,
+          text: readableText(el).text,
+          at: { type: 'text', view, el, card },
+        };
+      }
+    }
+    for (const editor of this.searchDrafts(view))
+      yield {
+        kind: 'draft',
+        path: view.doc.path,
+        place:
+          'thread' in editor
+            ? 'Your reply'
+            : `Your comment · ${placeName((editor as Draft).target.side, (editor as Draft).target.startLine, (editor as Draft).target.endLine)}`,
+        version: null,
+        changed: true,
+        text: editor.textarea.value,
+        at: { type: 'draft', editor },
+      };
+  }
+
+  private searchCards(view: View): HTMLElement[] {
+    return [
+      ...view.section.querySelectorAll<HTMLElement>('.mr-file-threads .mr-thread'),
+      ...this.threadEls.filter((entry) => entry.view === view).map((entry) => entry.card),
+    ];
+  }
+
+  private searchDrafts(view: View): Editor[] {
+    const replies = [...this.replyEditors.values()].filter((editor) => editor.thread.doc === view.doc);
+    return [...this.drafts.filter((draft) => draft.view === view), ...replies].filter((editor) => hasDraft(editor));
+  }
+
+  /** What search covers, and what it cannot: code files left off, files still loading and files that failed. */
+  private searchScope(): SearchScope {
+    const visible = this.views.filter((view) => !view.section.hidden);
+    const searched = visible.filter((view) => !view.failed && (view.rendered || view.quiet));
+    return {
+      files: searched.length,
+      comments: searched.reduce((sum, view) => sum + this.searchCards(view).reduce((n, card) => n + card.querySelectorAll('.mr-thread-comment').length, 0), 0),
+      drafts: searched.reduce((sum, view) => sum + this.searchDrafts(view).length, 0),
+      code: this.views.length - visible.length,
+      loading: visible.filter((view) => !view.failed && !view.rendered && !view.quiet).length,
+      failed: visible.filter((view) => view.failed).length,
+    };
+  }
+
+  /** Show a result where it is: open what folds it, mark the words and move focus there. Viewed never changes. */
+  private async revealMatch({ target, start, end }: SearchMatch<SearchAt>): Promise<void> {
+    const at = target.at;
+    if (at.type === 'draft') {
+      this.focusEditor(at.editor);
+      at.editor.textarea.setSelectionRange(start, end);
+      return;
+    }
+    if (at.view?.folded) this.unfoldView(at.view);
+    if (at.type === 'text') {
+      const card = at.card;
+      if (card) {
+        if (at.el.closest('.is-folded') && !card.classList.contains('is-expanded')) card.querySelector<HTMLElement>('[data-act="toggle-thread"]')!.click();
+        this.scrollToEl(this.threadEls.find((entry) => entry.card === card)?.anchor ?? card, FOCUS_LINE, false, false);
+        this.flash(card);
+      } else {
+        at.el.closest('details')!.open = true;
+        this.scrollToEl(at.el, FOCUS_LINE, true, false);
+      }
+      this.markFound(at.el, undefined, start, end);
+      const focus = card ?? at.el;
+      focus.tabIndex = -1;
+      focus.focus({ preventScroll: true });
+      return;
+    }
+    if (at.type === 'block') {
+      this.revealBlock(at.view, at.block, at.side, [start, end]);
+      return;
+    }
+    const view = at.view;
+    if (!view.rendered) await this.openQuiet(this.views.indexOf(view));
+    const r = view.rendered;
+    const block = r && blockAt(r, at.side, at.line);
+    // The file could not be shown after all and says why, or no block shows the line (an HTML comment): go to the file.
+    if (!block) {
+      this.scrollToEl(view.section, 0.12, false, false);
+      view.section.tabIndex = -1;
+      view.section.focus({ preventScroll: true });
+      return;
+    }
+    // A source line reads as its source. A document's block shows its line rendered: find the words again there.
+    const words = target.text.slice(start, end);
+    const from = r!.isCode ? start : readableText(block.el, at.side).text.toLowerCase().indexOf(words.toLowerCase());
+    this.revealBlock(view, block, at.side, from < 0 ? null : [from, from + words.length]);
+  }
+
+  private revealBlock(view: View, block: RenderedBlock, side: 'base' | 'head', span: [number, number] | null): void {
+    const r = view.rendered!;
+    if (block.el.hidden) revealContext(r, block.el);
+    const section = block.el.closest('.mr-spec-section');
+    if (section?.classList.contains('is-collapsed')) section.querySelector<HTMLElement>('.mr-spec-toggle')!.click();
+    // A test plan shows a found line even when it is setup it would otherwise leave out.
+    for (const el of this.root.querySelectorAll<HTMLElement>('[data-mr-found]')) delete el.dataset.mrFound;
+    block.el.dataset.mrFound = '';
+    if (side === 'base' && view.doc.status !== 'removed' && this.settings.mode === 'clean') {
+      this.update({ mode: 'changes' });
+      this.toast('Change marks are on, to show the old version');
+    }
+    this.schedule(true);
+    this.scrollToEl(surfaceOf(block.el), FOCUS_LINE, true, false);
+    if (span) this.markFound(block.el, side, ...span);
+    block.el.tabIndex = -1;
+    block.el.focus({ preventScroll: true });
+  }
+
+  /** Mark the found words. Syntax colours can arrive after a file is shown and replace its text: mark them again then. */
+  private markFound(el: HTMLElement, side: 'base' | 'head' | undefined, start: number, end: number): void {
+    this.unmark();
+    const highlights = typeof Highlight === 'function' && CSS.highlights;
+    if (!highlights) return;
+    const mark = () => highlights.set('galley-search', new Highlight(textRange(el, side, start, end)));
+    mark();
+    this.found = new MutationObserver(mark);
+    this.found.observe(el, { childList: true, subtree: true, characterData: true });
+  }
+
+  private unmark(): void {
+    this.found?.disconnect();
+    this.found = null;
+    CSS.highlights?.delete('galley-search');
+  }
+
+  /** Where the reader was before searching: the file in view, how far into it, and what had focus. */
+  private rememberPlace(): () => void {
+    const view = this.views[this.index];
+    const offset = this.root.getBoundingClientRect().top - view.section.getBoundingClientRect().top;
+    const focus = this.shadow.activeElement as HTMLElement | null;
+    return () => {
+      // An instant scroll also stops one still running towards the result.
+      const top = this.root.scrollTop + view.section.getBoundingClientRect().top - this.root.getBoundingClientRect().top + offset;
+      this.root.scrollTo({ top, behavior: 'instant' });
+      (focus?.isConnected ? focus : this.root).focus({ preventScroll: true });
+    };
+  }
+
   // ---------------------------------------------------------------- events
 
   /** Keep the page's own keyboard shortcuts from firing while the reader is open. */
@@ -1774,10 +2048,10 @@ class Reader {
 
   private onKey(e: KeyboardEvent): void {
     if (e.defaultPrevented) return;
-    if (this.chapters.onKey(e)) return;
+    if (this.chapters.onKey(e) || this.search.onKey(e)) return;
     if (e.key === 'Escape') {
       e.preventDefault();
-      if (this.closeLightbox() || this.closeMenus()) return;
+      if (this.closeLightbox() || this.closeMenus() || this.search.closeBar()) return;
       // A draft is only ever discarded with Cancel. Esc leaves an editor, and closes it when it is empty.
       const editor = this.editorAt(this.shadow.activeElement);
       if (editor) {
@@ -1867,6 +2141,9 @@ class Reader {
       case 'p':
         this.stepThread(-1);
         break;
+      case '/':
+        if (this.views.length) this.search.open();
+        break;
       case 'f': {
         const button = this.shadow.querySelector<HTMLElement>('[data-act="files"]');
         if (button && !button.hidden && this.views.some((view) => !view.section.hidden)) this.toggleMenu(this.el.files, button);
@@ -1925,7 +2202,7 @@ class Reader {
 
   private onClick(e: MouseEvent): void {
     const target = e.target as Element;
-    const inMenu = target.closest('.mr-menu, .mr-settings, [data-act="files"], [data-act="settings"]');
+    const inMenu = target.closest('.mr-menu, .mr-settings, [data-act="files"], [data-act="settings"], [data-act="search"]');
     if (!inMenu) this.closeMenus();
 
     const settingsTab = target.closest<HTMLElement>('[data-settings-tab]');
@@ -1970,6 +2247,11 @@ class Reader {
         return;
       case 'files':
         if (this.views.some((view) => !view.section.hidden)) this.toggleMenu(this.el.files, action);
+        return;
+      case 'search':
+        // From the files menu, closing search gives focus to the file name that opened the menu.
+        if (action.closest('.mr-files')) this.el.fileBtn.focus({ preventScroll: true });
+        this.search.toggle();
         return;
       case 'project':
         this.toggleMenu(this.el.project, action);
@@ -2048,7 +2330,7 @@ class Reader {
       case 'show-quiet': {
         const index = this.views.findIndex((view) => view.section.contains(action));
         if (this.views[index].folded) this.unfoldView(this.views[index]);
-        else this.openQuiet(index);
+        else void this.openQuiet(index);
         return;
       }
       case 'fold-file':
@@ -2735,9 +3017,10 @@ class Reader {
     this.views.forEach((view, index) => {
       if (view.rendered) this.attachThreads(view);
       // A folded file that turns out to have a discussion opens, so the discussion is not missed.
-      else if (view.quiet && !view.open && this.threads.some((thread) => thread.doc === view.doc)) this.openQuiet(index);
+      else if (view.quiet && !view.open && this.threads.some((thread) => thread.doc === view.doc)) void this.openQuiet(index);
     });
     this.schedule(true);
+    this.search.refresh();
   }
 
   /** Anchor this document's threads to the blocks holding their lines; the rest are file comments. */

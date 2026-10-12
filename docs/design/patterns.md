@@ -46,8 +46,11 @@ Layers, innermost first: the enlarged diagram, the settings sheet or chapter map
 | Next or previous file | <kbd>]</kbd> <kbd>[</kbd> | Follows the current file order |
 | Any file | <kbd>F</kbd>, the file name | The document menu |
 | A route through the review | <kbd>M</kbd>, **Chapters** | The chapter map |
+| A phrase anywhere | <kbd>/</kbd>, the search icon (narrow phones: **Search this review** in the document menu) | The search popup; choosing a result shows it in place, and the results bar steps through the rest or goes **Back to where you were** |
 
-Moving never changes state: it does not mark files Viewed, open folded files, or discard drafts.
+Moving never changes state: it does not mark files Viewed, open folded files, or discard drafts. The one exception is a search result the reader chooses: it opens what folds that text (a folded file, an unchanged stretch, a test-plan section), because seeing it was the request. Viewed and drafts still never change.
+
+**Searching a review.** The field is a combobox over a listbox: the first result is active, arrow keys move, <kbd>Enter</kbd> chooses, and focus stays in the field while results are chosen with the pointer. Results are grouped by file in reading order and say what each is, where it is and which version it is in; private content says **Only you can see it**. The popup always says what it searched and what it did not (code files left off, files loading or failed), so no matches never reads as nothing there; loading more is a separate, explicit action. Matching runs in pauses of a few milliseconds, a newer query replaces an older one, and at most 200 results are listed, with the total reported. A chosen result moves instantly, as find in a browser does, flashes, and keeps its words marked with the Custom Highlight API (tint and underline) until the results bar closes. **Back to where you were** returns to the file and offset read before the search began, however many results were visited.
 
 ## Feedback
 

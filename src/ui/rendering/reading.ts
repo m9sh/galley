@@ -84,6 +84,50 @@ export function filterDocument(r: RenderedDoc, changedOnly: boolean): void {
   if (separator) separator.hidden = r.content.querySelector<HTMLElement>('section.footnotes')!.hidden;
 }
 
+/** Show one unchanged block hidden by Changed parts, as its own context toggle would. */
+export function revealContext(r: RenderedDoc, el: HTMLElement): void {
+  revealed.get(r)!.add(el);
+  filterDocument(r, true);
+  r.content.dispatchEvent(new r.content.ownerDocument.defaultView!.Event('galley:context', { bubbles: true }));
+}
+
+/** What belongs to the other version of a block, and what is no one's text: controls and line numbers. */
+const NOT_TEXT = 'button, [aria-hidden="true"]';
+const OTHER_SIDE = { head: 'del.mr-del, .mr-ghost-row, [data-mr-side="base"]', base: 'ins.mr-ins, [data-mr-side="head"]' } as const;
+
+/**
+ * The text a reader sees in one version of an element, with each text node and where it starts, so a match
+ * found in the text can be marked in place. A source line is its source text alone.
+ */
+export function readableText(el: HTMLElement, side?: 'base' | 'head'): { text: string; nodes: Array<{ node: Text; at: number }> } {
+  const scope = el.querySelector<HTMLElement>('.mr-code-text') ?? el;
+  const skip = side ? `${NOT_TEXT}, ${OTHER_SIDE[side]}` : NOT_TEXT;
+  const nodes: Array<{ node: Text; at: number }> = [];
+  let text = '';
+  const walker = el.ownerDocument.createTreeWalker(scope, 4);
+  for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
+    let skipped = false;
+    for (let parent = node.parentElement; parent && parent !== el && !skipped; parent = parent.parentElement) skipped = parent.matches(skip);
+    if (skipped) continue;
+    nodes.push({ node, at: text.length });
+    text += node.data;
+  }
+  return { text, nodes };
+}
+
+/** The range of [start, end) in readableText(el, side): what a search marks. */
+export function textRange(el: HTMLElement, side: 'base' | 'head' | undefined, start: number, end: number): Range {
+  const { nodes } = readableText(el, side);
+  const range = el.ownerDocument.createRange();
+  const at = (offset: number, isEnd: boolean) => {
+    const found = nodes.findLast((item) => (isEnd ? item.at < offset : item.at <= offset))!;
+    return [found.node, offset - found.at] as const;
+  };
+  range.setStart(...at(start, false));
+  range.setEnd(...at(end, true));
+  return range;
+}
+
 function owner(node: Node, blocks: RenderedBlock[]): RenderedBlock | undefined {
   return blocks.find((block) => block.el === node || block.el.contains(node));
 }
