@@ -1,7 +1,7 @@
 import type { RepoDiscovery } from '../../core/discovery.ts';
 import { ProjectIndex } from '../../core/docindex.ts';
 import { ReaderError, type RepositorySource } from '../../platforms/types.ts';
-import { button, h } from '../components/dom.ts';
+import { button, h, glyph } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
 import { ProjectNotes } from './project-store.ts';
 import { external } from './repo-views.ts';
@@ -17,8 +17,7 @@ export abstract class RepoReaderSource extends RepoReaderBase {
     const where = h('span', 'mr-review-route-text', 'From the review chapter ');
     where.append(h('strong', '', title));
     const next = button('Continue chapter', 'continue-chapter', 'mr-btn mr-review-continue');
-    // biome-ignore lint/plugin: a bundled icon constant, never document content.
-    next.insertAdjacentHTML('beforeend', icons.chevronRight);
+    next.append(glyph(icons.chevronRight));
     next.title = 'Back to the review, at the next part of this chapter';
     next.disabled = !enabled;
     bar.append(where, next);

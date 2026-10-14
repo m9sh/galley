@@ -1,5 +1,5 @@
 import type { ChapterAttachment, ChapterContext, ReviewRelated } from '../../core/review-context.ts';
-import { button, h } from './dom.ts';
+import { button, h, glyph } from './dom.ts';
 import { icons } from './icons.ts';
 import { sheetRow, sheetSection } from './sheet.ts';
 
@@ -15,8 +15,7 @@ export interface ContextOpening {
 const name = (path: string) => path.slice(path.lastIndexOf('/') + 1);
 const icon = (svg: string) => {
   const box = h('span', 'mr-sheet-icon');
-  // biome-ignore lint/plugin: a bundled icon constant, never document content.
-  box.innerHTML = svg;
+  box.replaceChildren(glyph(svg));
   return box;
 };
 

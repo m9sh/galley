@@ -1,6 +1,6 @@
 import { KIND_SOURCES } from '../src/core/docindex.ts';
 import type { MapConnection, MapProof } from '../src/core/project-map.ts';
-import { button, chip, h } from '../src/ui/components/dom.ts';
+import { button, chip, h, glyph } from '../src/ui/components/dom.ts';
 import { icons } from '../src/ui/components/icons.ts';
 import { renderDocument } from '../src/ui/rendering/render.ts';
 import { SHAPES, SHEET_TABS, type SheetTab, cardName, iconButton, lineIcon, placeBadge } from './project-map-shared.ts';
@@ -60,8 +60,7 @@ export abstract class PrototypeDetail extends PrototypeList {
     if (this.connection) {
       const connection = this.connection;
       const back = button('Back to document', 'place-detail', 'mr-btn mr-atlas-sheet-back');
-      // biome-ignore lint/plugin: a bundled reader icon constant, never document content.
-      back.insertAdjacentHTML('afterbegin', icons.chevronLeft);
+      back.prepend(glyph(icons.chevronLeft));
       actions.append(close);
       top.append(back, actions);
       header.append(

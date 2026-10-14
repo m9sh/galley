@@ -1,5 +1,5 @@
 import { excerpt, occurrences, phrase, SEARCH_BUDGET } from '../../core/search.ts';
-import { h } from '../components/dom.ts';
+import { h, glyph } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
 
 /** What a result is: file text, a comment from the review, or something only the reviewer can see. */
@@ -134,8 +134,7 @@ export class ReviewSearch<T> {
     this.panel.setAttribute('role', 'dialog');
     this.panel.setAttribute('aria-label', 'Search this review');
     const label = h('label', 'mr-search-label');
-    // biome-ignore lint/plugin: a bundled icon constant.
-    label.innerHTML = icons.search;
+    label.replaceChildren(glyph(icons.search));
     this.field.type = 'search';
     this.field.placeholder = 'Search this review';
     this.field.autocomplete = 'off';
@@ -174,8 +173,7 @@ export class ReviewSearch<T> {
     ] as const) {
       button.setAttribute('aria-label', name);
       button.title = name;
-      // biome-ignore lint/plugin: a bundled icon constant.
-      button.innerHTML = icon;
+      button.replaceChildren(glyph(icon));
     }
     const back = control('Back', 'mr-search-back', () => {
       const restore = this.restore!;

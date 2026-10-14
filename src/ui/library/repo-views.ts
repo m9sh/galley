@@ -9,7 +9,7 @@ import {
   type Relation,
 } from '../../core/architecture.ts';
 import { ANCHOR_STATES, MAX_LINKS, MAX_NOTE_CHARS, NOTE_HEADINGS, NOTE_KINDS, NOTE_NAMES, type AnchorState, type Note } from '../../core/notes.ts';
-import { button, chip, h, option, selectField, setRow, switchButton, textField, type ChipKind } from '../components/dom.ts';
+import { button, chip, h, option, selectField, setRow, switchButton, textField, type ChipKind, glyph } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
 
 /**
@@ -593,8 +593,7 @@ export function exportSheet(options: ExportOptions): HTMLElement[] {
   const close = button('', 'close-export', 'mr-btn mr-icon-btn');
   close.setAttribute('aria-label', 'Close export (Esc)');
   close.title = 'Close export (Esc)';
-  // biome-ignore lint/plugin: a bundled icon constant.
-  close.innerHTML = icons.close;
+  close.replaceChildren(glyph(icons.close));
   heading.append(title, close);
 
   const body = h('div', 'mr-settings-body');

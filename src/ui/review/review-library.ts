@@ -1,7 +1,7 @@
 import { fileTitle } from '../../core/docindex.ts';
 import type { ChapterContext, ReviewDocs, ReviewRelated } from '../../core/review-context.ts';
 import type { RepositorySource } from '../../platforms/types.ts';
-import { h } from '../components/dom.ts';
+import { h, glyph } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
 import { kbd, sheetRow, sheetSection, type SheetContent, type SheetLayer } from '../components/sheet.ts';
 import { highlightCode } from '../rendering/code.ts';
@@ -62,8 +62,7 @@ const control = (label: string, className: string, action: () => void) => {
 };
 const icon = (svg: string) => {
   const box = h('span', 'mr-sheet-icon');
-  // biome-ignore lint/plugin: a bundled icon constant, never document content.
-  box.innerHTML = svg;
+  box.replaceChildren(glyph(svg));
   return box;
 };
 const folderOf = (path: string) => path.slice(0, Math.max(0, path.lastIndexOf('/')));
@@ -212,8 +211,7 @@ export class ReviewLibrary {
 
   private fullButton(title: string, action: () => void): HTMLButtonElement {
     const full = control('', 'mr-btn mr-icon-btn mr-docs-full', action);
-    // biome-ignore lint/plugin: a bundled icon constant, never document content.
-    full.innerHTML = icons.expand;
+    full.replaceChildren(glyph(icons.expand));
     full.setAttribute('aria-label', title.replace(/,.*$/, ''));
     full.title = title;
     return full;

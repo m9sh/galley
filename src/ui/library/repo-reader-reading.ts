@@ -1,7 +1,7 @@
 import { chapterAttachment } from '../components/chapter-attachment.ts';
 import { classify, fileTitle, folderTree, KIND_NAMES, KIND_SOURCES, type DocKind, type Edge, type FolderNode, type KindSource } from '../../core/docindex.ts';
 import { highlightCode } from '../rendering/code.ts';
-import { button, chip, h } from '../components/dom.ts';
+import { button, chip, h, glyph } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
 import { renderDocument, type RenderedDoc } from '../rendering/render.ts';
 import { external } from './repo-views.ts';
@@ -187,8 +187,7 @@ export abstract class RepoReaderReading extends RepoReaderSource {
           // A stop already chosen says so; choosing it again only says it is there.
           const added = this.sequence.items.some((item) => item.path === link.path && item.anchor === link.anchor);
           const add = button(added ? 'Added' : 'Add', 'sequence-add', `mr-btn mr-outline mr-seq-add${added ? ' is-added' : ''}`);
-          // biome-ignore lint/plugin: a bundled icon constant, never document content.
-          add.insertAdjacentHTML('afterbegin', added ? icons.check : icons.plus);
+          add.prepend(glyph(added ? icons.check : icons.plus));
           add.dataset.path = link.path!;
           add.dataset.anchor = link.anchor;
           add.dataset.title = title;

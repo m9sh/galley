@@ -1,4 +1,4 @@
-import { h } from './dom.ts';
+import { h, glyph } from './dom.ts';
 import { icons } from './icons.ts';
 import { slideWith } from './motion.ts';
 
@@ -92,8 +92,7 @@ export function sheetRow(row: SheetRow): HTMLElement {
     el.classList.add('is-push');
     const go = h('span', 'mr-sheet-row-go');
     go.setAttribute('aria-hidden', 'true');
-    // biome-ignore lint/plugin: a bundled icon constant, never document content.
-    go.innerHTML = icons.chevronRight;
+    go.replaceChildren(glyph(icons.chevronRight));
     el.append(go);
   }
   return el;
@@ -143,8 +142,7 @@ export class SheetLayer {
     readonly opener: HTMLElement | null,
   ) {
     this.close.type = 'button';
-    // biome-ignore lint/plugin: a bundled icon constant, never document content.
-    this.close.innerHTML = icons.close;
+    this.close.replaceChildren(glyph(icons.close));
     this.close.append(h('span', 'mr-visually-hidden', closeLabel));
     this.close.title = back ? closeLabel : `${closeLabel} (Esc)`;
     this.close.addEventListener('click', dismiss);
@@ -266,8 +264,7 @@ export class Sheet {
     const name = this.top.name;
     const back = h('button', 'mr-btn mr-sheet-back');
     back.type = 'button';
-    // biome-ignore lint/plugin: a bundled icon constant, never document content.
-    back.innerHTML = icons.chevronLeft;
+    back.replaceChildren(glyph(icons.chevronLeft));
     back.append(h('span', 'mr-sheet-back-label', name));
     back.setAttribute('aria-label', `Back to ${name}`);
     back.title = 'Back (Esc)';

@@ -1,4 +1,4 @@
-import { button, chip, h } from '../components/dom.ts';
+import { button, chip, h, glyph } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
 
 export interface ReadingStop {
@@ -42,8 +42,7 @@ function action(label: string, act: string, at: number, className = 'mr-chapter-
 
 /** A bundled icon before a control's words, or as the whole of an icon-only control. */
 function withIcon(control: HTMLButtonElement, icon: string, at: 'afterbegin' | 'beforeend' = 'afterbegin'): HTMLButtonElement {
-  // biome-ignore lint/plugin: a bundled icon constant, never document content.
-  control.insertAdjacentHTML(at, icon);
+  control[at === 'afterbegin' ? 'prepend' : 'append'](glyph(icon));
   return control;
 }
 

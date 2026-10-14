@@ -21,7 +21,7 @@ Galley renders content anyone can write, inside the reviewer's session, next to 
 ## Working near a boundary
 
 - **Write the hostile test first.** A document, file name, Mermaid source, comment or API reply that attempts the attack; assert it fails. Put it beside the existing ones (`src/ui/rendering/render.test.ts`, `render-edges.test.ts`, `src/core/edges.test.ts`, `src/platforms/comments.test.ts`, `src/background/worker.test.ts`, `src/ui/sandbox/*-frame.test.ts`).
-- **Static HTML needs a reason:** `// biome-ignore lint/plugin: a bundled icon constant.` A reviewer must be able to agree that no content can reach it.
+- **Bundled markup goes through one helper:** `glyph(icons.x)` for an icon and `markup(template)` for a template, both in `src/ui/components/dom.ts`. Never `innerHTML`, `insertAdjacentHTML` or `parseFromString` anywhere else: the lint rule fails on them, and the Firefox validator warns on them. No content may reach `markup()` ([ADR 0033](../../../docs/adr/0033-parse-bundled-markup-in-one-place.md)).
 - **New request, permission, storage key or dependency?** Update [PRIVACY.md](../../../PRIVACY.md), the [storage inventory](../../../docs/architecture/storage.md), the store listing if permissions change, and write an ADR for a new boundary. A new permission is at least a `feat`.
 - **New GitHub call?** Follow [the how-to](../../../docs/how-to/add-a-github-api-call.md); the worker refuses anything not in `allowedRequest()`.
 - **New frame or engine?** Add it to the manifest `sandbox` pages and `web_accessible_resources`, cap its input, validate its replies, and make sure `npm run build`'s token-isolation check covers it.

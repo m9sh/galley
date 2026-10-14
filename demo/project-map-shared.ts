@@ -1,5 +1,5 @@
 import type { MapPlace, MapPosition } from '../src/core/project-map.ts';
-import { button, h } from '../src/ui/components/dom.ts';
+import { button, h, glyph } from '../src/ui/components/dom.ts';
 
 export const SETTINGS_TABS = ['reading', 'layout', 'keys'];
 export const SHEET_TABS = ['preview', 'links'] as const;
@@ -55,8 +55,7 @@ export function iconButton(act: string, label: string, title: string, icon: SVGS
   control.setAttribute('aria-label', label);
   control.title = title;
   if (typeof icon === 'string') {
-    // biome-ignore lint/plugin: a bundled reader icon constant, never document content.
-    control.innerHTML = icon;
+    control.replaceChildren(glyph(icon));
   } else control.append(icon);
   return control;
 }

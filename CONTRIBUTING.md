@@ -186,11 +186,11 @@ npm run test:coverage             # coverage report in coverage/, and the thresh
 **Lint and formatting** use [Biome](https://biomejs.dev), configured in `biome.jsonc`: the recommended lint rules plus `noFloatingPromises` (`npm run lint`), and the formatter with 160-character lines (`npm run format` rewrites files, `npm run format:check` only reports). CI and the pre-push hook fail on unformatted files; editors with the Biome extension can format on save. One rule is custom (`lint/no-unsanitized-html.grit`): writing a string as HTML (`innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write`) is an error, because this extension renders content from pull requests. Document text must go through the sanitiser in `src/ui/rendering/render.ts` or be built from DOM nodes. A static template is fine if you say why:
 
 ```ts
-// biome-ignore lint/plugin: a bundled icon constant.
-button.innerHTML = icons.comment;
+button.replaceChildren(glyph(icons.comment)); // a bundled icon
+root.replaceChildren(markup(TEMPLATE)); // bundled markup, such as a template
 ```
 
-Suppressions need a reason after the colon, and a reviewer should be able to agree with it.
+`glyph()` and `markup()` in `src/ui/components/dom.ts` are the only places that parse a string as HTML. A lint rule fails on `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write` and `parseFromString` anywhere else, so there is nothing to suppress for bundled markup. Anything that came from a document goes through `sanitize()` or becomes text ([ADR 0033](docs/adr/0033-parse-bundled-markup-in-one-place.md)). The Firefox validator reports no warning for Galley's own code, and `npm run lint:firefox` keeps it that way.
 
 ## Guidelines
 
