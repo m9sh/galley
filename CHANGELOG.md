@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.19.1](https://github.com/m9sh/galley/compare/v0.19.0...v0.19.1) (2026-10-14)
+
+
+### Bug Fixes
+
+* **reader:** remove every Firefox validator warning from Galley's own code ([546595f](https://github.com/m9sh/galley/commit/546595f4dc56975a6ece65b905840acf67bab4b6))
+* **reader:** remove every Firefox validator warning from Galley's own code ([6066261](https://github.com/m9sh/galley/commit/6066261ce42d218782bfa18ed585693730db1059)), closes [#81](https://github.com/m9sh/galley/issues/81)
+
 ## [0.19.0](https://github.com/m9sh/galley/compare/v0.18.0...v0.19.0) (2026-10-14)
 
 
