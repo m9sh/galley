@@ -4,8 +4,9 @@ created: 2026-10-12
 authors: [m9sh]
 discussion: https://github.com/m9sh/galley/issues/74
 theme: Read the project
-phase: Follow-up to the project library ([RFC 0049](0049-repository-docs-and-project-maps.md)); a privacy change in its later steps
-progress: Step 1 (documents and readings kept by content hash across a refresh), the opt-in on-device outline index (step 3, in extension storage, with the settings switch, Forget control, expiry, size bounds, private windows and forgetting with a site's token) and GitHub conditional refresh (the listing is immutable at a commit, so it needs none) are implemented in this pull request; step 2 (a worker session cache) and batched GraphQL reads are not built, and rate-limit use on a large repository is still to be measured
+phase: Follow-up to the project library (RFC 0049); a privacy change in its later steps
+progress: Steps 1 and 3 and conditional refresh on GitHub are done; step 2, GraphQL batching and the rate-limit measurement on a large repository are open
+implemented-in: [https://github.com/m9sh/galley/pull/77]
 adrs: [31]
 ---
 
@@ -38,9 +39,14 @@ Independently of caching, fewer requests:
 
 - [x] After **Refresh** to a newer commit, only documents whose blob changed are read again (step 1).
 - [x] The map rebuilds from cached indexes without parsing unchanged documents again (step 1).
-- [ ] Reopening the library in the same browser session reads no document it has already read (step 2). With **Remember project outlines on this device** on, the map of a project read again reads none of the documents whose hash is unchanged; the document being opened is still read, and with the switch off a reopened library starts from nothing.
+- [ ] Reopening the library in the same browser session reads no document it has already read (step 2).
+  - Met in part. With **Remember project outlines on this device** on, the map of a project read again reads none of the documents whose hash is unchanged.
+  - Still open. The document being opened is still read, and with the setting off a reopened library starts from nothing.
 - [x] Nothing from a repository is written to disk unless the reader turns it on (steps 1–2), and step 3 is off by default.
-- [x] Every cache is bounded in size and lifetime, says what it holds, and can be cleared from the popup or settings. The memory cache is bounded in size and lasts while the reader is open; the on-device outlines are bounded in size, last 7 days from last use (removed when the browser starts, even if never read again), start over with each Galley version, are described in Galley settings and are cleared there.
+- [x] Every cache is bounded in size and lifetime, says what it holds, and can be cleared from the popup or settings.
+  - The memory cache is bounded in size and lasts while the reader is open.
+  - The on-device outlines are bounded in size and last 7 days from last use. They are removed when the browser starts, even if never read again, and start over with each Galley version.
+  - Galley settings describes what is kept and clears it.
 - [x] Removing a site's token clears what was cached for that site.
 - [x] Private windows never persist anything.
 - [x] PRIVACY.md and the storage inventory describe exactly what is kept, where and for how long, before step 2 or 3 ships.
@@ -62,11 +68,19 @@ The worker boundary from [ADR 0009](../adr/0009-github-tokens-in-the-background-
 
 ## Open questions
 
-- **Product, blocking:** is a memory-only session cache (step 2) enough, or do readers need the on-device index (step 3)? Answered by the maintainer on 2026-10-13: local storage is fine. The on-device index is built in extension storage, off by default; the worker's session cache is not built.
-- **Engineering, not blocking:** what size and lifetime limits fit large documentation repositories? Started at 7 days, 1,000,000 stored characters for a project and 4,000,000 in all; revisit with real repositories.
+- **Product, blocking:** is a memory-only session cache (step 2) enough, or do readers need the on-device index (step 3)?
+  - Answered by the maintainer on 2026-10-13: "local storage should be fine".
+  - The on-device index is built in extension storage and is off by default. The worker's session cache is not built.
+- **Engineering, not blocking:** what size and lifetime limits fit large documentation repositories?
+  - The limits started at 7 days, 1,000,000 stored characters for a project and 4,000,000 in all.
+  - Revisit them with real repositories.
 - **Product, not blocking:** should the review reader share the same cache for files a review changes?
-- **Product, not blocking:** should the setting start on? It starts off, as proposed; making it a default is a separate decision.
-- **Engineering, not blocking:** GraphQL batching adds a request to the token allowlist, and costs API quota that same-origin raw reads do not. It is not built; is it worth it for requests saved rather than quota?
+- **Product, not blocking:** should the setting start on?
+  - It starts off, as proposed. Making it a default is a separate decision.
+- **Engineering, not blocking:** is GraphQL batching worth it?
+  - It adds a request to the token allowlist.
+  - It costs API quota that same-origin raw reads do not.
+  - It is not built. The question is whether requests saved are worth the quota spent.
 
 ## Validation
 

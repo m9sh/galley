@@ -188,7 +188,11 @@ Galley also reads a project's own documentation, outside any review: its README,
 
 **Opening.** On a repository's main page, one of its folders or one of its Markdown files on GitHub or GitLab, press **Read the project** in the bottom-right corner. Nothing is fetched until you do. From a Markdown file the reader opens that document at once; from a folder it opens the folder's README, or its first document. Hiding the button with × hides it for that repository.
 
-**One commit.** Galley resolves the branch, tag or commit the page shows to one commit, and reads every document at that commit while the reader is open. The commit is shown in the top bar and under each title. Choose it to check for a newer commit: if the branch has moved, Galley says so and starts over at the new one, reading again only the documents whose content changed. On GitHub the check asks whether the branch has moved without using any of your hourly requests when it has not. A page for a specific commit has nothing newer to check.
+**One commit.** Galley resolves the branch, tag or commit the page shows to one commit, and reads every document at that commit while the reader is open. The commit is shown in the top bar and under each title.
+
+**Newer commits.** Choose the commit to check for a newer one. If the branch has moved, Galley says so and starts over at the new commit, reading again only the documents whose content changed. A page for a specific commit has nothing newer to check.
+
+On GitHub, the check asks whether the branch has moved. When it has not, the check uses none of your hourly requests.
 
 **Reading.** Documents are read as they are: no change marks, comments or Viewed. Relative links to other Markdown documents open in the reader at the same commit, and a link to a folder opens its README. Links to source files and other formats open on the platform in a new tab, as does any link you open with ⌘/Ctrl or Shift. Section links scroll to the section and say when it does not exist. **Back** and **Forward** (or <kbd>Alt</kbd> <kbd>←</kbd> / <kbd>Alt</kbd> <kbd>→</kbd>) return to the paragraph you left, at any window width. In Balanced and Wide text, longer documents list their headings in the left margin on wide screens.
 
@@ -198,7 +202,18 @@ Galley also reads a project's own documentation, outside any review: its README,
 
 **Library chapters.** Outside a review, choose **Chapters** (or <kbd>C</kbd>) for an optional reading sequence. Use **Add** beside a document or search result, or **Add to chapter** in an article to choose its whole document or a heading. **Links from this document** offers only explicit Markdown links, with their source line; a link you have chosen says **Added**, and missing targets still explain the failure when opened. Your stops are numbered in order; choose one to read it, and use **Earlier**, **Later** and **Remove** beside it to change the order. **Read chapter** (shown once there is a stop), **Previous** and **Next** follow it. **Browse all documents** keeps the ordinary outline available. Choices are labelled **Added by you**, last until the library closes, and clear when you explicitly move to a newer commit. Nothing counts as Viewed. A library opened over a review uses that review's chapters and context instead.
 
-**Remembering projects.** By default nothing about a project is kept after the library closes. In **Galley settings → Remembering projects**, turn on **Remember project outlines on this device** and the map of a project you read again skips the documents that have not changed. Galley keeps each document's path, title, headings, links and front matter, never its text, for up to a week after you last read the project, and never from a private window. The same page says how much is remembered and has **Forget remembered outlines**; turning the setting off, or removing a site's token in the popup, forgets what was kept as well. The architecture and infrastructure views suggest where a document "names" a component from the documents read in this visit, so a document taken from the device adds none until you open it.
+**Remembering projects.** By default, nothing about a project is kept after the library closes. You can ask Galley to remember project outlines, so that a project you read again skips the documents that have not changed.
+
+To turn it on:
+
+1. Choose **Settings…** in the toolbar popup.
+2. Under **Remembering projects**, turn on **Remember project outlines on this device**.
+
+Galley keeps each document's path, title, headings, links and front matter, never its text. It keeps them for up to a week after you last read the project, and never from a private window.
+
+The same page says how much is remembered and has **Forget remembered outlines**. Turning the setting off, or removing a site's token in the popup, forgets what was kept as well.
+
+One effect to know about: the architecture and infrastructure views suggest where a document "names" a component, using the documents read in this visit. A document taken from the device was not read, so it adds no suggestion until you open it.
 
 **Map.** Press **Map** (or <kbd>M</kbd>) to see a document in the middle, the documents that link to it on the left and the ones it links to on the right, with a line for each connection; a document that links both ways keeps its side, with an arrowhead at each end. Point at a document to light its lines. Choose one to open its details beside the map, which narrows to make room: **Preview** shows the document, and links in it preview the document they point to; **Links** says how it connects to the middle, lists every link in and out with its text, section and line (choose one to read that paragraph), names **Links the map cannot follow**, and holds its type. **Show its connections** puts it in the middle, and **Read** opens it. The map keeps its place while you read; **Back to my place** puts the document you are reading in the middle. Drag, scroll or use the arrow keys to move the map, <kbd>+</kbd> <kbd>−</kbd> to zoom and <kbd>0</kbd> to fit it. Each side shows eight documents (four on a phone); **Show more in List** opens the rest. **List** shows every document by folder, with its links in and out. Folders appear as where a document lives, never as a connection: only links someone wrote connect documents. On a phone the map reads top to bottom and details open from the bottom.
 
@@ -232,7 +247,9 @@ Nothing to configure: Galley reads the merge request with your signed-in session
 
 ## GitHub (github.com and Enterprise Server)
 
-Public repositories work without setup. GitHub allows 60 API requests an hour without a token; Galley uses three for a pull request with up to 100 files, one more per further page of files, and one comparison request when a patch is omitted. Posting a comment also checks that the reviewed version is still current. Reading a project costs one request to find the commit (a few more when the branch name has slashes) and one to list its files (more for a repository too large for GitHub to list at once); its documents are read from github.com itself and cost none, and checking for a newer commit costs none when the branch has not moved.
+Public repositories work without setup. GitHub allows 60 API requests an hour without a token. Galley uses three for a pull request with up to 100 files, one more per further page of files, and one comparison request when a patch is omitted. Posting a comment also checks that the reviewed version is still current.
+
+Reading a project costs one request to find the commit (a few more when the branch name has slashes) and one to list its files (more for a repository too large for GitHub to list at once). Its documents are read from github.com itself and cost none. Checking for a newer commit costs none when the branch has not moved.
 
 Private repositories need a token, because GitHub's API does not accept the browser session. Create a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) with read-only **Contents** and **Pull requests** access to the repositories you review, then paste it into the Galley popup. To comment, give it **Pull requests: read and write**; **Contents** can stay read-only.
 
