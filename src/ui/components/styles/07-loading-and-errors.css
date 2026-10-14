@@ -1,0 +1,73 @@
+/* ------------------------------------------------------------------ loading & errors */
+
+.mr-skeleton i {
+  display: block;
+  height: 16px;
+  margin-top: 18px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--soft) 0%, color-mix(in srgb, var(--soft) 35%, var(--bg)) 50%, var(--soft) 100%);
+  background-size: 200% 100%;
+  animation: mr-shimmer 1.3s linear infinite;
+}
+
+.mr-skeleton i.h {
+  width: 72%;
+  height: 42px;
+  margin: 0 0 40px;
+}
+
+.mr-skeleton i.s {
+  width: 58%;
+}
+
+@keyframes mr-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.mr-message {
+  padding: 30px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  font-family: var(--sans);
+}
+
+.mr-message h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+
+.mr-message p {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.mr-message a {
+  color: var(--fg);
+}
+
+.mr-message .mr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mr-primary {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.mr-primary:hover {
+  background: color-mix(in srgb, var(--fg) 85%, var(--bg));
+}
+
+.mr-outline {
+  border: 1px solid var(--rule);
+}

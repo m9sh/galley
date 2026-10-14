@@ -34,7 +34,7 @@ flowchart TB
     CS["Content script<br/>src/content/main.ts"]
     L["Launcher: Read or Read the project<br/>src/ui/opening/launcher.ts"]
     subgraph Shadow["#galley-reader shadow root"]
-      RD["Reader<br/>src/ui/review/reader.ts + reader.css"]
+      RD["Reader<br/>src/ui/review/reader.ts + styles/"]
       DF["diagram-frame<br/>(Mermaid)"]
       HF["highlight-frame<br/>(highlight.js)"]
       SF["spec-frame<br/>(Babel parser)"]
@@ -155,7 +155,7 @@ A failure keeps the draft; writes are never retried ([ADR 0008](../adr/0008-comm
 | `src/ui/library/` | Project library shell, map and notes views, saved notes, configuration client | `repo-reader.ts`, `repo-views.ts`, `reading-sequence.ts`, `repo.css`, `project-store.ts`, `outline-store.ts`, `outline-cache.ts`, `configs.ts` | jsdom in tests |
 | `src/ui/rendering/` | Sanitised Markdown, code, diagrams, images, source comments and reading behavior | `render.ts`, `reading.ts`, `code*.ts`, `diagrams.ts`, `image.ts`, `specs.ts`, `symbols.ts`, `source-comments.ts` | jsdom in tests |
 | `src/ui/sandbox/` | Opaque frame transport and bundled engines; isolated image fallback | `sandbox.ts`, `sandbox-frame.ts`, `*-frame.ts`, `*-frame.html`, `elk-shim.ts` | jsdom and Chrome |
-| `src/ui/components/` | Shared DOM controls, the side sheet and its stack, the slide that goes with it, layout picker, chapter context and attachment form, settings sheet, icons, fonts and common reader styles | `dom.ts`, `sheet.ts`, `motion.ts`, `layout-controls.ts`, `chapter-context.ts`, `chapter-attachment.ts`, `settings-sheet.ts`, `icons.ts`, `fonts.ts`, `fonts/`, `reader.css` | jsdom in tests |
+| `src/ui/components/` | Shared DOM controls, the side sheet and its stack, the slide that goes with it, layout picker, chapter context and attachment form, settings sheet, icons, fonts and common reader styles | `dom.ts`, `sheet.ts`, `motion.ts`, `layout-controls.ts`, `chapter-context.ts`, `chapter-attachment.ts`, `settings-sheet.ts`, `icons.ts`, `fonts.ts`, `fonts/`, `reader-styles.ts`, `styles/` | jsdom in tests |
 | `src/ui/preferences/` | Shared preference model, persistence and application | `settings.ts` | jsdom in tests |
 | `src/ui/opening/` | The optional page launcher | `launcher.ts` | jsdom in tests |
 | `src/background/` | The only holder of GitHub tokens; allowlisted API proxy; restores enabled sites | `worker.ts` | Node in tests |

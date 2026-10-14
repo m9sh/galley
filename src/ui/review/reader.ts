@@ -30,7 +30,7 @@ import { openRepository, type RepoReaderHandle } from '../library/repo-reader.ts
 import { viewedKey, loadViewed, saveViewed } from './viewed.ts';
 import { icons } from '../components/icons.ts';
 import { layoutPanel, LAYOUT_NAMES } from '../components/layout-controls.ts';
-import css from '../components/reader.css';
+import css from '../components/reader-styles.ts';
 import { loadReaderFonts } from '../components/fonts.ts';
 import { loadImage, platformLink, renderDocument, renderSnippet, type RenderedBlock, type RenderedDoc } from '../rendering/render.ts';
 import { filterDocument, paragraphTarget, readableText, revealContext, selectionTarget, textRange } from '../rendering/reading.ts';
@@ -1187,7 +1187,7 @@ class Reader {
   private updateFileButton(): void {
     const visible = this.views.filter((view) => !view.section.hidden);
     const docs = visible.map((view) => view.doc);
-    // Each file's slug says where it is in the review: "File 3 of 8" (reader.css).
+    // Each file's slug says where it is in the review: "File 3 of 8" (styles/08-small-screens-and-motion.css).
     this.el.doc.style.setProperty('--files', String(visible.length));
     this.el.doc.dataset.files = String(visible.length);
     this.el.empty.hidden = visible.length > 0;
@@ -1221,7 +1221,7 @@ class Reader {
     const folded = this.views.filter((view) => !view.section.hidden && ((view.quiet && !view.open) || view.folded)).length;
     if (folded) meta.append(h('span', 'mr-files-folded', `${folded} folded`));
     head.append(meta);
-    // Narrow phones have no room for search in the top bar; it opens from here instead (reader.css).
+    // Narrow phones have no room for search in the top bar; it opens from here instead (styles/13-documents-menu.css).
     const find = h('button', 'mr-menu-item mr-files-search');
     find.type = 'button';
     find.setAttribute('role', 'menuitem');
@@ -1729,7 +1729,7 @@ class Reader {
     if (flash) this.flash(el);
   }
 
-  /** Point something out once: a short tint that fades (reader.css). */
+  /** Point something out once: a short tint that fades (components/styles/). */
   private flash(el: Element): void {
     el.classList.remove('mr-flash');
     void (el as HTMLElement).offsetWidth;

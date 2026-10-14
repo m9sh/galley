@@ -1,0 +1,217 @@
+/* Render diagrams from trusted Mermaid fences, with old/new source available to reviewers. */
+/* Diagrams are figures: drawn in the page's palette (see diagram-frame.ts) on a soft canvas, at the
+   size their text was laid out for, and shrunk only to fit the column. Choosing one enlarges it. */
+.mr-content .mr-diagram {
+  margin: 36px 0;
+}
+.mr-diagram-version + .mr-diagram-version {
+  margin-top: 24px;
+}
+.mr-content .mr-diagram-caption {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font: 600 11px / 1.4 var(--sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mr-diagram-view {
+  padding: 28px 24px;
+  border-radius: 14px;
+  background: var(--code-bg);
+  color: var(--muted);
+  font: 13px / 1.5 var(--sans);
+}
+.mr-diagram-zoom {
+  appearance: none;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  cursor: zoom-in;
+}
+.mr-diagram-zoom img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+.mr-root .mr-diagram-zoom:focus-visible {
+  outline-offset: 8px;
+}
+.mr-content .mr-diagram-source {
+  margin-top: 8px;
+  border: 0;
+  font: 12px / 1.4 var(--sans);
+  color: var(--muted);
+}
+.mr-diagram-source summary {
+  cursor: pointer;
+  padding: 6px 0;
+}
+.mr-content .mr-diagram-source pre {
+  margin-top: 8px;
+}
+.mode-clean .mr-diagram[data-mr-change="modified"] > [data-mr-side="base"] {
+  display: none;
+}
+/* An edited flowchart is one drawing of its changes; its two whole versions are a click away. */
+.mr-diagram.has-changes > .mr-diagram-version:not(.mr-diagram-changes) {
+  display: none;
+}
+.mr-diagram.has-changes.is-sides > .mr-diagram-version:not(.mr-diagram-changes) {
+  display: block;
+}
+.mr-content .mr-diagram-changes .mr-diagram-caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px 14px;
+}
+.mr-diagram-caption .mr-chip {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.mr-content .mr-diagram-sides {
+  appearance: none;
+  margin: 2px 0 0;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: 12px / 1.4 var(--sans);
+  text-decoration: underline;
+  text-decoration-color: var(--control-rule);
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.mr-content .mr-diagram-sides:hover {
+  color: var(--fg);
+}
+.mr-diagram.is-sides > .mr-diagram-sides {
+  margin-bottom: 16px;
+}
+/* Clean mode reads the new version as it is, without marks. */
+.mode-clean .mr-diagram.has-changes > .mr-diagram-changes,
+.mode-clean .mr-diagram-sides {
+  display: none;
+}
+.mode-clean .mr-diagram.has-changes > [data-mr-side="head"]:not(.mr-diagram-changes) {
+  display: block;
+}
+.mr-diagram-view[data-state="error"] {
+  border: 1px dashed var(--rule);
+  background: none;
+}
+@media (max-width: 760px) {
+  .mr-diagram-view {
+    padding: 18px 14px;
+  }
+}
+
+/* The enlarged diagram: a canvas over the whole window. It opens with all of the diagram in view and
+   zooms from there; a large diagram can be dragged, scrolled and pinched around. */
+.mr-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: mr-fade 0.16s ease-out;
+}
+.mr-lightbox-stage {
+  position: absolute;
+  inset: 12px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--code-bg);
+  box-shadow: var(--shadow);
+  cursor: zoom-out;
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+.mr-lightbox-stage img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  max-width: none;
+  cursor: zoom-in;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.mr-lightbox-stage.is-movable img {
+  cursor: grab;
+}
+.mr-lightbox-stage.is-dragging,
+.mr-lightbox-stage.is-dragging img {
+  cursor: grabbing;
+}
+.mr-lightbox-bar {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  color: var(--fg);
+  font: 13px / 1 var(--sans);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.mr-lightbox-bar .mr-btn {
+  min-width: 40px;
+  height: 40px;
+  justify-content: center;
+  border-radius: 999px;
+}
+.mr-lightbox-bar .mr-btn:disabled {
+  color: var(--muted);
+  cursor: default;
+  opacity: 0.5;
+}
+.mr-zoom-level {
+  min-width: 64px;
+  padding: 0 10px;
+  font-variant-numeric: tabular-nums;
+}
+.mr-lightbox-hint {
+  padding: 0 14px 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.mr-lightbox-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: var(--shadow);
+}
+@media (max-width: 760px), (hover: none) {
+  .mr-lightbox-stage {
+    inset: 8px;
+    border-radius: 14px;
+  }
+  .mr-lightbox-hint {
+    display: none;
+  }
+  .mr-lightbox-bar {
+    bottom: 20px;
+  }
+  .mr-lightbox-close {
+    top: 16px;
+    right: 16px;
+  }
+}

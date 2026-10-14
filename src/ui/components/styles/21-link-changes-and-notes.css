@@ -1,0 +1,80 @@
+/* ------------------------------------------------------------------ link changes, held images, notes */
+
+.mr-link-note {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 6px;
+  max-width: 100%;
+  margin: 0 0.3em;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--mod) 12%, transparent);
+  font: 12px / 1.6 var(--sans);
+  overflow-wrap: anywhere;
+  vertical-align: 0.1em;
+  user-select: none;
+}
+
+.mr-link-note-label {
+  color: var(--mod);
+  font-weight: 600;
+}
+
+.mode-changes .mr-content .mr-link-note ins.mr-ins {
+  background-image: none;
+  color: var(--add);
+}
+
+.mode-clean .mr-content .mr-link-note {
+  display: none;
+}
+
+.mr-img-hold {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 8px 8px 8px 14px;
+  border: 1px dashed var(--rule);
+  border-radius: 10px;
+  color: var(--muted);
+  font: 13px / 1.4 var(--sans);
+  vertical-align: middle;
+}
+
+.mr-img-hold > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mr-img-load {
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+.mr-img-load:hover {
+  background: var(--soft);
+}
+
+.mr-byline .mr-chip.is-hidden {
+  color: var(--muted);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.mr-byline .mr-btn.mr-chip {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--rule);
+  color: var(--fg);
+  font-size: 13px;
+}

@@ -1,0 +1,398 @@
+/* ---------------------------------------------------------------- source files: what changed, by declaration
+   One quiet line between the byline and the code: each name marked + added, • edited, → moved or − removed,
+   and each a way to its first changed line, which lights briefly so the eye finds it. */
+.mr-content > .mr-symbol-plan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px;
+  margin: -28px 0 18px;
+  color: var(--muted);
+}
+.mr-symbol-title {
+  margin-right: 10px;
+  font: 600 11px / 1.9 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mr-symbol-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 0 8px 0 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg);
+  font: 12.5px / 1.9 var(--mono);
+  cursor: pointer;
+}
+.mr-symbol-link::before {
+  content: var(--glyph);
+  color: var(--glyph-fg);
+  font: 700 12px / 1 var(--sans);
+}
+.mr-symbol-link:hover {
+  background: var(--soft);
+}
+.mr-symbol-link[data-status="added"] {
+  --glyph: "+";
+  --glyph-fg: var(--add);
+}
+.mr-symbol-link[data-status="edited"] {
+  --glyph: "•";
+  --glyph-fg: var(--mod);
+}
+.mr-symbol-link[data-status="moved"] {
+  --glyph: "→";
+  --glyph-fg: var(--accent);
+}
+.mr-symbol-link[data-status="removed"] {
+  --glyph: "−";
+  --glyph-fg: var(--del);
+  color: var(--muted);
+}
+.mr-symbol-link[data-status="removed"] .mr-symbol-name {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--del-strike) 60%, transparent);
+}
+.mr-symbol-other {
+  color: var(--muted);
+  font-family: var(--sans);
+}
+.mode-clean .mr-symbol-link.is-removed {
+  display: none;
+}
+@media (hover: none), (max-width: 760px) {
+  .mr-symbol-link {
+    align-items: center;
+    min-height: 36px;
+  }
+}
+:is(.mr-code-line, .mr-source-comment).is-flash {
+  animation: mr-line-flash 1.4s ease-out;
+}
+@keyframes mr-line-flash {
+  from {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  to {
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+  }
+}
+.mr-spec-status.is-unchanged {
+  padding-inline: 0;
+  background: none;
+  color: var(--muted);
+  font-weight: 500;
+}
+.mr-spec-flag {
+  padding: 2px 8px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+}
+.mr-spec-flag.is-todo {
+  border-style: dashed;
+}
+.mr-spec-chevron {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin: 0 4px 3px;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: rotate(45deg);
+}
+[aria-expanded="false"] > .mr-spec-chevron {
+  margin-bottom: 0;
+  transform: rotate(-45deg);
+}
+.mr-spec-section > .mr-code-lines {
+  border-radius: 0 0 12px 12px;
+  box-shadow: none;
+}
+.mr-spec-section:not(.is-collapsed) > .mr-spec-heading .mr-spec-toggle {
+  border-radius: 12px 12px 0 0;
+}
+.mr-spec-section.is-collapsed > .mr-code-lines {
+  display: none;
+}
+/* Lines that only repeat the heading are left out of the plan, unless a discussion or a draft is on them. */
+.mr-spec-file:not(.is-spec-source) [data-mr-spec-boilerplate]:not([data-mr-threads], .mr-targeted, [data-mr-found]) {
+  display: none;
+}
+.mr-spec-file.is-spec-source .mr-spec-section.is-collapsed > .mr-code-lines {
+  display: block;
+}
+/* The first and last rows may be left out, so the padding around a test's code is never tinted. */
+.mr-spec-file:not(.is-spec-source) .mr-spec-section > .mr-code-lines::before,
+.mr-spec-file:not(.is-spec-source) .mr-spec-section > .mr-code-lines::after {
+  background: transparent;
+  box-shadow: none;
+}
+/* A test that is all title (it.todo) is just its heading. */
+.mr-spec-file:not(.is-spec-source) .mr-spec-section.is-bare:not(:has([data-mr-threads], .mr-targeted, [data-mr-found])) > .mr-code-lines {
+  display: none;
+}
+.mr-spec-file:not(.is-spec-source) .mr-spec-section.is-bare:not(:has([data-mr-threads], .mr-targeted, [data-mr-found])) > .mr-spec-heading .mr-spec-toggle {
+  border-radius: 12px;
+  cursor: default;
+}
+.mr-spec-file:not(.is-spec-source) .mr-spec-section.is-bare:not(:has([data-mr-threads], .mr-targeted, [data-mr-found])) .mr-spec-chevron {
+  visibility: hidden;
+}
+
+/* Unchanged tests are shown whole, a little quieter than the changed ones. */
+.mr-spec-section[data-status="unchanged"] .mr-spec-name {
+  color: var(--muted);
+}
+.mr-spec-section.is-case.is-todo {
+  background: var(--card);
+  box-shadow: none;
+}
+.mr-spec-section[data-status="removed"] .mr-spec-name {
+  color: var(--muted);
+}
+
+.mr-spec-section.is-suite {
+  margin-top: 18px;
+}
+.mr-spec-section.is-suite > .mr-spec-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  padding: 0 0 10px;
+}
+.mr-spec-section.is-suite > .mr-spec-heading .mr-spec-kicker {
+  width: 100%;
+  margin: 0;
+}
+.mr-content .is-suite .mr-spec-title {
+  font: 400 calc(26px * var(--type)) / 1.2 var(--heading-font, var(--body-font));
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+.mr-spec-section.is-suite > .mr-code-lines,
+.mr-spec-section.is-support > .mr-code-lines {
+  border-radius: 10px;
+  box-shadow: none;
+}
+.mr-spec-section.is-support > .mr-spec-heading {
+  padding: 0 0 8px;
+}
+.mr-content .is-support .mr-spec-title {
+  color: var(--muted);
+  font: 600 11px / 1.5 var(--sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mode-clean .mr-spec-section.is-removed,
+.mode-clean .mr-spec-link.is-removed {
+  display: none;
+}
+
+/* Source (Reading settings → Review → Test files): the plain diff again, every line. */
+.mr-spec-file.is-spec-source :is(.mr-spec-heading, .mr-spec-plan) {
+  display: none;
+}
+.mr-spec-file.is-spec-source .mr-spec-stream {
+  gap: 0;
+  padding-block: 12px;
+  border-radius: 6px;
+  background: var(--code-bg);
+}
+.mr-spec-file.is-spec-source .mr-spec-section {
+  margin: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  outline: 0;
+}
+.mr-spec-file.is-spec-source .mr-spec-section::before {
+  display: none;
+}
+.mr-spec-file.is-spec-source .mr-code-lines {
+  border-radius: 0;
+  box-shadow: none;
+}
+.mr-spec-file.is-spec-source .mr-code-lines::before,
+.mr-spec-file.is-spec-source .mr-code-lines::after {
+  display: none;
+}
+@media (max-width: 760px) {
+  .mr-spec-plan {
+    padding: 16px 14px 12px;
+  }
+  .mr-spec-plan-top {
+    flex-direction: column;
+  }
+  .mr-spec-section {
+    margin-left: calc(var(--spec-depth, 0) * 12px);
+  }
+  .mr-spec-section:not([data-depth="0"])::before {
+    left: -8px;
+  }
+  .mr-spec-toggle {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+  }
+  .mr-spec-meta {
+    order: 3;
+    box-sizing: border-box;
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 30px;
+  }
+  .is-suite > .mr-spec-heading .mr-spec-meta {
+    padding-left: 0;
+  }
+  .mr-spec-name {
+    font-size: calc(17px * var(--type));
+  }
+  .mr-content .is-suite .mr-spec-title {
+    font-size: calc(22px * var(--type));
+  }
+}
+
+/* Test files read as a compact working outline. The full index is a disclosure, so the first screen
+   reaches the tests rather than repeating their names before the code. */
+.mr-main:has(.mr-document:nth-child(1 of .mr-document:not([hidden])) .mr-spec-file) {
+  padding-top: 36px;
+}
+.mr-document:has(.mr-spec-file) .mr-title.mr-code-title {
+  font-size: calc(30px * var(--type));
+}
+.mr-document:has(.mr-spec-file) .mr-byline {
+  /* biome-ignore lint/complexity/noImportantStyles: overrides the prose byline margin for a compact test file */
+  margin: 16px 0 12px !important;
+  padding-block: 10px;
+}
+.mr-spec-plan {
+  margin: 8px 0 12px;
+  padding: 16px 18px 12px;
+  border-radius: 12px;
+}
+.mr-spec-summary {
+  font-size: calc(22px * var(--type));
+}
+.mr-spec-counts {
+  margin-top: 10px;
+}
+.mr-content .mr-spec-browse {
+  margin: 8px 0 0;
+}
+.mr-content .mr-spec-browse > summary {
+  min-height: 36px;
+  padding: 0;
+  color: var(--fg);
+  font: 500 12px / 1.4 var(--sans);
+}
+.mr-spec-browse .mr-spec-outline {
+  margin-top: 0;
+  padding-top: 8px;
+}
+.mr-spec-note {
+  margin-top: 4px;
+  font-size: 11px;
+}
+.mr-spec-toggle {
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 12px;
+}
+.mr-spec-toggle .mr-spec-lines {
+  display: none;
+}
+.mr-spec-section.is-suite {
+  margin-top: 10px;
+}
+.mr-spec-section.is-suite > .mr-spec-heading .mr-spec-kicker {
+  display: none;
+}
+.mr-spec-section > .mr-code-lines::before,
+.mr-spec-section > .mr-code-lines::after {
+  height: 6px;
+}
+@media (max-width: 760px) {
+  .mr-main:has(.mr-document:nth-child(1 of .mr-document:not([hidden])) .mr-spec-file) {
+    padding-top: 24px;
+  }
+  .mr-spec-plan {
+    padding: 12px 14px 10px;
+  }
+  .mr-spec-count {
+    gap: 5px;
+    padding: 3px 7px;
+  }
+  .mr-content .mr-spec-browse > summary {
+    min-height: 44px;
+  }
+  .mr-spec-toggle .mr-spec-meta {
+    width: auto;
+    padding-left: 0;
+    margin-left: 28px;
+  }
+}
+
+.mr-content .mr-spec-section {
+  margin-block: 0;
+}
+.mr-content .mr-spec-section.is-suite {
+  margin-top: 10px;
+}
+.mr-spec-section.is-support > .mr-spec-heading {
+  padding-bottom: 0;
+}
+.mr-spec-support-toggle {
+  padding-inline: 0;
+}
+.mr-spec-support-toggle .mr-spec-name {
+  font: 600 11px / 1.5 var(--sans);
+  letter-spacing: 0.06em;
+}
+
+/* Chapter context is supporting reading, distinct from Changed files and Viewed. */
+.mr-chapter-group-title,
+.mr-chapter-context h3 {
+  margin: 16px 0 8px;
+  font: 600 13px / 1.35 var(--sans);
+}
+.mr-chapter-context {
+  margin: 16px 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
+}
+.mr-chapter-context-status {
+  color: var(--muted);
+  font: 400 12px / 1.4 var(--sans);
+  overflow-wrap: anywhere;
+}
+.mr-chapter-context-list {
+  padding: 0;
+  list-style: none;
+}
+.mr-chapter-context-list li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 0 0 16px;
+}
+.mr-chapter-context-list small {
+  color: var(--muted);
+  font: 400 12px / 1.35 var(--sans);
+  overflow-wrap: anywhere;
+}
+.mr-chapter-context-list button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+  line-height: 1.35;
+}
+.mr-chapter-path {
+  line-height: 1.35;
+}

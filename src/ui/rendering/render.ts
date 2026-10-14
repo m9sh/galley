@@ -661,7 +661,7 @@ export function renderDocument(doc: Document, input: RenderInput): RenderedDoc {
   const { replacements, held } = decorate(doc, root, input);
   for (const pre of root.querySelectorAll<HTMLElement>('pre')) {
     lineify(doc, pre);
-    // Wide screens give a code block the room its longest line needs, up to 120 characters (reader.css).
+    // Wide screens give a code block the room its longest line needs, up to 120 characters (components/styles/04-article.css).
     const longest = Math.max(0, ...[...pre.querySelectorAll('.mr-cl, .mr-line')].map((line) => line.textContent!.replace(/\t/g, '    ').length));
     pre.style.setProperty('--chars', String(longest));
   }

@@ -1,4 +1,4 @@
-/* The repository reader (repo-reader.ts). It shares reader.css: palettes, typography, the top bar and
+/* The repository reader (repo-reader.ts). It shares the reader's styles (components/styles/): palettes, typography, the top bar and
    menus. These rules add its own parts: history, the commit it reads, the documents list, backlinks,
    the project map and its lenses, the reader's notes and their export, and a review's project context.
    Nothing here styles a change; a repository is read as it is. */

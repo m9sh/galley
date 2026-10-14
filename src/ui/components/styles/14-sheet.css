@@ -1,0 +1,493 @@
+/* ------------------------------------------------------------------ settings sheet */
+/* A small sheet under the settings button; on phones it rises from the bottom. */
+
+.mr-root.settings-open {
+  overflow-y: hidden;
+}
+
+.mr-settings {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+/* A quiet route alongside the full file list. Chapter changes never replace the document nodes. */
+.mr-chapter-route {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 0 0 32px;
+  padding: 12px 0;
+  color: var(--muted);
+  font: 400 13px / 1.5 var(--sans);
+}
+.mr-chapter-route-text {
+  flex: 1;
+  min-width: 100px;
+  overflow-wrap: anywhere;
+}
+/* ------------------------------------------------------------------ sheet */
+/* The sheet (components/sheet.ts), the same on every page: on wide screens it sits on the right edge and the page
+   narrows beside it, everything in reach; on phones it rises from the bottom over the page, which waits behind it.
+   It is a stack: what a list opens slides in on top, leaving the edges of the sheets beneath as a way back. Each
+   sheet has a header that stays put, one scrolling body of sections and rows, and the keys that work there. */
+@media (min-width: 761px) {
+  .mr-root {
+    /* One width for every sheet, the chapters and a document alike, so going deeper never resizes the page. */
+    --sheet-width: clamp(380px, 42vw, 620px);
+  }
+  .mr-root.has-sheet {
+    right: var(--sheet-width);
+    --vw: calc(100vw - var(--sheet-width));
+    /* The page behind the reader never shows while the sheet slides into the room the review just made. */
+    box-shadow: var(--sheet-width) 0 0 var(--bg);
+  }
+}
+.mr-sheet {
+  --sheet-peek: 14px;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 35;
+  box-sizing: border-box;
+  width: var(--sheet-width);
+  color: var(--fg);
+  font: 400 calc(14px * var(--type, 1)) / 1.5 var(--sans);
+}
+/* A stack, from the right: each sheet opened on top slides in from the edge and stops a step further in than the one
+   beneath, lifted by its shadow. A sheet beneath another is only its edge, in shade: its contents step out of view, so
+   nothing of them shows through, and the edge is the way back to it. */
+.mr-sheet-layer {
+  position: absolute;
+  inset: 0 0 0 calc(var(--sheet-peek) * var(--at, 0));
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-left: 1px solid var(--rule);
+  background: var(--bg);
+}
+.mr-sheet-layer:focus {
+  outline: none;
+}
+.mr-sheet-layer + .mr-sheet-layer {
+  box-shadow: var(--shadow);
+}
+.mr-sheet-layer.is-under > * {
+  visibility: hidden;
+}
+.mr-sheet-layer.is-under::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--recede);
+  pointer-events: none;
+}
+.mr-sheet-edges {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.mr-root .mr-sheet-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--sheet-peek) * var(--at, 0));
+  width: var(--sheet-peek);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.mr-root .mr-sheet-edge:hover {
+  background: var(--recede);
+}
+/* The header: the way back or the switch, then its actions and Close; under them its name and what it is for. */
+.mr-sheet-header {
+  position: relative;
+  flex: none;
+  display: grid;
+  justify-items: start;
+  padding: 10px 10px 18px 20px;
+  border-bottom: 1px solid var(--rule);
+}
+/* Everything under the top row starts flush; each part sets its own space above. */
+.mr-sheet-header > :where(:not(.mr-sheet-top)) {
+  margin: 0 10px 0 0;
+}
+.mr-sheet-header > .mr-sheet-kicker {
+  margin-top: 14px;
+}
+.mr-sheet-header > .mr-sheet-title {
+  margin-top: 3px;
+}
+.mr-sheet-header > .mr-sheet-description {
+  margin-top: 4px;
+}
+.mr-sheet-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  justify-self: stretch;
+  min-height: 36px;
+}
+.mr-sheet-lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--type, 1));
+}
+.mr-sheet-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+.mr-sheet-actions .mr-icon,
+.mr-sheet-close .mr-icon {
+  width: 18px;
+  height: 18px;
+}
+.mr-sheet-actions .mr-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.mr-root .mr-sheet-back {
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: -10px;
+  padding: 0 10px 0 4px;
+  color: var(--muted);
+  font: 500 calc(13.5px * var(--type, 1)) / 1 var(--sans);
+}
+.mr-root .mr-sheet-back:hover {
+  color: var(--fg);
+}
+.mr-sheet-back-label {
+  flex: none;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The first sheet's switch is its title: the view shown in full ink, the other in quiet ink beside it. */
+.mr-sheet-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: -8px;
+}
+.mr-root .mr-sheet-tab {
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: 600 calc(17px * var(--type, 1)) / 1.2 var(--sans);
+  letter-spacing: -0.01em;
+  cursor: pointer;
+}
+.mr-root .mr-sheet-tab:hover,
+.mr-root .mr-sheet-tab[aria-pressed="true"] {
+  color: var(--fg);
+}
+.mr-root .mr-sheet-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+.mr-sheet-heading {
+  margin: 0;
+  color: var(--fg);
+  font: 600 calc(17px * var(--type, 1)) / 1.2 var(--sans);
+  letter-spacing: -0.01em;
+}
+.mr-sheet-kicker {
+  color: var(--muted);
+  font: 600 calc(11px * var(--type, 1)) / 1.4 var(--sans);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.mr-sheet-title {
+  font: 600 calc(19px * var(--type, 1)) / 1.25 var(--sans);
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+/* A document's title is set as the document is. */
+.mr-sheet-layer[data-kind="document"] .mr-sheet-title {
+  font: 400 calc(23px * var(--type, 1)) / 1.2 var(--heading-font, var(--serif));
+  letter-spacing: 0;
+}
+.mr-sheet-description {
+  color: var(--muted);
+  font-size: calc(13px * var(--type, 1));
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.mr-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 18px 12px 40px;
+}
+.mr-sheet-body:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+/* Keys, where they work: at the foot of each sheet with a keyboard, Esc always among them; never on touch screens. */
+.mr-sheet-keys {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  padding: 10px 20px;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: calc(12px * var(--type, 1));
+}
+.mr-sheet-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.mr-sheet-key kbd + kbd {
+  margin-left: -1px;
+}
+/* Keys in a sheet are quiet: a soft cap, no rim. */
+.mr-sheet kbd {
+  box-sizing: border-box;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--soft);
+  color: var(--fg);
+  font: 500 12px / 20px var(--sans);
+  text-align: center;
+}
+.mr-root button.mr-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 34;
+  border: 0;
+  background: color-mix(in srgb, var(--fg) 12%, transparent);
+  font-size: 0;
+}
+/* Quiet actions in a header or beside a section: words, no outline. */
+.mr-root .mr-sheet-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: 500 calc(13px * var(--type, 1)) / 1 var(--sans);
+  cursor: pointer;
+}
+.mr-root .mr-sheet-link:hover {
+  background: var(--soft);
+  color: var(--fg);
+}
+.mr-root .mr-sheet-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+/* A search field: a soft well that takes the page's ground when it is in use. */
+.mr-root .mr-sheet-search {
+  justify-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  margin-top: 14px;
+  padding: 0 8px 0 12px;
+  border-radius: 10px;
+  background: var(--soft);
+  color: var(--muted);
+}
+.mr-root .mr-sheet-search:focus-within {
+  background: var(--bg);
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+.mr-root .mr-sheet-search input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--fg);
+  font: 400 calc(14px * var(--type, 1)) / 1.4 var(--sans);
+}
+.mr-root .mr-sheet-search input::placeholder {
+  color: var(--muted);
+}
+.mr-root .mr-sheet-search kbd {
+  background: var(--bg);
+}
+.mr-sheet-icon {
+  display: grid;
+  place-items: center;
+}
+.mr-sheet-icon .mr-icon,
+.mr-sheet-search .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+/* Sections: a small heading with how many and its own quiet actions, then rows; each well apart from the next. */
+.mr-sheet-section + .mr-sheet-section,
+.mr-docs-results > .mr-sheet-section + .mr-sheet-section {
+  margin-top: 28px;
+}
+.mr-sheet-section-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 0 4px 10px;
+}
+.mr-sheet-section-title {
+  margin: 0;
+  color: var(--muted);
+  font: 600 calc(11px * var(--type, 1)) / 1.4 var(--sans);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.mr-sheet-count {
+  color: var(--muted);
+  font: 500 calc(11px * var(--type, 1)) / 1.4 var(--sans);
+  font-variant-numeric: tabular-nums;
+}
+.mr-sheet-section-head > button:first-of-type {
+  margin-left: auto;
+}
+.mr-sheet-subhead {
+  margin: 18px 10px 4px;
+  color: var(--muted);
+  font: 500 calc(12px * var(--type, 1)) / 1.4 var(--sans);
+  overflow-wrap: anywhere;
+}
+.mr-sheet-section-head + .mr-sheet-subhead {
+  margin-top: 4px;
+}
+.mr-sheet-note {
+  margin: 4px 10px 8px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type, 1));
+}
+/* Rows: one shape for every list, a mark, the title over one quiet line, a value, and a chevron when it opens a sheet. */
+.mr-root .mr-sheet-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 46px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.mr-root .mr-sheet-row.is-push {
+  grid-template-columns: 22px minmax(0, 1fr) auto 14px;
+}
+.mr-root .mr-sheet-row:hover {
+  background: var(--soft);
+}
+.mr-root .mr-sheet-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.mr-root .mr-sheet-row:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+/* Where the reader is: the accent on its mark, a firmer title, and aria-current. */
+.mr-sheet-row.is-current .mr-sheet-row-title {
+  font-weight: 600;
+}
+.mr-sheet-row.is-current .mr-sheet-row-lead {
+  color: var(--accent);
+}
+.mr-root .mr-sheet-row.is-current:not(:has(.mr-sheet-num)) {
+  background: var(--selected-bg);
+}
+.mr-sheet-row-lead .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+.mr-sheet-row-lead,
+.mr-sheet-row-go {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.mr-sheet-row-go {
+  color: color-mix(in srgb, var(--muted) 55%, var(--bg));
+}
+.mr-root .mr-sheet-row:hover .mr-sheet-row-go,
+.mr-root .mr-sheet-row:focus-visible .mr-sheet-row-go {
+  color: var(--muted);
+}
+.mr-sheet-row-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.mr-sheet-row-title {
+  font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.mr-sheet-row-meta {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: calc(12.5px * var(--type, 1));
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mr-sheet-row-end {
+  color: var(--muted);
+  font-size: calc(12.5px * var(--type, 1));
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.mr-sheet-row-go .mr-icon {
+  width: 14px;
+  height: 14px;
+}
+/* The chevron keeps the last column even when there is no value beside it. */
+.mr-sheet-row-go {
+  grid-column: -2 / -1;
+}
+.mr-sheet-row-with {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mr-sheet-row-with > .mr-sheet-row {
+  flex: 1;
+  min-width: 0;
+}

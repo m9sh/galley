@@ -1,0 +1,295 @@
+/* ------------------------------------------------------------------ threads */
+/* Wide screens: a column to the right of the document, each card level with its text. Narrow
+   screens: the same cards below the text they belong to. */
+
+.mr-threads {
+  position: absolute;
+  top: 0;
+  left: calc(100% + var(--rail-gap));
+  width: var(--rail-width);
+}
+
+.mr-root:not(.has-rail) .mr-threads {
+  display: none;
+}
+
+/* Hidden at once on narrow windows, before the layout moves its cards below their text. */
+@media (max-width: 1279px) {
+  .mr-threads,
+  .mr-comment-btn.is-lane {
+    display: none;
+  }
+}
+:where(.mr-root.is-narrowed) .mr-threads,
+:where(.mr-root.is-narrowed) .mr-comment-btn.is-lane {
+  display: none;
+}
+
+.mr-threads > * {
+  position: absolute;
+  right: 0;
+  left: 0;
+  max-width: var(--card-max);
+}
+
+.mr-thread {
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--fg);
+  font: var(--comment-size) / 1.5 var(--sans);
+  letter-spacing: 0;
+  box-shadow: var(--card-shadow);
+  transition: box-shadow 0.15s ease;
+}
+
+.mr-thread:is(:hover, :focus-within) {
+  box-shadow: var(--raised-shadow);
+}
+
+/* Your own conversations carry a hint of the accent. */
+.mr-thread.is-own {
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+
+.mr-thread.is-new {
+  animation: mr-arrive 1.8s ease-out;
+}
+
+@keyframes mr-arrive {
+  0%,
+  35% {
+    background-color: color-mix(in srgb, var(--accent) 12%, var(--bg));
+  }
+}
+
+.mr-content :is(.mr-thread, .mr-composer) {
+  margin: 14px 0 26px;
+}
+
+/* Narrow screens put comments between source lines, aligned with the code. */
+.mr-content .mr-code-lines > :is(.mr-thread, .mr-composer) {
+  max-width: 720px;
+  margin: 10px 16px 16px var(--gutter);
+}
+
+@media (max-width: 760px) {
+  .mr-content .mr-code-lines > :is(.mr-thread, .mr-composer) {
+    margin: 10px 10px 14px;
+  }
+}
+
+.mr-thread-comment + .mr-thread-comment,
+.mr-thread-more + .mr-thread-comment,
+.mr-reply + .mr-thread-comment {
+  margin-top: 12px;
+}
+
+/* Replies hang under the comment that started the thread, on a thread line, Reddit style. */
+.mr-thread-comment.is-reply,
+.mr-thread-more {
+  margin-left: 9px;
+  padding-left: 14px;
+  border-left: 2px solid color-mix(in srgb, var(--fg) 14%, transparent);
+}
+
+.mr-thread-comment.is-folded {
+  display: none;
+}
+
+.mr-thread.is-expanded .mr-thread-comment.is-folded {
+  display: block;
+}
+
+.mr-thread-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-bottom: 4px;
+}
+
+.mr-avatar {
+  display: inline-grid;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  place-items: center;
+}
+
+.mr-thread-author {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mr-thread-time {
+  flex: none;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.mr-thread-body {
+  overflow-wrap: anywhere;
+}
+
+.mr-thread .mr-thread-body :where(p, ul, ol, pre, blockquote) {
+  margin: 0 0 6px;
+  font: inherit;
+}
+
+.mr-thread .mr-thread-body > :last-child {
+  margin-bottom: 0;
+}
+
+.mr-thread .mr-thread-body :where(code, pre) {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.mr-thread .mr-thread-body pre {
+  padding: 8px 10px;
+  overflow: auto;
+  border-radius: 6px;
+  background: var(--code-bg);
+}
+
+.mr-thread .mr-thread-body img {
+  max-width: 100%;
+}
+
+.mr-thread-more {
+  height: 26px;
+  margin-top: 8px;
+  border-radius: 0;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.mr-thread-more:hover {
+  background: none;
+  text-decoration: underline;
+}
+
+.mr-thread-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.mr-thread-foot:empty {
+  display: none;
+}
+
+.mr-thread-link {
+  margin-left: auto;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.mr-thread-link:hover {
+  color: var(--fg);
+  text-decoration: underline;
+}
+
+.mr-thread-tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* Every comment can be answered. */
+.mr-reply-to {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  margin: 4px 0 0 -7px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--muted);
+  font: 600 12px / 1 var(--sans);
+  cursor: pointer;
+}
+
+.mr-reply-to:hover {
+  background: var(--soft);
+  color: var(--fg);
+}
+
+.mr-reply-to .mr-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* The reply box opens under the comment it answers, on the same thread line as the replies. */
+.mr-reply {
+  margin: 8px 0 2px 9px;
+  padding: 10px 12px 8px;
+  border-radius: 12px;
+  background: var(--bg);
+  cursor: text;
+  animation: mr-pop 0.14s ease-out;
+}
+
+.mr-reply-context {
+  margin: 0 0 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font: 600 11px / 1.4 var(--sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mr-reply textarea {
+  min-height: 66px;
+  max-height: 240px;
+  font-size: 14px;
+}
+
+.mr-file-threads {
+  margin: -24px 0 40px;
+}
+
+.mr-file-threads-title {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font: 600 11px / 1.4 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mr-file-threads .mr-thread + .mr-thread {
+  margin-top: 10px;
+}
+
+/* Touch screens get full-size targets in editors and threads. */
+@media (max-width: 760px), (hover: none) {
+  .mr-compose-actions .mr-btn {
+    height: 44px;
+    padding: 0 16px;
+  }
+
+  .mr-reply-to {
+    height: 36px;
+  }
+}

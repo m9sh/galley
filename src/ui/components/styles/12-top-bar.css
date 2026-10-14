@@ -1,0 +1,291 @@
+/* ------------------------------------------------------------------ top bar */
+/* One quiet row: close and wordmark, the current document, change navigation and two icon buttons.
+   The PR, full paths and statuses live in the documents menu; configuration lives in the sheet. */
+
+/* Stacking order inside the reader: article content, then the contents rail (5), then this bar (15),
+   then menus, the selection chip and sheets. */
+.mr-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--measure)) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  height: 52px;
+  padding: 0 12px;
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  backdrop-filter: saturate(180%) blur(16px);
+  border-bottom: 1px solid transparent;
+  transition: transform 0.28s ease;
+}
+
+/* Light washes down from the whole top edge: teal, violet and rose blend with the palette's accent.
+   The broad glow stays anchored to the screen, becoming softer once reading moves down the page. */
+.mr-topbar {
+  --aurora-a: color-mix(in srgb, color-mix(in srgb, #2dd4bf 60%, var(--accent)) var(--aurora-strength, 10%), transparent);
+  --aurora-b: color-mix(in srgb, color-mix(in srgb, #a78bfa 60%, var(--accent)) var(--aurora-strength, 10%), transparent);
+  --aurora-c: color-mix(in srgb, color-mix(in srgb, #f472b6 55%, var(--accent)) var(--aurora-strength, 10%), transparent);
+  overflow-x: clip;
+}
+.mr-root.is-dark .mr-topbar {
+  --aurora-strength: 14%;
+}
+.mr-topbar::before,
+.mr-topbar::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  background: linear-gradient(100deg, var(--aurora-a), var(--aurora-b) 48%, var(--aurora-c));
+  pointer-events: none;
+  transition: opacity 0.75s ease;
+}
+.mr-topbar::before {
+  height: 320px;
+  mask-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.35) 30%, rgba(0, 0, 0, 0.07) 68%, transparent);
+  animation: mr-aurora-glow 32s ease-in-out infinite alternate;
+}
+.mr-topbar::after {
+  height: 96px;
+  opacity: 0.18;
+  mask-image: linear-gradient(rgba(0, 0, 0, 0.5), transparent);
+}
+.no-top-glow .mr-topbar::before,
+.no-top-glow .mr-topbar::after {
+  content: none;
+  animation: none;
+}
+.mr-topbar.is-scrolled::before {
+  opacity: 0.55;
+}
+.mr-topbar.is-scrolled::after {
+  opacity: 0.1;
+}
+@keyframes mr-aurora-glow {
+  from {
+    filter: opacity(0.92);
+  }
+  to {
+    filter: opacity(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mr-topbar::before {
+    animation: none;
+  }
+}
+
+.mr-topbar.is-hidden {
+  transform: translateY(-100%);
+}
+
+.mr-tb-left,
+.mr-tb-right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mr-tb-left {
+  gap: 8px;
+}
+
+.mr-tb-center {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.mr-tb-right {
+  justify-content: flex-end;
+}
+
+.mr-brand {
+  flex: none;
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.mr-dev {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #f08a24;
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: 3px;
+}
+
+.mr-icon-btn {
+  justify-content: center;
+  width: 34px;
+  padding: 0;
+  color: var(--muted);
+}
+
+.mr-icon-btn:hover,
+.mr-icon-btn[aria-expanded="true"] {
+  color: var(--fg);
+}
+
+/* The current document: a status dot, the file name and its position. */
+.mr-file-btn {
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 10px 0 12px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.mr-file-btn[aria-expanded="true"] {
+  background: var(--soft);
+}
+
+.mr-file-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mr-count {
+  flex: none;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.mr-count:empty {
+  display: none;
+}
+
+.mr-file-btn .mr-icon {
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+  transition: transform 0.2s ease;
+}
+
+.mr-file-btn[aria-expanded="true"] .mr-icon {
+  transform: rotate(180deg);
+}
+
+.mr-status-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.mr-status-dot.is-added {
+  background: var(--add);
+}
+
+.mr-status-dot.is-modified,
+.mr-status-dot.is-renamed {
+  background: var(--mod);
+}
+
+.mr-status-dot.is-removed {
+  background: var(--del);
+}
+
+/* Change navigation, set apart from the two tools by a hairline. */
+.mr-pill {
+  display: flex;
+  align-items: center;
+}
+
+.mr-pill::after {
+  content: "";
+  width: 1px;
+  height: 18px;
+  margin: 0 8px 0 6px;
+  background: var(--rule);
+}
+
+.mr-pill .mr-btn {
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: var(--muted);
+}
+
+.mr-pill .mr-btn:hover {
+  color: var(--fg);
+}
+
+.mr-pill-label {
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mr-viewed .mr-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.mr-viewed[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+.mr-viewed[aria-pressed="true"] circle {
+  fill: var(--accent);
+}
+
+.mr-viewed[aria-pressed="true"] path {
+  stroke: var(--bg);
+}
+
+.mr-viewed:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.mr-viewed.is-busy {
+  cursor: progress;
+}
+
+.mr-viewed.is-busy .mr-icon {
+  animation: mr-pulse 0.9s ease-in-out infinite alternate;
+}
+
+.mr-viewed.is-error {
+  color: var(--del);
+}
+
+.mr-viewed-feedback {
+  position: fixed;
+  top: 58px;
+  right: 12px;
+  z-index: 15;
+  max-width: min(480px, calc(100vw - 24px));
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--del);
+  font-size: 12px;
+  box-shadow: var(--shadow);
+}

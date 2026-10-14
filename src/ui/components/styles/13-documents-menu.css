@@ -1,0 +1,126 @@
+/* ------------------------------------------------------------------ documents menu */
+
+.mr-menu {
+  position: fixed;
+  top: 56px;
+  z-index: 20;
+  box-sizing: border-box;
+  max-height: min(70vh, 560px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  animation: mr-pop 0.16s ease-out;
+}
+
+.mr-files {
+  width: min(460px, calc(100vw - 24px));
+}
+
+/* Narrow phones keep the file name in the bar; search opens from the files menu instead. */
+.mr-files-search {
+  display: none;
+}
+.mr-files-search .mr-icon {
+  flex: none;
+  color: var(--muted);
+}
+@media (max-width: 480px) {
+  .mr-search-btn {
+    display: none;
+  }
+  .mr-files-search {
+    display: flex;
+  }
+}
+
+.mr-files-head {
+  margin: 0 0 4px;
+  padding: 10px 12px 12px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.mr-files-title {
+  margin: 0;
+  color: var(--fg);
+  font: 600 15px / 1.35 var(--sans);
+  letter-spacing: -0.01em;
+}
+
+.mr-files-title:empty {
+  display: none;
+}
+
+.mr-files-meta {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mr-files-source::after {
+  content: "·";
+  margin: 0 6px;
+}
+
+.mr-menu-item {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mr-menu-item:hover,
+.mr-menu-item[aria-current="true"] {
+  background: var(--soft);
+}
+
+.mr-menu-name {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mr-menu-name .mr-path-name {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.mr-menu-name .mr-path-dir {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+.mr-menu-status {
+  flex: none;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mr-file-check {
+  display: inline-flex;
+  flex: none;
+  color: var(--accent);
+}
+
+.mr-file-check .mr-icon {
+  width: 16px;
+  height: 16px;
+}

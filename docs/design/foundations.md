@@ -1,6 +1,6 @@
 # Design foundations
 
-The building blocks of the reader's look, as implemented in `src/ui/components/reader.css` and `src/ui/preferences/settings.ts`. Use these values and tokens; do not introduce new raw colours, sizes or breakpoints without adding them here.
+The building blocks of the reader's look, as implemented in `src/ui/components/styles/` (joined in order by `reader-styles.ts`) and `src/ui/preferences/settings.ts`. Use these values and tokens; do not introduce new raw colours, sizes or breakpoints without adding them here.
 
 - [Colour](#colour)
 - [Typography](#typography)

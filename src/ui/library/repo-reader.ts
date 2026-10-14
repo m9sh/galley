@@ -41,7 +41,7 @@ import { loadReaderFonts } from '../components/fonts.ts';
 import { chip, option, selectField, setRow, switchButton } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
 import { layoutPanel, LibraryLayout, LAYOUT_NAMES } from '../components/layout-controls.ts';
-import css from '../components/reader.css';
+import css from '../components/reader-styles.ts';
 import { digestText, ProjectNotes, when } from './project-store.ts';
 import { loadImage, renderDocument, type RenderedDoc } from '../rendering/render.ts';
 import { button, configStatus, exportSheet, external, h, lensSwitch, lensView, notesView, type ConfigState } from './repo-views.ts';

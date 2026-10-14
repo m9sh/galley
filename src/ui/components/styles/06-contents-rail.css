@@ -1,0 +1,95 @@
+/* ------------------------------------------------------------------ contents rail, pill, footer */
+
+/* Sticky in the same scroll flow as the top bar (not fixed to the viewport), so both move together
+   when the reader bounces at either end. It takes no height; its list hangs below it. */
+/* Its label lines up with the first document's title. */
+.mr-toc {
+  position: sticky;
+  top: 156px;
+  z-index: 5;
+  display: none;
+  box-sizing: border-box;
+  width: var(--toc-width);
+  height: 0;
+  padding-right: 16px;
+  margin: 0 0 0 calc(var(--left) + var(--edge));
+  overflow: visible;
+  font-size: calc(13px * var(--type));
+  line-height: 1.35;
+}
+
+.mr-toc-list {
+  max-height: calc(100vh - 248px);
+  overflow-y: auto;
+}
+
+.mr-toc {
+  transition:
+    opacity 0.2s ease,
+    visibility 0s;
+}
+
+.mr-toc.is-covered {
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    visibility 0s 0.2s;
+}
+@media (min-width: 1280px) {
+  :where(.mr-root:not(.is-narrowed)) .mr-toc:not(:empty) {
+    display: block;
+  }
+}
+
+/* Text aligns with the title; change dots hang in the margin like bullets. */
+.mr-toc-title {
+  margin: 0 0 10px 16px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mr-toc a {
+  display: grid;
+  grid-template-columns: 6px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 5px 8px 5px 0;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.mr-toc a > span:not(.mr-dot) {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mr-toc a:hover {
+  color: var(--fg);
+}
+
+.mr-toc a.is-active {
+  color: var(--fg);
+}
+
+.mr-toc a.lvl-2 {
+  padding-left: 12px;
+}
+
+.mr-toc a.lvl-3 {
+  padding-left: 24px;
+}
+
+.mr-toc a .mr-dot {
+  grid-column: 1;
+  grid-row: 1;
+  width: 6px;
+  height: 6px;
+  margin-top: 6px;
+  color: var(--gutter-modified);
+}

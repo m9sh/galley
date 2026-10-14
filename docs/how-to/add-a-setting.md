@@ -21,7 +21,7 @@ Write the label and explanation with [COPY.md](../COPY.md): name what the review
 
 Apply the setting where it takes effect, keeping the one-way flow (`update()` → `applySettings()` → save):
 
-- **Visual only:** set a class or data attribute on `.mr-root` (`r.classList.toggle('no-signs', !s.signs)`) and style it in `src/ui/components/reader.css` with tokens. No per-palette rules.
+- **Visual only:** set a class or data attribute on `.mr-root` (`r.classList.toggle('no-signs', !s.signs)`) and style it in the matching file in `src/ui/components/styles/` with tokens. No per-palette rules.
 - **Changes rendering:** re-apply to rendered views (see `applyCodeView()`), never re-fetch content. Keep drafts, scroll position and Viewed state across the change.
 - Call `this.schedule(true)` if layout moves.
 

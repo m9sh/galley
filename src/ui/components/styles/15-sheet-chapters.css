@@ -1,0 +1,273 @@
+/* A chapter's place in the path: a ring with its number, filled with a check once all its files are viewed, in the
+   accent where the reader is. */
+.mr-sheet-num {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--rule);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--muted);
+  font: 600 calc(11px * var(--type, 1)) / 1 var(--sans);
+  font-variant-numeric: tabular-nums;
+}
+.mr-sheet-row.is-current .mr-sheet-num {
+  border: 2px solid var(--accent);
+  color: var(--accent);
+}
+.mr-sheet-row.is-done .mr-sheet-num {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+}
+.mr-root .mr-sheet-row-lead .mr-sheet-num .mr-icon {
+  width: 13px;
+  height: 13px;
+}
+/* The chapters as a path: their rings joined by a line that fills in as chapters are viewed. */
+.mr-path {
+  --path-pad: 10px;
+}
+.mr-root .mr-path > .mr-sheet-row {
+  align-items: start;
+  padding-block: var(--path-pad);
+}
+.mr-path > .mr-sheet-row > .mr-sheet-row-end,
+.mr-path > .mr-sheet-row > .mr-sheet-row-go {
+  align-self: center;
+}
+.mr-path .mr-sheet-row-lead {
+  position: relative;
+  align-self: stretch;
+  place-items: start center;
+}
+.mr-path .mr-sheet-num {
+  margin-top: -1px;
+}
+.mr-path > .mr-sheet-row:not(:last-child) > .mr-sheet-row-lead::after {
+  content: "";
+  position: absolute;
+  top: 25px;
+  bottom: calc(4px - 2 * var(--path-pad));
+  left: calc(50% - 0.75px);
+  width: 1.5px;
+  border-radius: 1px;
+  background: var(--rule);
+}
+.mr-path > .mr-sheet-row.is-done:not(:last-child) > .mr-sheet-row-lead::after {
+  background: var(--accent);
+}
+/* Review chapters: how far the review is, the way in, then the path. */
+.mr-chapters-status {
+  justify-self: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-top: 12px;
+}
+.mr-chapters-progress {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--type, 1));
+  font-variant-numeric: tabular-nums;
+}
+/* Progress along the path: a segment for each chapter, as long as its files. */
+.mr-chapters-bar {
+  justify-self: stretch;
+  display: flex;
+  gap: 3px;
+  height: 4px;
+  margin-top: 12px;
+}
+.mr-chapters-bar > span {
+  flex: 1 1 0;
+  min-width: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--soft);
+}
+.mr-chapters-bar > span > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.mr-chapters-tools {
+  justify-self: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 4px;
+  margin-top: 16px;
+}
+.mr-chapters-count {
+  margin-left: 10px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type, 1));
+}
+.mr-chapter-introduction {
+  justify-self: stretch;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--soft);
+  color: var(--fg);
+  font-size: calc(13.5px * var(--type, 1));
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.mr-chapters-feedback {
+  margin: 12px 10px 0;
+  color: var(--accent);
+  font-size: calc(13px * var(--type, 1));
+}
+.mr-chapters-feedback:empty {
+  display: none;
+}
+/* Chapter controls are quiet outlined pills; the way in (Start here, Read chapter) is the one filled control. */
+.mr-chapter-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--fg);
+  background: transparent;
+  font: 500 calc(13px * var(--type, 1)) / 1.3 var(--sans);
+  cursor: pointer;
+}
+.mr-chapter-button:hover {
+  background: var(--soft);
+}
+.mr-chapter-button[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--selected-bg);
+}
+.mr-chapter-button.mr-chapters-start:not(:disabled) {
+  padding: 0 16px;
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+  font-weight: 600;
+}
+.mr-chapter-button.mr-chapters-start:not(:disabled):hover {
+  background: color-mix(in srgb, var(--fg) 85%, var(--bg));
+}
+.mr-chapter-button:disabled {
+  color: var(--muted);
+  background: transparent;
+  opacity: 0.6;
+  cursor: default;
+}
+/* Edit chapters: one line for each chapter, its name reading as text until it is edited and its order beside it;
+   what to look at opens under it while it is being edited, and stays when written. */
+.mr-chapter-edit {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 4px;
+  padding: 5px 6px 5px 10px;
+  border-radius: 10px;
+}
+.mr-chapter-edit:focus-within {
+  background: var(--soft);
+}
+.mr-chapter-edit > textarea {
+  grid-column: 2;
+}
+.mr-chapter-edit:not(:focus-within) > textarea:placeholder-shown {
+  display: none;
+}
+.mr-chapter-edit-top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.mr-chapter-edit-top .mr-sheet-note {
+  flex: none;
+  margin: 0 4px;
+  font-size: calc(12px * var(--type, 1));
+}
+.mr-chapter-edit-order {
+  display: flex;
+  flex: none;
+}
+/* With a pointer, a chapter's order shows where the pointer or focus rests; on touch screens it is always there. */
+@media (hover: hover) and (min-width: 761px) {
+  .mr-chapter-edit:not(:hover, :focus-within) .mr-chapter-edit-order {
+    opacity: 0;
+  }
+}
+.mr-chapter-edit-order .mr-icon-btn {
+  width: 30px;
+  height: 30px;
+}
+.mr-chapters .mr-chapter-edit input,
+.mr-chapters .mr-chapter-edit textarea {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+}
+.mr-chapters .mr-chapter-edit input {
+  flex: 1;
+  margin-left: -8px;
+  font: 500 calc(14px * var(--type, 1)) / 1.4 var(--sans);
+}
+.mr-chapters .mr-chapter-edit textarea {
+  width: calc(100% + 8px);
+  min-height: 32px;
+  margin-left: -8px;
+  resize: none;
+  field-sizing: content;
+  color: var(--muted);
+  font: 400 calc(13px * var(--type, 1)) / 1.45 var(--sans);
+}
+.mr-chapters .mr-chapter-edit :is(input, textarea):hover {
+  border-color: var(--rule);
+}
+.mr-chapters .mr-chapter-edit :is(input, textarea):focus {
+  border-color: var(--control-rule);
+  outline: none;
+  background: var(--bg);
+  color: var(--fg);
+}
+.mr-chapter-assignment {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  margin: 2px 10px 0;
+}
+.mr-chapters .mr-chapter-assignment select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--soft);
+  color: var(--fg);
+  font: 400 calc(13px * var(--type, 1)) / 1.4 var(--sans);
+}
+.mr-chapters .mr-chapter-assignment select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+.mr-sheet-body > .mr-chapters-tools {
+  margin: 28px 10px 0;
+}

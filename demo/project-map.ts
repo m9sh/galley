@@ -15,7 +15,7 @@ import { button, chip, h } from '../src/ui/components/dom.ts';
 import { loadReaderFonts } from '../src/ui/components/fonts.ts';
 import { icons } from '../src/ui/components/icons.ts';
 import { applyReadingControls, keyGroups, nextTab, PaletteCarousel, READING_SECTIONS, selectTab, settingsSheet } from '../src/ui/components/settings-sheet.ts';
-import readerCss from '../src/ui/components/reader.css';
+import readerCss from '../src/ui/components/reader-styles.ts';
 import { DEFAULT_SETTINGS, loadSettings, TEXT_SIZES, type Settings } from '../src/ui/preferences/settings.ts';
 import { renderDocument } from '../src/ui/rendering/render.ts';
 import css from './project-map.css';

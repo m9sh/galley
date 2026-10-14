@@ -1,0 +1,363 @@
+/* ------------------------------------------------------------------ article typography */
+
+.mr-content {
+  color: var(--fg);
+  font-family: var(--body-font);
+  font-size: calc(var(--body-size) * var(--size-scale));
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+  line-height: var(--leading, 1.58);
+  letter-spacing: -0.003em;
+  overflow-wrap: break-word;
+}
+
+.mr-content :where(p, ul, ol, dl, pre, blockquote, figure, details, table, .mr-table, .mr-html, .mr-ghost, hr, section) {
+  margin: var(--block-gap, 1.5em) 0 0;
+}
+
+.mr-content :where(h1, h2, h3, h4, h5, h6) {
+  margin: var(--heading-gap, 1.95em) 0 0;
+  color: var(--fg);
+  font-family: var(--heading-font, var(--body-font));
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  scroll-margin-top: 84px;
+}
+
+.mr-content h1 {
+  font-size: 1.9em;
+  line-height: 1.22;
+}
+
+.mr-content h2 {
+  font-size: 1.6em;
+  line-height: 1.28;
+}
+
+.mr-content h3 {
+  font-size: 1.3em;
+  line-height: 1.32;
+}
+
+.mr-content :where(h4, h5, h6) {
+  font-size: 1.1em;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.mr-content :where(h1, h2, h3, h4, h5, h6) + * {
+  margin-top: 0.5em;
+}
+
+.mr-content > :first-child,
+.mr-content :where(li, blockquote, td, th, dd) > :first-child {
+  margin-top: 0;
+}
+
+.mr-content strong {
+  font-weight: 600;
+}
+
+.mr-content :where(ul, ol) {
+  padding-left: 1.6em;
+}
+
+.mr-content li {
+  margin-top: var(--item-gap, 0.75em);
+  padding-left: 0.2em;
+  line-height: var(--list-leading, 1.42);
+}
+
+.mr-content li::marker {
+  color: var(--muted);
+}
+
+.mr-content li > :where(p, ul, ol, pre, blockquote, figure, .mr-table) {
+  margin-top: 0.55em;
+}
+
+.mr-content li.mr-task-item {
+  list-style: none;
+}
+
+/* Task boxes sit where the bullet would be, sized with the text: an outlined square, filled with the
+   accent and ticked when done. They are drawn here because a disabled native box is small and grey. */
+.mr-content input.mr-task {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  box-sizing: border-box;
+  width: 0.95em;
+  height: 0.95em;
+  margin: 0 0.5em 0 -1.45em;
+  border: 0.085em solid color-mix(in srgb, var(--fg) 42%, var(--bg));
+  border-radius: 0.26em;
+  background: var(--bg);
+  font: inherit;
+  /* Centred on the text explicitly: an empty grid would take its baseline from the tick. */
+  position: relative;
+  top: -0.08em;
+  vertical-align: middle;
+  cursor: default;
+}
+
+.mr-content input.mr-task::before {
+  content: "";
+  width: 0.56em;
+  height: 0.56em;
+  background: var(--bg);
+  clip-path: polygon(12% 46%, 0 62%, 42% 98%, 100% 18%, 84% 4%, 40% 66%);
+  transform: scale(0);
+}
+
+.mr-content input.mr-task:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.mr-content input.mr-task:checked::before {
+  transform: scale(1);
+}
+
+.mr-content blockquote {
+  padding-left: 1.15em;
+  border-left: 2px solid color-mix(in srgb, var(--muted) 55%, var(--bg));
+  font-style: italic;
+}
+
+.mr-content blockquote.mr-alert {
+  --alert: #2f6fdd;
+  padding: 0.85em 1.15em;
+  border-left-color: var(--alert);
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--alert) 7%, transparent);
+  font-style: normal;
+}
+
+.mr-content blockquote.mr-alert::before {
+  content: "Note";
+  display: block;
+  margin-bottom: 0.25em;
+  color: var(--alert);
+  font-family: var(--sans);
+  font-size: 0.68em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mr-content blockquote.mr-alert-tip::before {
+  content: "Tip";
+}
+
+.mr-content blockquote.mr-alert-important::before {
+  content: "Important";
+}
+
+.mr-content blockquote.mr-alert-warning::before {
+  content: "Warning";
+}
+
+.mr-content blockquote.mr-alert-caution::before {
+  content: "Caution";
+}
+
+.mr-content .mr-alert-tip {
+  --alert: var(--accent);
+}
+
+.mr-content .mr-alert-important {
+  --alert: #8250df;
+}
+
+.mr-content .mr-alert-warning {
+  --alert: #c58a0c;
+}
+
+.mr-content .mr-alert-caution {
+  --alert: var(--del);
+}
+
+.mr-content a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.mr-content a:hover {
+  text-decoration-color: currentColor;
+}
+
+.mr-content code {
+  padding: 0.14em 0.36em;
+  border-radius: 4px;
+  background: var(--soft);
+  font-family: var(--mono);
+  font-size: 0.8em;
+}
+
+.mr-content pre {
+  position: relative;
+  overflow-x: auto;
+  padding: 24px 26px;
+  border-radius: 6px;
+  background: var(--code-bg);
+  font-family: var(--mono);
+  /* The same size as source files, so 120 characters fit the same width in both. */
+  font-size: var(--code-size);
+  font-style: normal;
+  line-height: 1.7;
+  letter-spacing: 0;
+  tab-size: 4;
+}
+
+/* Narrow windows keep code in the reading column; wide ones give it up to 120 characters (end of file). */
+.mr-content pre {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.mr-content pre code {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  font-size: inherit;
+}
+
+.mr-content pre[data-lang]::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 7px;
+  right: 12px;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mr-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.mr-content figure {
+  text-align: center;
+}
+
+.mr-content figure img,
+.mr-content figure .mr-image-frame {
+  display: block;
+  margin: 0 auto;
+}
+
+.mr-content figcaption {
+  margin-top: 12px;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.mr-content hr {
+  height: auto;
+  margin: 2.6em 0;
+  border: 0;
+  text-align: center;
+}
+
+.mr-content hr::before {
+  content: "···";
+  color: var(--fg);
+  font-family: var(--serif);
+  font-size: 30px;
+  letter-spacing: 0.65em;
+  line-height: 1;
+}
+
+.mr-content .mr-table {
+  overflow-x: auto;
+}
+
+.mr-content table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+  font-family: var(--sans);
+  font-size: calc(15px * var(--size-scale));
+  font-style: normal;
+  line-height: 1.5;
+}
+
+.mr-content th,
+.mr-content td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+.mr-content th {
+  border-bottom-color: var(--fg);
+  font-weight: 600;
+}
+
+.mr-content kbd {
+  font-size: 0.7em;
+}
+
+.mr-content details:not(.mr-meta) > summary {
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 0.85em;
+}
+
+.mr-content .mr-meta {
+  padding: 10px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 14px;
+}
+
+.mr-content .mr-meta summary {
+  cursor: pointer;
+}
+
+.mr-content .mr-meta dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 16px;
+  margin: 10px 0 0;
+}
+
+.mr-content .mr-meta dl > div {
+  display: contents;
+}
+
+.mr-content .mr-meta dt {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.mr-content .mr-meta dd {
+  margin: 0;
+}
+
+.mr-content .footnotes-sep {
+  margin-top: 3em;
+}
+
+.mr-content .footnotes {
+  color: var(--muted);
+  font-size: 0.8em;
+}
+
+.mr-content .footnote-ref a,
+.mr-content .footnote-backref {
+  font-family: var(--sans);
+  text-decoration: none;
+}

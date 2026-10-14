@@ -1,4 +1,4 @@
-/** Reading palettes, from neutral through warm to cool; each has a light and a dark version (reader.css). */
+/** Reading palettes, from neutral through warm to cool; each has a light and a dark version (components/styles/01-palette.css). */
 export const THEMES = [
   'paper',
   'eink',
@@ -20,7 +20,7 @@ export const THEMES = [
   'aurora',
   'sunset',
 ] as const;
-/** galley pairs Newsreader headings with DM Sans text (reader.css); the others use one face throughout. */
+/** galley pairs Newsreader headings with DM Sans text (components/styles/); the others use one face throughout. */
 export const FONTS = ['galley', 'serif', 'sans', 'georgia', 'system', 'mono'] as const;
 export const APPEARANCES = ['auto', 'light', 'dark'] as const;
 /**
