@@ -48,17 +48,18 @@ export function gitlabRepositoryAt(where: GitLabProject, at: Snapshot): Reposito
     const entries: TreeEntry[] = [];
     for (let page = 1; page <= pages; page++) {
       const query = new URLSearchParams({ ...(folder ? { path: folder } : {}), ...(recursive ? { recursive: 'true' } : {}), per_page: '100', ref: commit });
-      let data: TreeEntry[];
+      let data: Array<TreeEntry & { id?: string }>;
       let headers: Headers;
       try {
-        ({ data, headers } = await getJson<TreeEntry[]>(`${api}/repository/tree?${query}&page=${page}`, {
+        ({ data, headers } = await getJson<Array<TreeEntry & { id?: string }>>(`${api}/repository/tree?${query}&page=${page}`, {
           headers: { Accept: 'application/json' },
           cache: 'no-store',
         }));
       } catch (err) {
         throw explain(err);
       }
-      entries.push(...data);
+      // GitLab calls the hash of an entry `id`; the listing keeps it as GitHub's `sha`.
+      entries.push(...data.map(({ id, ...entry }) => (id === undefined ? entry : { ...entry, sha: id })));
       if (!headers.get('x-next-page')) return { entries, complete: true };
     }
     return { entries, complete: false };

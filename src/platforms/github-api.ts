@@ -8,14 +8,18 @@ import { HttpError } from './http.ts';
  */
 export interface GitHubApi {
   hasToken(): Promise<boolean>;
-  request<T>(url: string, init?: { method?: 'GET' | 'POST'; body?: unknown }): Promise<{ data: T; headers: Headers }>;
+  /**
+   * `etag` makes a GET conditional: when GitHub's answer is still the one the ETag names, the request fails with
+   * `HttpError` status 304, and GitHub does not count it against the hourly limit.
+   */
+  request<T>(url: string, init?: { method?: 'GET' | 'POST'; body?: unknown; etag?: string }): Promise<{ data: T; headers: Headers }>;
 }
 
-export type ApiMessage = { type: 'galley:github'; url: string; method: 'GET' | 'POST'; body?: string } | { type: 'galley:has-token' };
+export type ApiMessage = { type: 'galley:github'; url: string; method: 'GET' | 'POST'; body?: string; etag?: string } | { type: 'galley:has-token' };
 export type ApiReply = { status: number; body: string; headers: Record<string, string> } | { error: string };
 
-/** Response headers the reader needs: pagination, rate limits and SSO hints. */
-export const FORWARDED_HEADERS = ['link', 'retry-after', 'x-ratelimit-remaining', 'x-ratelimit-reset', 'x-github-sso'];
+/** Response headers the reader needs: pagination, rate limits, SSO hints and the ETag a later refresh asks about. */
+export const FORWARDED_HEADERS = ['link', 'retry-after', 'x-ratelimit-remaining', 'x-ratelimit-reset', 'x-github-sso', 'etag'];
 
 export function apiEndpoints(origin: string): { rest: string; graphql: string } {
   return origin === 'https://github.com'
@@ -107,9 +111,11 @@ export function allowedRequest(origin: string, page: string | null, url: string,
 }
 
 /** The fetch both the worker and the tests use; tokens are only ever sent to https sites. */
-export function fetchGitHub(url: string, method: 'GET' | 'POST', body: string | undefined, token: string | null): Promise<Response> {
+export function fetchGitHub(url: string, method: 'GET' | 'POST', body: string | undefined, token: string | null, etag?: string): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/vnd.github+json' };
   if (token && url.startsWith('https://')) headers.Authorization = `Bearer ${token}`;
+  // Only a well-formed ETag on a read is passed on: the page chooses this value.
+  if (etag && method === 'GET' && /^(?:W\/)?"[^"\r\n]*"$/.test(etag)) headers['If-None-Match'] = etag;
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   return fetch(url, { method, headers, body, credentials: 'omit', cache: 'no-store' });
 }
@@ -133,12 +139,13 @@ export function backgroundApi(): GitHubApi {
       const reply = (await send({ type: 'galley:has-token' })) as { has?: boolean } | undefined;
       return Boolean(reply?.has);
     },
-    async request<T>(url: string, init: { method?: 'GET' | 'POST'; body?: unknown } = {}) {
+    async request<T>(url: string, init: { method?: 'GET' | 'POST'; body?: unknown; etag?: string } = {}) {
       const reply = (await send({
         type: 'galley:github',
         url,
         method: init.method ?? 'GET',
         ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),
+        ...(init.etag === undefined ? {} : { etag: init.etag }),
       })) as ApiReply | undefined;
       if (!reply || 'error' in reply) throw new HttpError(0, url, null);
       return parse<T>(url, reply.status, reply.body, new Headers(reply.headers));
@@ -152,13 +159,13 @@ export function directApi(origin: string, tokenFor: (origin: string) => Promise<
     async hasToken() {
       return Boolean(await tokenFor(origin));
     },
-    async request<T>(url: string, init: { method?: 'GET' | 'POST'; body?: unknown } = {}) {
+    async request<T>(url: string, init: { method?: 'GET' | 'POST'; body?: unknown; etag?: string } = {}) {
       const method = init.method ?? 'GET';
       const body = init.body === undefined ? undefined : JSON.stringify(init.body);
       if (!allowedRequest(origin, null, url, method, body)) throw new Error(`Galley does not make this request: ${method} ${url}`);
       let res: Response;
       try {
-        res = await fetchGitHub(url, method, body, await tokenFor(origin));
+        res = await fetchGitHub(url, method, body, await tokenFor(origin), init.etag);
       } catch {
         throw new HttpError(0, url, null);
       }

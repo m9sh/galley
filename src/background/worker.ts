@@ -13,7 +13,7 @@ async function handle(message: ApiMessage, sender: chrome.runtime.MessageSender)
   if (message.type === 'galley:has-token') return { has: Boolean(token) };
   if (!allowedRequest(page.origin, sender.url, message.url, message.method, message.body)) return { error: 'Galley does not make this request.' };
   try {
-    const res = await fetchGitHub(message.url, message.method, message.body, token);
+    const res = await fetchGitHub(message.url, message.method, message.body, token, message.etag);
     const headers: Record<string, string> = {};
     for (const name of FORWARDED_HEADERS) {
       const value = res.headers.get(name);

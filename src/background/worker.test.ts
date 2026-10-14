@@ -171,3 +171,14 @@ it('opens the current tab only on the reader command, and leaves unavailable tab
   command('read-page');
   await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(2));
 });
+
+it('asks GitHub whether an answer has changed when the page names its ETag, and passes the new ETag back', async () => {
+  const fetchSpy = mockFetch(() => new Response('[{"sha":"c1"}]', { headers: { etag: '"v2"', 'set-cookie': 'session=1' } }));
+  const url = 'https://api.github.com/repos/acme/docs/commits?per_page=1';
+  expect(await send({ ...request(url), etag: '"v1"' }, sender('https://github.com/acme/docs'))).toStrictEqual({
+    status: 200,
+    body: '[{"sha":"c1"}]',
+    headers: { etag: '"v2"' },
+  });
+  expect(headersOf(fetchSpy.mock.calls[0][1])['If-None-Match']).toBe('"v1"');
+});

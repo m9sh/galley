@@ -4,7 +4,7 @@ import { isMarkdownPath } from './paths.ts';
 export interface TreeEntry {
   path: string;
   type: string;
-  /** GitHub's id for a folder, used to list it on its own. */
+  /** The platform's hash of the entry: for a folder, GitHub's id to list it on its own; for a file, the hash of its content. */
   sha?: string;
   size?: number;
 }
@@ -14,6 +14,8 @@ export interface RepoDoc {
   path: string;
   /** Bytes, when the listing says; oversized documents are left out of the map without reading them. */
   size?: number;
+  /** The hash of the content, when the listing says: the same hash is the same text at any commit or path, so a document is read once. */
+  blob?: string;
 }
 
 export interface RepoDiscovery {
@@ -110,7 +112,11 @@ export function collectDocs(entries: TreeEntry[], limits: string[], configLimits
     if (entry.type !== 'blob') continue;
     const into = isMarkdownPath(entry.path) ? found : configFormat(entry.path) ? configs : null;
     if (!into || into.has(entry.path)) continue;
-    into.set(entry.path, entry.size === undefined ? { path: entry.path } : { path: entry.path, size: entry.size });
+    into.set(entry.path, {
+      path: entry.path,
+      ...(entry.size === undefined ? {} : { size: entry.size }),
+      ...(entry.sha === undefined ? {} : { blob: entry.sha }),
+    });
   }
   let files = [...configs.values()].sort(byPath);
   if (files.length > MAX_CONFIGS) {

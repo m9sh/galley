@@ -80,3 +80,16 @@ it('configuration files are recognised by name and folder, and listed apart from
     configRoots([folder('src'), folder('.github'), folder('infra'), folder('deploy'), folder('k8s'), folder('terraform')]).map((entry) => entry.path),
   ).toStrictEqual(['.github', 'k8s', 'deploy', 'infra']);
 });
+
+it('keeps the content hash a listing gives for a document or a configuration file', () => {
+  const { docs, configs } = collectDocs(
+    [
+      { path: 'README.md', type: 'blob', sha: 'abc', size: 10 },
+      { path: 'docs/a.md', type: 'blob' },
+      { path: 'compose.yaml', type: 'blob', sha: 'def' },
+    ],
+    [],
+  );
+  expect(docs).toStrictEqual([{ path: 'README.md', size: 10, blob: 'abc' }, { path: 'docs/a.md' }]);
+  expect(configs.files).toStrictEqual([{ path: 'compose.yaml', blob: 'def' }]);
+});

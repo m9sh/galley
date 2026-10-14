@@ -21,6 +21,15 @@
         <p class="muted">You can always open a review or project docs from Galley’s toolbar popup.</p>
         <p class="muted">Press <b>Alt+Shift+R</b>, or change <b>Read this page in Galley</b> in your browser’s extension shortcut settings.</p>
       </section>
+      <section aria-labelledby="remember-title">
+        <h2 id="remember-title">Remembering projects</h2>
+        <label class="setting-row" for="remember-outlines">
+          <span>Remember project outlines on this device<small>Keeps each document’s title, headings and links, never its text, so a project you read again can skip reading its documents again. Forgotten a week after you last read the project, and never kept from private windows.</small></span>
+          <input type="checkbox" role="switch" aria-checked="false" id="remember-outlines" disabled />
+        </label>
+        <p class="muted" id="remembered"></p>
+        <button type="button" id="forget-outlines" class="secondary" disabled>Forget remembered outlines</button>
+      </section>
       <p id="status" role="status"></p>
       <button type="button" id="retry" class="secondary" hidden>Try again</button>
     </main>

@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { jsonResponse, mockFetch } from '../testing/http.ts';
+import { headersOf, jsonResponse, mockFetch } from '../testing/http.ts';
 import type { GitHubRepoContext } from './detect.ts';
 import { directApi } from './github-api.ts';
 import { loadGitHubRepository } from './github-repo.ts';
@@ -167,4 +167,60 @@ it('a commit page is pinned: there is nothing newer to read', async () => {
   mockFetch(() => jsonResponse([{ sha: 'abc1234def' }]));
   const source = await load(context('tree', ['abc1234', 'docs']));
   expect(source).toMatchObject({ ref: 'abc1234', commit: 'abc1234def', pinned: true });
+});
+
+it('a refresh asks GitHub whether the branch has moved and, when it has not, returns the same snapshot without spending any quota', async () => {
+  const asked: Array<string | undefined> = [];
+  let head = { sha: 'c1', etag: '"v1"' };
+  mockFetch((_url, init) => {
+    asked.push(headersOf(init)['If-None-Match']);
+    if (headersOf(init)['If-None-Match'] === head.etag) return new Response(null, { status: 304 });
+    return new Response(JSON.stringify([{ sha: head.sha }]), { headers: { etag: head.etag } });
+  });
+  const source = await load(context('root'));
+  expect(await source.refresh()).toBe(source);
+  head = { sha: 'c2', etag: '"v2"' };
+  const moved = await source.refresh();
+  expect(moved.commit).toBe('c2');
+  // The newer snapshot asks about the newer answer.
+  expect(await moved.refresh()).toBe(moved);
+  expect(asked).toStrictEqual([undefined, '"v1"', '"v1"', '"v2"']);
+});
+
+it('a refresh asks again from the beginning when the branch was found after a shorter ref, or its answer had no ETag', async () => {
+  const asked: Array<string | undefined> = [];
+  mockFetch((url, init) => {
+    asked.push(headersOf(init)['If-None-Match']);
+    if (url === `${api}/commits?sha=release&per_page=1`) return jsonResponse({ message: 'Not Found' }, 404);
+    return new Response(JSON.stringify([{ sha: 'c9' }]), { headers: { etag: '"v1"' } });
+  });
+  const folder = await load(context('tree', ['release', '2.0']));
+  await folder.refresh();
+  expect(asked).toStrictEqual([undefined, undefined, undefined, undefined]);
+  mockFetch((_url, init) => {
+    asked.push(headersOf(init)['If-None-Match']);
+    return jsonResponse([{ sha: 'c1' }]);
+  });
+  asked.length = 0;
+  await (await load(context('root'))).refresh();
+  expect(asked).toStrictEqual([undefined, undefined]);
+});
+
+it('the listing carries each document’s content hash, so an unchanged document can be recognised at another commit', async () => {
+  mockFetch((url) => {
+    if (url.includes('/commits?')) return jsonResponse([{ sha: 'c1' }]);
+    return jsonResponse({
+      tree: [
+        { path: 'README.md', type: 'blob', sha: 'b-readme' },
+        { path: 'docs', type: 'tree', sha: 't-docs' },
+        { path: 'docker-compose.yml', type: 'blob', sha: 'b-compose', size: 300 },
+      ],
+      truncated: false,
+    });
+  });
+  expect(await (await load(context('root'))).discover()).toStrictEqual({
+    docs: [{ path: 'README.md', blob: 'b-readme' }],
+    limits: [],
+    configs: { files: [{ path: 'docker-compose.yml', size: 300, blob: 'b-compose' }], limits: [] },
+  });
 });

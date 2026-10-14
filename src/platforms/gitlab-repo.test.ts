@@ -139,3 +139,20 @@ it('a commit page is pinned: there is nothing newer to read', async () => {
   const source = await loadGitLabRepository(context('tree', ['abc1234']));
   expect(source).toMatchObject({ ref: 'abc1234', commit: 'abc1234def', pinned: true });
 });
+
+it('the listing carries each document’s content hash, which GitLab calls its id', async () => {
+  mockFetch((url) => {
+    if (url.includes('/repository/commits/')) return jsonResponse({ id: 'c1' });
+    return page([
+      { id: 'b-readme', path: 'README.md', type: 'blob' },
+      { id: 't-docs', path: 'docs', type: 'tree' },
+      { id: 'b-ci', path: '.gitlab-ci.yml', type: 'blob' },
+      blob('docs/a.md'),
+    ]);
+  });
+  expect(await (await loadGitLabRepository(context('root'))).discover()).toStrictEqual({
+    docs: [{ path: 'README.md', blob: 'b-readme' }, { path: 'docs/a.md' }],
+    limits: [],
+    configs: { files: [{ path: '.gitlab-ci.yml', blob: 'b-ci' }], limits: [] },
+  });
+});
