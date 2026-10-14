@@ -3,7 +3,7 @@ import type { ConfigReading, DeclaredItem, DeclaredLink } from '../../core/archi
 import { sandbox } from '../sandbox/sandbox.ts';
 
 /** One frame reads every configuration file, one at a time; a file that stops it is discarded after five seconds. */
-export const configParser = sandbox('config-frame.html', 5_000);
+const configParser = sandbox('config-frame.html', 5_000);
 
 const KINDS = new Set(['service', 'workflow', 'job', 'stage', 'environment', 'workload', 'resource', 'module']);
 const LABELS = new Set(['depends on', 'needs', 'deploys to', 'in stage', 'runs']);

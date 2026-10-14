@@ -129,7 +129,7 @@ try {
       for (const [i, width] of widths.entries()) {
         const page = await browser.newPage();
         const errors = [];
-        page.on('pageerror', (error) => errors.push(error.message));
+        page.on('pageerror', (/** @type {Error} */ error) => errors.push(error.message));
         await page.setViewport({ width, height: Number(opt.height), deviceScaleFactor: Number(opt.scale) });
         await page.emulateMediaFeatures([
           { name: 'prefers-reduced-motion', value: 'reduce' },
@@ -158,7 +158,9 @@ try {
         await page.screenshot({ path: file });
         saved.push(file);
         if (!opt['no-settings'] && i === 0) {
-          await page.evaluate(() => document.querySelector('#galley-reader').shadowRoot.querySelector('[data-act="settings"]').click());
+          await page.evaluate(() =>
+            /** @type {HTMLElement} */ (document.querySelector('#galley-reader').shadowRoot.querySelector('[data-act="settings"]')).click(),
+          );
           await new Promise((resolve) => setTimeout(resolve, 300));
           const sheet = join(out, `${name}-settings.png`);
           await page.screenshot({ path: sheet });

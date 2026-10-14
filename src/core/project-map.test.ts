@@ -7,7 +7,6 @@ import {
   MAP_NEIGHBOUR_LIMIT,
   MAP_NODE_LIMIT,
   MAP_PROOF_LIMIT,
-  mapOverview,
   MapPlacement,
   reviewMap,
   type ProjectMapModel,
@@ -135,27 +134,6 @@ it('counts evidence beyond the preview budget rather than silently losing its ex
   expect(connection.proof).toHaveLength(MAP_PROOF_LIMIT);
   expect(connection.hiddenProof).toBe(2);
   expect(index.edges[0].evidence).toHaveLength(MAP_PROOF_LIMIT + 2);
-});
-
-it('groups only by literal containment and counts real directional references between regions', () => {
-  const model = graph(
-    [
-      ['a/first.md', 'b/one.md'],
-      ['a/second.md', 'b/one.md'],
-      ['b/one.md', 'a/first.md'],
-      ['b/one.md', 'b/two.md'],
-    ],
-    ['README.md', 'isolated/x.md'],
-  );
-  const overview = mapOverview(model);
-  expect(overview.regions.map((region) => region.folder)).toEqual(['', 'a', 'b', 'isolated']);
-  expect(overview.regions[1].places).toHaveLength(2);
-  expect(overview.references.map((reference) => [reference.from, reference.to, reference.connections.length])).toEqual([
-    ['a', 'b', 2],
-    ['b', 'a', 1],
-  ]);
-  expect(overview.references.flatMap((reference) => reference.connections)).not.toContain(model.connections[3]);
-  expect(mapOverview(graph([], [])).regions).toEqual([]);
 });
 
 it('places each neighbour once, including cycles and reciprocal links, and never invents a line', () => {

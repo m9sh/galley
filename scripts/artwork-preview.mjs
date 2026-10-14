@@ -97,4 +97,6 @@ const server = createServer(async (req, res) => {
     res.end('Preview file not found');
   }
 });
-server.listen(Number(process.env.PORT ?? 4180), '127.0.0.1', () => console.log(`Galley artwork → http://localhost:${server.address().port}`));
+server.listen(Number(process.env.PORT ?? 4180), '127.0.0.1', () =>
+  console.log(`Galley artwork → http://localhost:${/** @type {import('node:net').AddressInfo} */ (server.address()).port}`),
+);

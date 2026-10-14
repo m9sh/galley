@@ -120,7 +120,8 @@ export function fetchGitHub(url: string, method: 'GET' | 'POST', body: string | 
   return fetch(url, { method, headers, body, credentials: 'omit', cache: 'no-store' });
 }
 
-async function parse<T>(url: string, status: number, text: string, headers: Headers): Promise<{ data: T; headers: Headers }> {
+/** A reply from GitHub as data: its body parsed, or an `HttpError` for any status outside 2xx. */
+export async function parseResponse<T>(url: string, status: number, text: string, headers: Headers): Promise<{ data: T; headers: Headers }> {
   if (status < 200 || status > 299) throw new HttpError(status, url, headers);
   return { data: JSON.parse(text) as T, headers };
 }
@@ -148,28 +149,7 @@ export function backgroundApi(): GitHubApi {
         ...(init.etag === undefined ? {} : { etag: init.etag }),
       })) as ApiReply | undefined;
       if (!reply || 'error' in reply) throw new HttpError(0, url, null);
-      return parse<T>(url, reply.status, reply.body, new Headers(reply.headers));
-    },
-  };
-}
-
-/** Tests: the same allowlist and fetch, with the token read directly. */
-export function directApi(origin: string, tokenFor: (origin: string) => Promise<string | null>): GitHubApi {
-  return {
-    async hasToken() {
-      return Boolean(await tokenFor(origin));
-    },
-    async request<T>(url: string, init: { method?: 'GET' | 'POST'; body?: unknown; etag?: string } = {}) {
-      const method = init.method ?? 'GET';
-      const body = init.body === undefined ? undefined : JSON.stringify(init.body);
-      if (!allowedRequest(origin, null, url, method, body)) throw new Error(`Galley does not make this request: ${method} ${url}`);
-      let res: Response;
-      try {
-        res = await fetchGitHub(url, method, body, await tokenFor(origin), init.etag);
-      } catch {
-        throw new HttpError(0, url, null);
-      }
-      return parse<T>(url, res.status, await res.text(), res.headers);
+      return parseResponse<T>(url, reply.status, reply.body, new Headers(reply.headers));
     },
   };
 }

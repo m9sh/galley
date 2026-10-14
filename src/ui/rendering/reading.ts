@@ -3,7 +3,7 @@ import type { RenderedBlock, RenderedDoc } from './render.ts';
 
 const revealed = new WeakMap<RenderedDoc, Set<HTMLElement>>();
 /** Source files keep this many unchanged lines on each side of a change in view, as a diff does. */
-export const CODE_CONTEXT = 2;
+const CODE_CONTEXT = 2;
 
 /** Hide unchanged blocks, retain relevant headings, and let every gap reveal its own context. */
 export function filterDocument(r: RenderedDoc, changedOnly: boolean): void {

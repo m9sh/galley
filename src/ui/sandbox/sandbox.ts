@@ -10,7 +10,7 @@ interface Frame {
   replies: Map<number, (reply: Record<string, unknown>) => void>;
 }
 
-export interface Sandbox {
+interface Sandbox {
   /** Resolves with the frame's reply, or rejects if it reports an error, stops answering or is removed. */
   request(host: ParentNode, message: Record<string, unknown>): Promise<Record<string, unknown>>;
 }

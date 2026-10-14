@@ -6,7 +6,7 @@ export interface RepoLinks {
   blob(path: string): string;
 }
 
-export type ResolvedHref = { type: 'anchor'; hash: string } | { type: 'external'; href: string } | { type: 'repo'; path: string; suffix: string };
+type ResolvedHref = { type: 'anchor'; hash: string } | { type: 'external'; href: string } | { type: 'repo'; path: string; suffix: string };
 
 const SCHEME = /^[a-z][a-z\d+.-]*:/i;
 

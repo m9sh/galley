@@ -1,7 +1,7 @@
 import { boundedDiff } from './limits.ts';
 import type { Unit } from './markdown.ts';
 
-export type ChangeKind = 'same' | 'added' | 'removed' | 'modified';
+type ChangeKind = 'same' | 'added' | 'removed' | 'modified';
 
 export interface BlockChange {
   kind: ChangeKind;
@@ -89,16 +89,4 @@ export function diffUnits(base: Unit[], head: Unit[]): BlockChange[] {
   }
   flush();
   return out;
-}
-
-export interface ChangeSummary {
-  added: number;
-  removed: number;
-  modified: number;
-}
-
-export function summarize(changes: BlockChange[]): ChangeSummary {
-  const s: ChangeSummary = { added: 0, removed: 0, modified: 0 };
-  for (const c of changes) if (c.kind !== 'same') s[c.kind]++;
-  return s;
 }

@@ -8,7 +8,7 @@ import { listen, serve } from './sandbox-frame.ts';
 
 hljs.registerLanguage('dockerfile', dockerfile);
 
-export interface HighlightRequest {
+interface HighlightRequest {
   id: number;
   code: string;
   language: string;

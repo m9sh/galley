@@ -6,7 +6,7 @@ import type { DiagramPalette } from './diagram-palette.ts';
 import type { RenderedBlock } from './render.ts';
 import { hostFor, sandbox } from '../sandbox/sandbox.ts';
 
-export interface DiagramVersion {
+interface DiagramVersion {
   side: 'base' | 'head';
   source: string;
   view: HTMLElement;

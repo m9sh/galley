@@ -1,6 +1,6 @@
 import { ReaderError, type CommentTarget, type DocRef, type Thread } from './types.ts';
 
-export interface DiffLine {
+interface DiffLine {
   oldLine?: number;
   newLine?: number;
   oldPos: number;

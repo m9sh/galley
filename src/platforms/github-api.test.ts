@@ -1,6 +1,7 @@
 import { expect, it, vi } from 'vitest';
 import { headersOf, mockFetch } from '../testing/http.ts';
-import { allowedRequest, backgroundApi, directApi, fetchGitHub } from './github-api.ts';
+import { directApi } from '../testing/github.ts';
+import { allowedRequest, backgroundApi, fetchGitHub } from './github-api.ts';
 import { HttpError } from './http.ts';
 import { MARK_VIEWED, VIEWED_FILES_QUERY } from './github-queries.ts';
 

@@ -7,7 +7,7 @@ import type { ConfigFormat } from '../../core/discovery.ts';
 import { listen, serve } from './sandbox-frame.ts';
 
 export const MAX_DECLARED = 400;
-export const FORMATS: ConfigFormat[] = ['compose', 'workflow', 'gitlab-ci', 'kubernetes', 'terraform'];
+const FORMATS: ConfigFormat[] = ['compose', 'workflow', 'gitlab-ci', 'kubernetes', 'terraform'];
 
 /** GitLab CI keys that configure the pipeline rather than name a job. */
 const GITLAB_KEYWORDS = new Set(['stages', 'variables', 'default', 'include', 'workflow', 'image', 'services', 'before_script', 'after_script', 'cache']);

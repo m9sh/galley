@@ -1,6 +1,6 @@
 import { boundedDiff } from './limits.ts';
 
-export type OpType = 'eq' | 'ins' | 'del';
+type OpType = 'eq' | 'ins' | 'del';
 
 export interface Op {
   type: OpType;

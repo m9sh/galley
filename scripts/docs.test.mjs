@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { anchorsOf, checkLinks, linksOf, parseFrontMatter, run } from './docs.mjs';
+import { anchorsOf, checkLinks, checkOrphanImages, linksOf, parseFrontMatter, run } from './docs.mjs';
 
 const ADR_README = '# Decisions\n\n<!-- adr-index:start -->\n<!-- adr-index:end -->\n';
 const RFC_README = '# Proposals\n\n<!-- rfc-index:start -->\n<!-- rfc-index:end -->\n';
@@ -139,5 +139,25 @@ test('checks that every agent skill is named after its folder and says when to u
     '.claude/skills/bare/SKILL.md: front matter is missing',
     '.claude/skills/empty/SKILL.md is missing',
     '.claude/skills/quiet/SKILL.md: description must say what the skill does and when to use it, in at most 1,024 characters',
+  ]);
+});
+
+test('reports an image in docs/ that no document links to, however the document links it', async (t) => {
+  const root = await repo(t, {
+    'README.md': '<img src="docs/images/hero.png"> [![x](docs/images/badge.svg)](docs/images/badge.svg)\n',
+    'docs/guide.md': '![a shot](images/shot.png) and [a link](https://example.com/other.png)\n',
+    'docs/rfcs/0001-x.md': '[capture](../images/capture.png)\n',
+    'docs/images/hero.png': 'x',
+    'docs/images/badge.svg': 'x',
+    'docs/images/shot.png': 'x',
+    'docs/images/capture.png': 'x',
+    'docs/images/left-behind.png': 'x',
+    'docs/design/captures/old.JPG': 'x',
+    'docs/notes.txt': 'not an image',
+  });
+  const documents = ['README.md', 'docs/guide.md', 'docs/rfcs/0001-x.md'];
+  assert.deepEqual(checkOrphanImages(root, documents), [
+    'docs/design/captures/old.JPG is not linked from any document; link it or delete it',
+    'docs/images/left-behind.png is not linked from any document; link it or delete it',
   ]);
 });

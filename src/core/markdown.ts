@@ -3,7 +3,7 @@ import footnote from 'markdown-it-footnote';
 import { full as emoji } from 'markdown-it-emoji';
 import type { Env, StateCore, Token } from 'markdown-it';
 
-export type UnitKind = 'frontmatter' | 'heading' | 'paragraph' | 'code' | 'table' | 'html' | 'rule';
+type UnitKind = 'frontmatter' | 'heading' | 'paragraph' | 'code' | 'table' | 'html' | 'rule';
 
 /**
  * A leaf block of a document (paragraph, heading, list-item text, code block, table…).
@@ -31,7 +31,7 @@ export interface Unit {
   links: string[];
 }
 
-export interface FrontMatter {
+interface FrontMatter {
   raw: string;
   fields: Array<[string, string]>;
 }
@@ -159,7 +159,7 @@ export function isCommentOnly(html: string): boolean {
   }
 }
 
-export function escapeHtml(text: string): string {
+function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 }
 
@@ -389,7 +389,7 @@ export interface OutlineLink {
   section: string | null;
 }
 
-export interface Outline {
+interface Outline {
   frontmatter: FrontMatter | null;
   headings: OutlineHeading[];
   links: OutlineLink[];

@@ -45,6 +45,7 @@ const browser = await puppeteer.launch({ executablePath: findChrome(), headless:
 /**
  * Open the demo with the given reader settings, optionally scroll to a heading or paragraph, open a
  * menu, and run `act` in the page (inside the reader's shadow root) before the capture.
+ * @param {{ settings: Record<string, unknown>, doc?: number, heading?: string, offset?: number, menu?: string, act?: string, scale?: number }} options
  */
 async function readerShot({ settings, doc = 0, heading, offset = 110, menu, act, scale = 2 }) {
   const page = await browser.newPage();
@@ -75,7 +76,11 @@ async function readerShot({ settings, doc = 0, heading, offset = 110, menu, act,
     );
     await sleep(400);
   }
-  if (menu) await page.evaluate((name) => document.querySelector('#galley-reader').shadowRoot.querySelector(`[data-act="${name}"]`).click(), menu);
+  if (menu)
+    await page.evaluate(
+      (name) => /** @type {HTMLElement} */ (document.querySelector('#galley-reader').shadowRoot.querySelector(`[data-act="${name}"]`)).click(),
+      menu,
+    );
   if (act) {
     await page.evaluate(act);
     await sleep(500);

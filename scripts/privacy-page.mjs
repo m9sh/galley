@@ -1,4 +1,4 @@
-// Renders PRIVACY.md into store/privacy-policy.html, a standalone page to host as the privacy policy URL.
+// Renders PRIVACY.md into dist/store/privacy-policy.html, a standalone page to host as the privacy policy URL.
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import markdownit from 'markdown-it';
@@ -33,6 +33,6 @@ ${body}</main>
 </html>
 `;
 
-await mkdir(`${root}store`, { recursive: true });
-await writeFile(`${root}store/privacy-policy.html`, page);
-console.log('store/privacy-policy.html written');
+await mkdir(`${root}dist/store`, { recursive: true });
+await writeFile(`${root}dist/store/privacy-policy.html`, page);
+console.log('dist/store/privacy-policy.html written');

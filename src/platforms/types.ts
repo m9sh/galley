@@ -25,7 +25,7 @@ export interface CommentTarget {
   quote: string;
 }
 
-export interface ThreadComment {
+interface ThreadComment {
   /** The name people know them by: GitLab's display name, or the GitHub login (the API gives no name). */
   author: string;
   /** Their username, for @mentions in replies. */
@@ -130,7 +130,7 @@ export interface RepositorySource {
 }
 
 /** A revision of the repository behind a review: the branch name and the commit the review uses. */
-export interface ReviewRevision {
+interface ReviewRevision {
   ref: string;
   commit: string;
 }

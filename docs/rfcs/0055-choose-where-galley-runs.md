@@ -25,7 +25,7 @@ The expected benefit, that reviewers keep Galley installed and use it where it h
 
 Implementation has started with **How the reader opens**, the independent second part below: the page-button switch, toolbar actions and extension shortcut. Site/repository policy and feature switches remain proposed, including the privacy and default-setting questions at the end of this RFC. [Issue #55](https://github.com/m9sh/galley/issues/55) tracks progress.
 
-The first implementation's browser captures: [toolbar before](../opening-popup-before.png), [toolbar after](../opening-popup-after.png), and the settings page at [desktop](../opening-settings-desktop.png) and [phone](../opening-settings-mobile.png) widths. The toolbar is shown on the same GitLab review; the new settings page has no earlier equivalent.
+The first implementation's browser captures: [toolbar before](../images/opening-popup-before.png), [toolbar after](../images/opening-popup-after.png), and the settings page at [desktop](../images/opening-settings-desktop.png) and [phone](../images/opening-settings-mobile.png) widths. The toolbar is shown on the same GitLab review; the new settings page has no earlier equivalent.
 
 Three controls, each useful on its own. The defaults keep today's behaviour exactly: nothing changes for a reviewer who never opens them.
 

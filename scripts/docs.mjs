@@ -154,6 +154,32 @@ export function checkLinks(root, files) {
   return problems;
 }
 
+const IMAGE = /\.(?:png|jpe?g|gif|svg|webp)$/i;
+
+/** Images in docs/ that no document links to were left behind by an earlier change, and are reported. */
+export function checkOrphanImages(root, files) {
+  const referenced = new Set();
+  for (const file of files) {
+    const path = join(root, file);
+    for (const { url } of linksOf(readFileSync(path, 'utf8'))) {
+      if (!url || /^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith('//')) continue;
+      let target;
+      try {
+        target = decodeURIComponent(url.split('#')[0].split('?')[0]);
+      } catch {
+        continue;
+      }
+      if (target) referenced.add(target.startsWith('/') ? join(root, target) : resolve(dirname(path), target));
+    }
+  }
+  const tracked = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z', '--', 'docs'], { cwd: root, encoding: 'utf8' });
+  return tracked
+    .split('\0')
+    .filter((file) => file && IMAGE.test(file) && existsSync(join(root, file)) && !referenced.has(join(root, file)))
+    .sort()
+    .map((file) => `${file} is not linked from any document; link it or delete it`);
+}
+
 /** ADRs or RFCs, read from `NNNN-slug.md` files: number, title (from the H1) and front matter. */
 export function readRecords(root, folder, kind) {
   const records = [];
@@ -314,7 +340,8 @@ export function run(root, { write = false } = {}) {
     if (write) writeFileSync(path, next);
     else problems.push(`${file}: the index is out of date; run npm run docs:index`);
   }
-  problems.push(...checkLinks(root, markdownFiles(root)));
+  const documents = markdownFiles(root);
+  problems.push(...checkLinks(root, documents), ...checkOrphanImages(root, documents));
   return problems;
 }
 

@@ -12,8 +12,10 @@ import { createHash } from 'node:crypto';
 import { watch } from 'node:fs';
 import { cp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
+import { basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as esbuild from 'esbuild';
+import { removeSupersededZips } from './dist-files.mjs';
 import { ORANGE, writeIcons } from './icons.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -117,6 +119,7 @@ const notify = (kind) => ({
   },
 });
 
+/** @returns {import('esbuild').BuildOptions} */
 const options = (entry, file) => ({
   absWorkingDir: root,
   entryPoints: [entry],
@@ -142,6 +145,7 @@ if (standalone) {
   const zip = `${root}dist/galley-chrome-dev-${pkg.version}.zip`;
   await rm(zip, { force: true });
   execFileSync('zip', ['-qrX', zip, '.'], { cwd: out });
+  await removeSupersededZips(`${root}dist`, basename(zip));
   console.log(`Galley ${pkg.version} dev build, no live reload → ${out}
   Zip: ${zip}
   Load it like the dev build: chrome://extensions → Developer mode → Load unpacked → the folder above
@@ -173,7 +177,7 @@ watch(`${root}src/manifest.json`, () => {
   writeStatic().then(() => console.log(`${time()}  manifest changed → ${NEEDS_MANUAL_RELOAD}`), console.error);
 });
 
-server.on('error', (err) => {
+server.on('error', (/** @type {NodeJS.ErrnoException} */ err) => {
   console.error(`Live reload is off: ${err.code === 'EADDRINUSE' ? `port ${PORT} is already in use` : err.message}`);
 });
 server.listen(PORT, '127.0.0.1', () => {

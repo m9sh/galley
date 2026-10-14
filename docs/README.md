@@ -24,6 +24,8 @@ The folders follow the [Diátaxis](https://diataxis.fr) split, so each document 
 | Reference | Facts to look up | [Foundations](design/foundations.md), [UI map](design/ui-map.md), [Storage](architecture/storage.md), [Glossary](glossary.md) |
 | Explanation | Why things are the way they are | [`architecture/`](architecture/README.md), [`design/`](design/README.md), [`adr/`](adr/README.md), [`rfcs/`](rfcs/README.md) |
 
+Images that documents show live in [`images/`](images/) or beside the document that uses them (`design/captures/`). An image no document links to is deleted: `npm run docs:check` fails on one.
+
 Decisions and proposals are connected: every ADR lists the RFCs behind it, and every RFC lists the ADRs it relies on or would change. Their indexes are generated from the files.
 
 ## Keeping the docs true

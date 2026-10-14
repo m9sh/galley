@@ -12,7 +12,7 @@ interface GitTree {
 }
 
 /** Where a GitHub repository lives: its site, API and name. */
-export interface GitHubRepository {
+interface GitHubRepository {
   origin: string;
   apiBase: string;
   owner: string;

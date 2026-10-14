@@ -14,7 +14,7 @@ export const SEARCH_BUDGET = {
   context: 48,
 } as const;
 
-export type Phrase = { pattern: RegExp } | { problem: 'short' | 'long' };
+type Phrase = { pattern: RegExp } | { problem: 'short' | 'long' };
 
 const SPECIAL = /[.*+?^${}()|[\]\\]/g;
 
@@ -40,7 +40,7 @@ export function occurrences(text: string, pattern: RegExp): Array<[number, numbe
   return [...text.matchAll(pattern)].map((match) => [match.index, match.index + match[0].length]);
 }
 
-export interface Excerpt {
+interface Excerpt {
   before: string;
   match: string;
   after: string;

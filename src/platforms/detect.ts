@@ -23,7 +23,7 @@ export interface GitLabContext {
 export type PageContext = GitHubContext | GitLabContext;
 
 /** Where a repository page points: the repository, a folder, or one Markdown file. */
-export interface RepoLocation {
+interface RepoLocation {
   view: 'root' | 'tree' | 'blob';
   /**
    * Decoded segments after /tree/ or /blob/: the branch, tag or commit followed by the path. A ref

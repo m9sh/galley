@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { headersOf, jsonResponse, mockFetch } from '../testing/http.ts';
-import { directApi } from './github-api.ts';
+import { directApi } from '../testing/github.ts';
 import { loadGitHub } from './github.ts';
 import { getToken, setToken } from './tokens.ts';
 import type { CommentTarget } from './types.ts';

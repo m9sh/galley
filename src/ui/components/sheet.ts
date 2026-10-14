@@ -57,7 +57,7 @@ export function kbd(key: string): HTMLElement {
   return el;
 }
 
-export interface SheetRow {
+interface SheetRow {
   title: string;
   meta?: string;
   /** A mark before the title (a dot, a ring, an icon); decorative, so the words say the same. */

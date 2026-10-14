@@ -17,7 +17,7 @@ The package, graphics, listing copy and privacy texts are ready in this reposito
 https://github.com/m9sh/galley/blob/main/PRIVACY.md
 ```
 
-If you prefer a standalone page, `npm run privacy-page` renders `store/privacy-policy.html`, which you can host anywhere (GitHub Pages works).
+If you prefer a standalone page, `npm run privacy-page` renders `dist/store/privacy-policy.html`, which you can host anywhere (GitHub Pages works).
 
 ## 3. Build and check the package
 

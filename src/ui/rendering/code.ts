@@ -140,14 +140,14 @@ export function lineEl(doc: Document, tag: 'span' | 'ins' | 'del', className: st
   return el;
 }
 
-export interface CodeSource {
+interface CodeSource {
   language: string | null;
   base?: string;
   head?: string;
 }
 
 const sources = new WeakMap<HTMLElement, CodeSource>();
-export interface CommentLines {
+interface CommentLines {
   base: Set<number>;
   head: Set<number>;
 }
