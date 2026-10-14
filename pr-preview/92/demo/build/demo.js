@@ -1,9 +1,9 @@
 "use strict";
 (() => {
   var __defProp = Object.defineProperty;
-  var __export = (target, all2) => {
-    for (var name3 in all2)
-      __defProp(target, name3, { get: all2[name3], enumerable: !0 });
+  var __export = (target, all3) => {
+    for (var name3 in all3)
+      __defProp(target, name3, { get: all3[name3], enumerable: !0 });
   };
   var __toBinary = Uint8Array.fromBase64 || /* @__PURE__ */ (() => {
     for (var table2 = new Uint8Array(128), i = 0; i < 64; i++) table2[i < 26 ? i + 65 : i < 52 ? i + 71 : i < 62 ? i - 4 : i * 4 - 205] = i;
@@ -3658,10 +3658,10 @@ ${lines.join(`
   var punycode_es6_default = punycode;
 
   // node_modules/markdown-it/dist/markdown-it.mjs
-  var __defProp2 = Object.defineProperty, __exportAll = (all2, no_symbols) => {
+  var __defProp2 = Object.defineProperty, __exportAll = (all3, no_symbols) => {
     let target = {};
-    for (var name3 in all2) __defProp2(target, name3, {
-      get: all2[name3],
+    for (var name3 in all3) __defProp2(target, name3, {
+      get: all3[name3],
       enumerable: !0
     });
     return no_symbols || __defProp2(target, Symbol.toStringTag, { value: "Module" }), target;
@@ -9667,6 +9667,7 @@ ${body}</details>
       [
         [["C"], "Change marks on / off"],
         [["A"], "Changed parts / whole files"],
+        [["U"], "Only what changed since you looked / the whole review"],
         [["L"], "Next layout"],
         [["D"], "Comfortable / compact"],
         [["+", "−"], "Larger / smaller text"],
@@ -9805,6 +9806,9 @@ ${settingsSheet("Choose a view that helps you follow the changes.", [
         if (sib.getClientRects().length) return sib;
     return null;
   }
+  function shortCommit(commit) {
+    return commit.slice(0, 7);
+  }
   var RAIL_SPACE = 296, CARD_GAP = 12, AIM_DELAY = 280, LANE_OFFSETS = [0, 8, -8, 16, -16, 24, -24, 32, -32, 40, -40, 48, -48], session = { reader: null };
 
   // src/ui/rendering/specs.ts
@@ -9823,7 +9827,7 @@ ${settingsSheet("Choose a view that helps you follow the changes.", [
     return el.className = className, text5 !== void 0 && (el.textContent = text5), el;
   }
   function groups(r, base2, head) {
-    let unused = new Set(base2), context = (definition, all2) => all2.filter((parent) => parent.kind === "suite" && parent.depth < definition.depth && parent.start <= definition.start && parent.end >= definition.end).map((parent) => parent.title), rows2 = (definition, side) => r.blocks.filter((block2) => {
+    let unused = new Set(base2), context = (definition, all3) => all3.filter((parent) => parent.kind === "suite" && parent.depth < definition.depth && parent.start <= definition.start && parent.end >= definition.end).map((parent) => parent.title), rows2 = (definition, side) => r.blocks.filter((block2) => {
       let line = block2[side]?.lines[0];
       return line !== void 0 && line >= definition.start && line <= definition.end;
     }), result = [];
@@ -9832,15 +9836,15 @@ ${settingsSheet("Choose a view that helps you follow the changes.", [
         (old2) => current.some((block2) => block2.kind === "same" && block2.base.lines[0] >= old2.start && block2.base.lines[0] <= old2.end && /[\w]/.test(block2.base.text))
       );
       old && unused.delete(old);
-      let selected = /* @__PURE__ */ new Set([...current, ...old ? rows2(old, "base") : []]), all2 = r.blocks.filter((block2) => selected.has(block2));
+      let selected = /* @__PURE__ */ new Set([...current, ...old ? rows2(old, "base") : []]), all3 = r.blocks.filter((block2) => selected.has(block2));
       result.push({
         definition,
         old,
-        rows: all2,
-        start: r.blocks.indexOf(all2[0]),
+        rows: all3,
+        start: r.blocks.indexOf(all3[0]),
         side: "head",
         context: parents,
-        status: old ? all2.some((block2) => block2.kind !== "same") ? "Edited" : "Unchanged" : "Added"
+        status: old ? all3.some((block2) => block2.kind !== "same") ? "Edited" : "Unchanged" : "Added"
       });
     }
     for (let definition of unused) {
@@ -11215,12 +11219,12 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
     state.setAttribute("role", "status");
     let meta = h("span", "mr-file-meta");
     meta.append(state);
-    let save = button("Save", "save-notes", "mr-btn mr-primary");
-    save.disabled = !options.dirty;
+    let save2 = button("Save", "save-notes", "mr-btn mr-primary");
+    save2.disabled = !options.dirty;
     let exporting = button("Export…", "export");
     exporting.setAttribute("aria-haspopup", "dialog"), exporting.setAttribute("aria-expanded", "false");
     let actions = h("span", "mr-file-actions mr-notes-actions");
-    if (actions.append(save, exporting, button("Delete all notes…", "delete-notes")), byline.append(meta, actions), head.append(byline), options.confirmDelete) {
+    if (actions.append(save2, exporting, button("Delete all notes…", "delete-notes")), byline.append(meta, actions), head.append(byline), options.confirmDelete) {
       let confirm = composeActions(
         "Delete every note, proposal and type you set for this repository, here and in storage?",
         button("Keep them", "cancel-delete-notes", "mr-btn mr-cancel"),
@@ -11982,8 +11986,8 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
           for (let proof of connection.proof.slice(0, 2)) why.append(this.proof(proof));
           let count2 = connection.proof.length + connection.hiddenProof;
           if (count2 > 2) {
-            let all2 = act(`See all ${count2} links`, "connection");
-            all2.dataset.id = connection.id, why.append(all2);
+            let all3 = act(`See all ${count2} links`, "connection");
+            all3.dataset.id = connection.id, why.append(all3);
           }
         }
         body.append(why);
@@ -13358,9 +13362,9 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
   color: var(--del);
 }
 
-/* Not changes: the reader's own carries a hint of the accent, as their threads do; a guess Galley has
-   not checked has a hollow dot. */
-.mr-chip.is-own .mr-dot {
+/* Not changes: the reader's own, and what is new since they last looked, carry a hint of the accent, as their
+   threads do; a guess Galley has not checked has a hollow dot. */
+.mr-chip:is(.is-own, .is-updated) .mr-dot {
   color: var(--accent);
 }
 
@@ -14902,15 +14906,25 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
   gap: 12px;
   height: 52px;
   padding: 0 12px;
+  border-bottom: 1px solid transparent;
+  transition:
+    transform 0.28s ease,
+    background-color 0.28s ease,
+    backdrop-filter 0.28s ease;
+}
+/* Frosted only once the page scrolls under it. At the top nothing is beneath the bar, and a background there would cut the
+   page's own glow (Aurora, Sunset) off in a hard line at its lower edge. */
+.mr-topbar.is-scrolled {
   background: color-mix(in srgb, var(--bg) 84%, transparent);
   -webkit-backdrop-filter: saturate(180%) blur(16px);
   backdrop-filter: saturate(180%) blur(16px);
-  border-bottom: 1px solid transparent;
-  transition: transform 0.28s ease;
 }
 
-/* Light washes down from the whole top edge: teal, violet and rose blend with the palette's accent.
-   The broad glow stays anchored to the screen, becoming softer once reading moves down the page. */
+/* Light washes down from the whole top edge: teal on the left, violet in the middle and rose on the right, each blended
+   with the palette's accent. The broad glow stays anchored to the screen, becoming softer once reading moves down the page.
+   Each colour fades out in its own gradient, along an eased curve (82% × (1 − t)^2.4) with no corners for the eye to
+   catch. Chrome dithers a gradient it draws, so a fade only a few shades deep stays smooth; a mask that did the fading
+   was not dithered, and showed as stripes. The masks here only blend the colours from side to side. */
 .mr-topbar {
   --aurora-a: color-mix(in srgb, color-mix(in srgb, #2dd4bf 60%, var(--accent)) var(--aurora-strength, 10%), transparent);
   --aurora-b: color-mix(in srgb, color-mix(in srgb, #a78bfa 60%, var(--accent)) var(--aurora-strength, 10%), transparent);
@@ -14926,30 +14940,64 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
   position: absolute;
   inset: 0 0 auto;
   z-index: -1;
-  background: linear-gradient(100deg, var(--aurora-a), var(--aurora-b) 48%, var(--aurora-c));
+  height: 320px;
   pointer-events: none;
   transition: opacity 0.75s ease;
-}
-.mr-topbar::before {
-  height: 320px;
-  mask-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.35) 30%, rgba(0, 0, 0, 0.07) 68%, transparent);
   animation: mr-aurora-glow 32s ease-in-out infinite alternate;
 }
+.mr-topbar::before {
+  background: linear-gradient(
+    color-mix(in srgb, var(--aurora-b) 82%, transparent) 0%,
+    color-mix(in srgb, var(--aurora-b) 67.1%, transparent) 8%,
+    color-mix(in srgb, var(--aurora-b) 54.0%, transparent) 16%,
+    color-mix(in srgb, var(--aurora-b) 41.1%, transparent) 25%,
+    color-mix(in srgb, var(--aurora-b) 29.2%, transparent) 35%,
+    color-mix(in srgb, var(--aurora-b) 18.7%, transparent) 46%,
+    color-mix(in srgb, var(--aurora-b) 10.2%, transparent) 58%,
+    color-mix(in srgb, var(--aurora-b) 3.9%, transparent) 72%,
+    color-mix(in srgb, var(--aurora-b) 0.7%, transparent) 86%,
+    transparent
+  );
+  mask-image: linear-gradient(to right, transparent, #000 48%, transparent);
+}
 .mr-topbar::after {
-  height: 96px;
-  opacity: 0.18;
-  mask-image: linear-gradient(rgba(0, 0, 0, 0.5), transparent);
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--aurora-a) 82%, transparent) 0%,
+      color-mix(in srgb, var(--aurora-a) 67.1%, transparent) 8%,
+      color-mix(in srgb, var(--aurora-a) 54.0%, transparent) 16%,
+      color-mix(in srgb, var(--aurora-a) 41.1%, transparent) 25%,
+      color-mix(in srgb, var(--aurora-a) 29.2%, transparent) 35%,
+      color-mix(in srgb, var(--aurora-a) 18.7%, transparent) 46%,
+      color-mix(in srgb, var(--aurora-a) 10.2%, transparent) 58%,
+      color-mix(in srgb, var(--aurora-a) 3.9%, transparent) 72%,
+      color-mix(in srgb, var(--aurora-a) 0.7%, transparent) 86%,
+      transparent
+    )
+    left / 48% 100% no-repeat,
+    linear-gradient(
+      color-mix(in srgb, var(--aurora-c) 82%, transparent) 0%,
+      color-mix(in srgb, var(--aurora-c) 67.1%, transparent) 8%,
+      color-mix(in srgb, var(--aurora-c) 54.0%, transparent) 16%,
+      color-mix(in srgb, var(--aurora-c) 41.1%, transparent) 25%,
+      color-mix(in srgb, var(--aurora-c) 29.2%, transparent) 35%,
+      color-mix(in srgb, var(--aurora-c) 18.7%, transparent) 46%,
+      color-mix(in srgb, var(--aurora-c) 10.2%, transparent) 58%,
+      color-mix(in srgb, var(--aurora-c) 3.9%, transparent) 72%,
+      color-mix(in srgb, var(--aurora-c) 0.7%, transparent) 86%,
+      transparent
+    )
+    right / 52% 100% no-repeat;
+  mask-image: linear-gradient(to right, #000, transparent 48%, #000);
 }
 .no-top-glow .mr-topbar::before,
 .no-top-glow .mr-topbar::after {
   content: none;
   animation: none;
 }
-.mr-topbar.is-scrolled::before {
-  opacity: 0.55;
-}
+.mr-topbar.is-scrolled::before,
 .mr-topbar.is-scrolled::after {
-  opacity: 0.1;
+  opacity: 0.55;
 }
 @keyframes mr-aurora-glow {
   from {
@@ -14960,7 +15008,8 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mr-topbar::before {
+  .mr-topbar::before,
+  .mr-topbar::after {
     animation: none;
   }
 }
@@ -19391,6 +19440,101 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
 }
 `;
 
+  // src/ui/components/styles/27-revisions.css
+  var revisions_default = `/* ------------------------------------------------------------------ changes since the reviewer last looked
+   A quiet card above the documents says what is new and offers the one thing to do about it; a line below them lets
+   the reviewer mark the version reviewed. Neither claims approval: the card is a card, the one filled button is the
+   comparison, and the rest are outlined. */
+.mr-since,
+.mr-reviewed {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px 14px 20px;
+  border-radius: 12px;
+  background: var(--card);
+}
+.mr-since {
+  margin: 0 0 48px;
+}
+.mr-since.is-active {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.mr-reviewed {
+  margin: 96px 0 24px;
+}
+.mr-since-text,
+.mr-reviewed-words {
+  flex: 1;
+  min-width: 0;
+}
+.mr-since-title,
+.mr-reviewed-text {
+  margin: 0;
+  color: var(--fg);
+  font: 600 calc(15px * var(--type)) / 1.4 var(--sans);
+}
+.mr-since-meta,
+.mr-reviewed-note {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font: 400 13px / 1.5 var(--sans);
+  overflow-wrap: anywhere;
+}
+.mr-reviewed-text {
+  font-weight: 500;
+}
+.mr-since-actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.mr-since .mr-btn,
+.mr-reviewed .mr-btn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font: 500 13px / 1 var(--sans);
+  white-space: nowrap;
+}
+.mr-since .mr-outline:hover,
+.mr-reviewed .mr-outline:hover {
+  border-color: var(--control-rule);
+}
+/* The files menu and the Files layout list say which files are new since, in the accent as the reader's own marks are. */
+.mr-menu-quiet.is-updated {
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg));
+  color: var(--fg);
+}
+.mr-file-updated {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--accent);
+}
+@media (max-width: 760px) {
+  .mr-since,
+  .mr-reviewed {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 16px;
+  }
+  .mr-since-actions {
+    justify-content: stretch;
+  }
+  .mr-since .mr-btn,
+  .mr-reviewed .mr-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 44px;
+  }
+}
+`;
+
   // src/ui/components/reader-styles.ts
   var reader_styles_default = [
     palette_default,
@@ -19418,7 +19562,8 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
     layouts_and_density_default,
     code_file_views_default,
     test_plan_default,
-    source_changes_default
+    source_changes_default,
+    revisions_default
   ].join(`
 `);
 
@@ -22254,11 +22399,11 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
       return this.index?.docs.get(path)?.title ?? fileTitle(path);
     }
     buildToc(r) {
-      let toc = this.q(".mr-toc"), all2 = [...r.content.querySelectorAll("h1, h2, h3")].filter((el) => el !== r.lead);
-      if (all2.length < 3) return;
-      let top = Math.min(...all2.map((el) => Number(el.tagName[1]))), list2 = h("div", "mr-toc-list");
+      let toc = this.q(".mr-toc"), all3 = [...r.content.querySelectorAll("h1, h2, h3")].filter((el) => el !== r.lead);
+      if (all3.length < 3) return;
+      let top = Math.min(...all3.map((el) => Number(el.tagName[1]))), list2 = h("div", "mr-toc-list");
       list2.append(h("p", "mr-toc-title", "Contents"));
-      for (let el of all2) {
+      for (let el of all3) {
         let link3 = h("a", `lvl-${Math.min(3, Number(el.tagName[1]) - top + 1)}`);
         link3.href = `#${el.id}`, link3.dataset.act = "heading", link3.append(h("span", "", el.textContent.trim())), list2.append(link3);
       }
@@ -23366,6 +23511,129 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
     area3 ? viewed ? await area3.set({ [key]: !0 }) : await area3.remove(key) : viewed ? localStorage.setItem(key, "true") : localStorage.removeItem(key);
   }
 
+  // src/ui/review/moves.ts
+  var distinctive = (text5) => text5.length >= 6 && /\w/.test(text5), MoveFinder = class {
+    lines = { removed: /* @__PURE__ */ new Map(), added: /* @__PURE__ */ new Map() };
+    order = [];
+    /** Indexes a newly shown file and returns the moves it completes, within itself or with a file shown before. */
+    add(ref, r) {
+      if (r.blocks.length > 1e4) return [];
+      let file = { ref, removed: /* @__PURE__ */ new Map(), added: /* @__PURE__ */ new Map() };
+      this.order.push(file);
+      let hunk = 0;
+      for (let block2 of r.blocks) {
+        if (block2.kind === "same") {
+          hunk++;
+          continue;
+        }
+        let side = block2.kind === "removed" ? "removed" : "added", unit = side === "removed" ? block2.base : block2.head, line = { file, block: block2, number: unit.lines[0], text: unit.text.trim(), used: !1, hunk };
+        file[side].set(line.number, line);
+        let same = this.lines[side].get(line.text);
+        same ? same.push(line) : this.lines[side].set(line.text, [line]);
+      }
+      let runs = [];
+      for (let side of ["removed", "added"])
+        for (let line of file[side].values()) {
+          let run = this.match(line, side);
+          run && runs.push(run);
+        }
+      return this.group(runs);
+    }
+    match(line, side) {
+      if (line.used || !distinctive(line.text)) return null;
+      let candidates = this.lines[side === "removed" ? "added" : "removed"].get(line.text)?.filter((other) => !other.used) ?? [];
+      if (!candidates.length || candidates.length > 40) return null;
+      let best = null;
+      for (let other of candidates) {
+        let [from, to] = side === "removed" ? [line, other] : [other, line];
+        if (from.file === to.file && from.hunk === to.hunk) continue;
+        let run = { removed: [from], added: [to] };
+        for (let step of [-1, 1])
+          for (let k = 1; ; k++) {
+            let removed = from.file.removed.get(from.number + step * k), added = to.file.added.get(to.number + step * k);
+            if (!removed || !added || removed.used || added.used || removed.text !== added.text) break;
+            run.removed[step < 0 ? "unshift" : "push"](removed), run.added[step < 0 ? "unshift" : "push"](added);
+          }
+        for (; !run.removed[0].text; )
+          run.removed.shift(), run.added.shift();
+        for (; !run.removed.at(-1).text; )
+          run.removed.pop(), run.added.pop();
+        let evidence = run.removed.filter((row) => distinctive(row.text));
+        evidence.length < 2 || evidence.reduce((sum, row) => sum + row.text.length, 0) < 40 || (!best || run.removed.length > best.removed.length) && (best = run);
+      }
+      if (best) for (let row of [...best.removed, ...best.added]) row.used = !0;
+      return best;
+    }
+    /** Runs between the same two files, a few lines apart at both ends, are one move edited on the way. */
+    group(runs) {
+      let rank = (file) => this.order.indexOf(file);
+      runs.sort(
+        (a, b) => rank(a.removed[0].file) - rank(b.removed[0].file) || rank(a.added[0].file) - rank(b.added[0].file) || a.removed[0].number - b.removed[0].number
+      );
+      let moves = [];
+      for (let run of runs) {
+        let last = moves.at(-1), gap = (a, b) => b[0].number - a.at(-1).number;
+        last && last.removed[0].file === run.removed[0].file && last.added[0].file === run.added[0].file && gap(last.removed, run.removed) > 0 && gap(last.removed, run.removed) <= 4 && gap(last.added, run.added) > 0 && gap(last.added, run.added) <= 4 ? (last.removed.push(...run.removed), last.added.push(...run.added)) : moves.push(run);
+      }
+      return moves.map(({ removed, added }) => ({
+        from: { ref: removed[0].file.ref, rows: removed.map((line) => line.block) },
+        to: { ref: added[0].file.ref, rows: added.map((line) => line.block) }
+      }));
+    }
+  };
+  function place(here, there, row, side) {
+    let line = `${side === "base" ? "old " : ""}line ${row[side].lines[0] + 1}`;
+    return here === there ? line : `${side === "base" ? there.oldPath : there.path}, ${line}`;
+  }
+  function showMove({ from, to }) {
+    for (let row of [...from.rows, ...to.rows]) row.el.dataset.mrMoved = "";
+    let note = (at, label2) => {
+      let doc = at.el.ownerDocument, box = doc.createElement("div");
+      box.className = "mr-move-note";
+      let button3 = doc.createElement("button");
+      return button3.type = "button", button3.className = "mr-move-link", button3.textContent = label2, box.append(button3), (at.el.closest(".mr-source-comment") ?? at.el).before(box), { box, button: button3 };
+    }, away = note(from.rows[0], `Moved to ${place(from.ref, to.ref, to.rows[0], "head")}`), here = note(to.rows[0], `Moved from ${place(to.ref, from.ref, from.rows[0], "base")}`), go = (target) => {
+      target.box.scrollIntoView({ block: "center", behavior: "instant" }), target.button.focus({ preventScroll: !0 }), target.box.classList.remove("is-flash"), target.box.offsetWidth, target.box.classList.add("is-flash");
+    };
+    away.button.addEventListener("click", () => go(here)), here.button.addEventListener("click", () => go(away));
+  }
+
+  // src/ui/review/fingerprint.ts
+  async function fingerprint(text5) {
+    let digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text5));
+    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  // src/ui/review/revisions.ts
+  var KEY = "galley:revisions", LIMIT = 50, COMMIT = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
+  async function all() {
+    let saved = await readStored(KEY);
+    return saved && typeof saved == "object" && !Array.isArray(saved) ? saved : {};
+  }
+  var valid = (value) => typeof value == "string" && COMMIT.test(value);
+  async function loadRevisions(review) {
+    let saved = (await all())[await fingerprint(review)];
+    return saved ? { reviewed: valid(saved.reviewed) ? saved.reviewed : null, seen: Array.isArray(saved.seen) ? saved.seen.filter(valid).slice(0, 2) : [] } : { reviewed: null, seen: [] };
+  }
+  async function save(review, change) {
+    let key = await fingerprint(review), everything = await all(), next = change(await loadRevisions(review)), { [key]: _old, ...others } = everything, saved = { ...others, [key]: { ...next.reviewed ? { reviewed: next.reviewed } : {}, seen: next.seen, at: Date.now() } }, recent = Object.entries(saved).sort(([, a], [, b]) => b.at - a.at).slice(0, LIMIT);
+    await writeStored(KEY, Object.fromEntries(recent));
+  }
+  function rememberSeen(review, head) {
+    return save(review, (current) => ({ reviewed: current.reviewed, seen: current.seen[0] === head ? current.seen : [head, ...current.seen].slice(0, 2) }));
+  }
+  function markReviewed(review, head) {
+    return save(review, (current) => ({ reviewed: head, seen: current.seen }));
+  }
+  function unmarkReviewed(review) {
+    return save(review, (current) => ({ reviewed: null, seen: current.seen }));
+  }
+  function baselineFor(revisions, head) {
+    if (revisions.reviewed) return revisions.reviewed === head ? null : { commit: revisions.reviewed, kind: "reviewed" };
+    let earlier = revisions.seen.find((commit) => commit !== head);
+    return earlier ? { commit: earlier, kind: "opened" } : null;
+  }
+
   // src/ui/rendering/code-files.ts
   function renderCodeFile(doc, ref, contents2) {
     if (contents2.base.includes("\0") || contents2.head.includes("\0")) throw new ReaderError("This file contains binary data. Open it in the platform diff.");
@@ -23508,111 +23776,20 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
   }
 
   // src/ui/review/positions.ts
-  var KEY = "galley:positions", LIMIT = 50;
-  async function fingerprint(text5) {
-    let digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text5));
-    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
-  }
-  async function all() {
-    let saved = await readStored(KEY);
+  var KEY2 = "galley:positions", LIMIT2 = 50;
+  async function all2() {
+    let saved = await readStored(KEY2);
     return saved && typeof saved == "object" && !Array.isArray(saved) ? saved : {};
   }
   async function loadPosition(review, paths) {
-    let saved = (await all())[await fingerprint(review)];
+    let saved = (await all2())[await fingerprint(review)];
     if (!saved || typeof saved.file != "string" || !Number.isFinite(saved.offset)) return null;
     for (let path of paths) if (await fingerprint(path) === saved.file) return { path, offset: saved.offset };
     return null;
   }
   async function savePosition(review, path, offset) {
-    let saved = { ...await all(), [await fingerprint(review)]: { file: await fingerprint(path), offset, at: Date.now() } }, recent = Object.entries(saved).sort(([, a], [, b]) => b.at - a.at).slice(0, LIMIT);
-    await writeStored(KEY, Object.fromEntries(recent));
-  }
-
-  // src/ui/review/moves.ts
-  var distinctive = (text5) => text5.length >= 6 && /\w/.test(text5), MoveFinder = class {
-    lines = { removed: /* @__PURE__ */ new Map(), added: /* @__PURE__ */ new Map() };
-    order = [];
-    /** Indexes a newly shown file and returns the moves it completes, within itself or with a file shown before. */
-    add(ref, r) {
-      if (r.blocks.length > 1e4) return [];
-      let file = { ref, removed: /* @__PURE__ */ new Map(), added: /* @__PURE__ */ new Map() };
-      this.order.push(file);
-      let hunk = 0;
-      for (let block2 of r.blocks) {
-        if (block2.kind === "same") {
-          hunk++;
-          continue;
-        }
-        let side = block2.kind === "removed" ? "removed" : "added", unit = side === "removed" ? block2.base : block2.head, line = { file, block: block2, number: unit.lines[0], text: unit.text.trim(), used: !1, hunk };
-        file[side].set(line.number, line);
-        let same = this.lines[side].get(line.text);
-        same ? same.push(line) : this.lines[side].set(line.text, [line]);
-      }
-      let runs = [];
-      for (let side of ["removed", "added"])
-        for (let line of file[side].values()) {
-          let run = this.match(line, side);
-          run && runs.push(run);
-        }
-      return this.group(runs);
-    }
-    match(line, side) {
-      if (line.used || !distinctive(line.text)) return null;
-      let candidates = this.lines[side === "removed" ? "added" : "removed"].get(line.text)?.filter((other) => !other.used) ?? [];
-      if (!candidates.length || candidates.length > 40) return null;
-      let best = null;
-      for (let other of candidates) {
-        let [from, to] = side === "removed" ? [line, other] : [other, line];
-        if (from.file === to.file && from.hunk === to.hunk) continue;
-        let run = { removed: [from], added: [to] };
-        for (let step of [-1, 1])
-          for (let k = 1; ; k++) {
-            let removed = from.file.removed.get(from.number + step * k), added = to.file.added.get(to.number + step * k);
-            if (!removed || !added || removed.used || added.used || removed.text !== added.text) break;
-            run.removed[step < 0 ? "unshift" : "push"](removed), run.added[step < 0 ? "unshift" : "push"](added);
-          }
-        for (; !run.removed[0].text; )
-          run.removed.shift(), run.added.shift();
-        for (; !run.removed.at(-1).text; )
-          run.removed.pop(), run.added.pop();
-        let evidence = run.removed.filter((row) => distinctive(row.text));
-        evidence.length < 2 || evidence.reduce((sum, row) => sum + row.text.length, 0) < 40 || (!best || run.removed.length > best.removed.length) && (best = run);
-      }
-      if (best) for (let row of [...best.removed, ...best.added]) row.used = !0;
-      return best;
-    }
-    /** Runs between the same two files, a few lines apart at both ends, are one move edited on the way. */
-    group(runs) {
-      let rank = (file) => this.order.indexOf(file);
-      runs.sort(
-        (a, b) => rank(a.removed[0].file) - rank(b.removed[0].file) || rank(a.added[0].file) - rank(b.added[0].file) || a.removed[0].number - b.removed[0].number
-      );
-      let moves = [];
-      for (let run of runs) {
-        let last = moves.at(-1), gap = (a, b) => b[0].number - a.at(-1).number;
-        last && last.removed[0].file === run.removed[0].file && last.added[0].file === run.added[0].file && gap(last.removed, run.removed) > 0 && gap(last.removed, run.removed) <= 4 && gap(last.added, run.added) > 0 && gap(last.added, run.added) <= 4 ? (last.removed.push(...run.removed), last.added.push(...run.added)) : moves.push(run);
-      }
-      return moves.map(({ removed, added }) => ({
-        from: { ref: removed[0].file.ref, rows: removed.map((line) => line.block) },
-        to: { ref: added[0].file.ref, rows: added.map((line) => line.block) }
-      }));
-    }
-  };
-  function place(here, there, row, side) {
-    let line = `${side === "base" ? "old " : ""}line ${row[side].lines[0] + 1}`;
-    return here === there ? line : `${side === "base" ? there.oldPath : there.path}, ${line}`;
-  }
-  function showMove({ from, to }) {
-    for (let row of [...from.rows, ...to.rows]) row.el.dataset.mrMoved = "";
-    let note = (at, label2) => {
-      let doc = at.el.ownerDocument, box = doc.createElement("div");
-      box.className = "mr-move-note";
-      let button3 = doc.createElement("button");
-      return button3.type = "button", button3.className = "mr-move-link", button3.textContent = label2, box.append(button3), (at.el.closest(".mr-source-comment") ?? at.el).before(box), { box, button: button3 };
-    }, away = note(from.rows[0], `Moved to ${place(from.ref, to.ref, to.rows[0], "head")}`), here = note(to.rows[0], `Moved from ${place(to.ref, from.ref, from.rows[0], "base")}`), go = (target) => {
-      target.box.scrollIntoView({ block: "center", behavior: "instant" }), target.button.focus({ preventScroll: !0 }), target.box.classList.remove("is-flash"), target.box.offsetWidth, target.box.classList.add("is-flash");
-    };
-    away.button.addEventListener("click", () => go(here)), here.button.addEventListener("click", () => go(away));
+    let saved = { ...await all2(), [await fingerprint(review)]: { file: await fingerprint(path), offset, at: Date.now() } }, recent = Object.entries(saved).sort(([, a], [, b]) => b.at - a.at).slice(0, LIMIT2);
+    await writeStored(KEY2, Object.fromEntries(recent));
   }
 
   // src/ui/rendering/symbols.ts
@@ -23903,21 +24080,21 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
     }
     /** Progress in words and as a bar, the way in, and the state of every row; the row with focus keeps it. */
     update() {
-      let all2 = [...this.docs, ...this.other], viewed = all2.filter((doc) => this.options.state(doc).viewed).length;
-      this.progress.textContent = `${viewed} of ${plural4(all2.length, "file")} viewed`, this.bar.replaceChildren(
+      let all3 = [...this.docs, ...this.other], viewed = all3.filter((doc) => this.options.state(doc).viewed).length;
+      this.progress.textContent = `${viewed} of ${plural4(all3.length, "file")} viewed`, this.bar.replaceChildren(
         ...this.chapters.filter((chapter) => chapter.files.length).map((chapter) => {
           let seen = chapter.files.filter((doc) => this.options.state(doc).viewed).length, part2 = node("span");
           part2.setAttribute("style", `flex-grow: ${chapter.files.length}`);
           let fill = node("span");
           return fill.setAttribute("style", `width: ${Math.round(seen / chapter.files.length * 100)}%`), part2.append(fill), part2;
         })
-      ), this.first.disabled = !all2.some((doc) => !this.options.state(doc).viewed && !this.options.state(doc).unsupported), this.first.textContent = viewed ? "Continue here" : "Start here", this.route.hidden = all2.length < 6;
+      ), this.first.disabled = !all3.some((doc) => !this.options.state(doc).viewed && !this.options.state(doc).unsupported), this.first.textContent = viewed ? "Continue here" : "Start here", this.route.hidden = all3.length < 6;
       let current = this.currentChapter();
-      this.routeText.textContent = current < 0 ? `${this.chapters.length} chapters · ${all2.length} files` : `${current + 1} of ${this.chapters.length} · ${this.chapters[current].title}`, this.next.disabled = current < 0 || !this.nextChapter(current);
+      this.routeText.textContent = current < 0 ? `${this.chapters.length} chapters · ${all3.length} files` : `${current + 1} of ${this.chapters.length} · ${this.chapters[current].title}`, this.next.disabled = current < 0 || !this.nextChapter(current);
       let active = this.options.root.getRootNode().activeElement, focused = active?.closest(".mr-sheet-rows [data-chapter]")?.dataset.chapter;
       this.list.replaceChildren(...this.chapters.map((chapter) => this.chapterRow(chapter))), focused && byData(this.list, "chapter", focused).focus({ preventScroll: !0 });
       for (let row of this.sheet.element.querySelectorAll(".mr-sheet-row[data-file]")) {
-        let fresh = this.fileRow(all2[Number(row.dataset.file)]);
+        let fresh = this.fileRow(all3[Number(row.dataset.file)]);
         row.replaceWith(fresh), row === active && fresh.focus({ preventScroll: !0 });
       }
       for (let option2 of this.sheet.element.querySelectorAll("[data-chapter-destination] option"))
@@ -24804,6 +24981,10 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
     editorOf = /* @__PURE__ */ new WeakMap();
     drafts = [];
     moves = new MoveFinder();
+    /** The review's earlier heads, once known (RFC 0039); drawn above and below the documents. */
+    revisions = null;
+    /** Documents as they were at the head being compared with, read once each while only what changed since is shown. */
+    earlier = /* @__PURE__ */ new Map();
     /** The files in the platform's order; `views` follow the File order setting. */
     listed = [];
     orderedBy = null;
@@ -24874,12 +25055,12 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
     setSource(source2, start2) {
       if (this.closed) return;
       this.source = source2, this.shadow.querySelector('[data-act="code-files"]').title = `${source2.codeDocs?.length ?? 0} supported code files`;
-      let all2 = [...source2.docs, ...source2.codeDocs ?? []];
-      if (!all2.length) {
+      let all3 = [...source2.docs, ...source2.codeDocs ?? []];
+      if (!all3.length) {
         this.chapters.setSource([], source2.otherFiles ?? [], !!source2.project), this.showMessage("No readable changes here", "This change set does not touch any supported document or text source files.");
         return;
       }
-      this.index = Math.min(Math.max(start2, 0), all2.length - 1), this.shadow.querySelector('[data-act="search"]').hidden = !1, this.views = all2.map((doc, i) => {
+      this.index = Math.min(Math.max(start2, 0), all3.length - 1), this.shadow.querySelector('[data-act="search"]').hidden = !1, this.views = all3.map((doc, i) => {
         let section = h(
           "section",
           `mr-document${doc.status === "removed" || doc.status === "added" ? ` doc-${doc.status}` : ""}${doc.kind === "code" ? " is-code" : ""}`
@@ -24887,10 +25068,10 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
         return section.setAttribute("aria-label", doc.path), section.dataset.document = String(i), section.hidden = doc.kind === "code" && !this.settings.codeFiles, section.append(this.skeleton()), { doc, section, rendered: null };
       });
       for (let view of this.views) this.viewByDoc.set(view.doc, view);
-      for (let doc of all2) this.viewed.set(doc, { value: !1, ready: !1, busy: !1 });
-      source2.viewed && this.initNativeViewed(), this.overview = source2.overview ? this.renderOverview(source2.overview) : null, this.el.doc.replaceChildren(...this.overview ? [this.overview] : [], ...this.views.map((view) => view.section)), this.listed = all2, this.orderViews(), start2 || (this.index = 0), this.chapters.setSource(all2, source2.otherFiles ?? [], !!source2.project), this.updateFileButton(), this.loadAll(this.index).then(() => {
+      for (let doc of all3) this.viewed.set(doc, { value: !1, ready: !1, busy: !1 });
+      source2.viewed && this.initNativeViewed(), this.overview = source2.overview ? this.renderOverview(source2.overview) : null, this.el.doc.replaceChildren(...this.overview ? [this.overview] : [], ...this.views.map((view) => view.section)), this.listed = all3, this.orderViews(), start2 || (this.index = 0), this.chapters.setSource(all3, source2.otherFiles ?? [], !!source2.project), this.updateFileButton(), this.loadAll(this.index).then(() => {
         start2 || this.offerResume();
-      }), this.loadThreads();
+      }), this.loadThreads(), source2.history && this.initRevisions();
     }
     close() {
       if (!this.closed) {
@@ -24924,55 +25105,55 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
     }
     async loadView(index) {
       let view = this.views[index];
-      if (!this.loading.has(view.doc)) {
-        this.loading.add(view.doc), view.failed = !1;
-        try {
-          let contents2 = await this.load(view.doc);
-          if (this.closed) return;
-          this.contentsOf.set(view.doc, contents2);
-          let quiet = view.open || !this.settings.fold || this.threads.some((thread) => thread.doc === view.doc) ? null : quietFile(view.doc, contents2);
-          if (quiet) {
-            view.quiet = quiet, view.section.classList.add("is-quiet"), view.section.replaceChildren(this.quietCard(view)), this.schedule(!0), this.search.refresh(), this.source.viewed ? this.updateViewed() : this.initLocalViewed(view.doc, contents2);
-            return;
-          }
-          let r = view.doc.kind === "code" ? renderCodeFile(document, view.doc, contents2) : renderDocument(document, {
-            path: view.doc.status === "removed" ? view.doc.oldPath : view.doc.path,
-            status: view.doc.status,
-            ...contents2,
+      if (this.loading.has(view.doc)) return;
+      this.loading.add(view.doc), view.failed = !1;
+      let since = this.sinceActive();
+      try {
+        let contents2 = await this.load(view.doc), shown = await this.shown(view, contents2);
+        if (this.closed || since !== this.sinceActive()) return;
+        this.contentsOf.set(view.doc, shown.contents);
+        let quiet = view.open || !this.settings.fold || this.threads.some((thread) => thread.doc === view.doc) ? null : quietFile(shown.doc, shown.contents);
+        if (quiet) {
+          view.quiet = quiet, view.section.classList.add("is-quiet"), view.section.replaceChildren(this.quietCard(view)), this.schedule(!0), this.search.refresh(), this.source.viewed ? this.updateViewed() : this.initLocalViewed(view.doc, contents2);
+          return;
+        }
+        let r = view.doc.kind === "code" ? renderCodeFile(document, shown.doc, shown.contents) : renderDocument(document, {
+          path: shown.doc.status === "removed" ? shown.doc.oldPath : shown.doc.path,
+          status: shown.doc.status,
+          ...shown.contents,
+          links: this.source.links(view.doc),
+          origin: location.origin,
+          images: this.settings.images
+        });
+        view.rendered = r, view.section.replaceChildren(this.buildArticle(shown.doc, r)), this.markUpdated(view);
+        for (let block2 of r.blocks) this.blockOf.set(block2.el, { view, block: block2 });
+        if (r.isCode && await enhanceSpecs(r, shown.doc, shown.contents), this.closed) return;
+        r.isCode && (this.applyCodeView(view), this.showMoves(view), enhanceSymbols(r, shown.doc, shown.contents).then(() => this.schedule(!0)));
+        for (let img of r.content.querySelectorAll("img")) img.addEventListener("load", () => this.schedule(!0), { once: !0 });
+        this.attachThreads(view), filterDocument(r, this.settings.scope === "changed");
+        let drawDiagrams = () => renderDiagrams(r.diagrams, this.root.classList.contains("is-dark"), () => this.schedule(!0), this.palette());
+        drawDiagrams(), highlightCode(r.content).then(() => {
+          if (r.isCode && !this.closed && renderSourceComments(r, {
+            path: shown.doc.status === "removed" ? shown.doc.oldPath : shown.doc.path,
+            status: shown.doc.status,
+            ...shown.contents,
             links: this.source.links(view.doc),
             origin: location.origin,
             images: this.settings.images
-          });
-          view.rendered = r, view.section.replaceChildren(this.buildArticle(view.doc, r));
-          for (let block2 of r.blocks) this.blockOf.set(block2.el, { view, block: block2 });
-          if (r.isCode && await enhanceSpecs(r, view.doc, contents2), this.closed) return;
-          r.isCode && (this.applyCodeView(view), this.showMoves(view), enhanceSymbols(r, view.doc, contents2).then(() => this.schedule(!0)));
-          for (let img of r.content.querySelectorAll("img")) img.addEventListener("load", () => this.schedule(!0), { once: !0 });
-          this.attachThreads(view), filterDocument(r, this.settings.scope === "changed");
-          let drawDiagrams = () => renderDiagrams(r.diagrams, this.root.classList.contains("is-dark"), () => this.schedule(!0), this.palette());
-          drawDiagrams(), highlightCode(r.content).then(() => {
-            if (r.isCode && !this.closed && renderSourceComments(r, {
-              path: view.doc.status === "removed" ? view.doc.oldPath : view.doc.path,
-              status: view.doc.status,
-              ...contents2,
-              links: this.source.links(view.doc),
-              origin: location.origin,
-              images: this.settings.images
-            })) {
-              for (let block2 of r.blocks) this.blockOf.set(block2.el, { view, block: block2 });
-              delete r.content.dataset.mrView, this.applyCodeView(view), drawDiagrams(), highlightCode(r.content).then(() => this.schedule(!0));
-            }
-            this.schedule(!0);
-          }), index === this.index && (this.rendered = r, this.buildToc(r)), this.schedule(!0), this.search.refresh(), this.source.viewed ? (this.updateViewed(), this.foldIfViewed(view)) : await this.initLocalViewed(view.doc, contents2);
-        } catch (err) {
-          if (this.closed) return;
-          let box = h("div", "mr-message");
-          box.append(h("h2", "", view.doc.path), h("p", "", err instanceof Error ? err.message : String(err)));
-          let platform = h("a", "mr-outline", "Open platform diff");
-          platform.href = this.source.diffUrl, platform.target = "_blank", platform.rel = "noopener noreferrer", box.append(platform), box.append(actionButton("Try again", "retry-doc", "mr-outline")), view.section.replaceChildren(box), view.failed = !0, this.search.refresh(), this.chapters.update(), this.schedule(!0);
-        } finally {
-          this.loading.delete(view.doc);
-        }
+          })) {
+            for (let block2 of r.blocks) this.blockOf.set(block2.el, { view, block: block2 });
+            delete r.content.dataset.mrView, this.applyCodeView(view), drawDiagrams(), highlightCode(r.content).then(() => this.schedule(!0));
+          }
+          this.schedule(!0);
+        }), index === this.index && (this.rendered = r, this.buildToc(r)), this.schedule(!0), this.search.refresh(), this.source.viewed ? (this.updateViewed(), this.foldIfViewed(view)) : await this.initLocalViewed(view.doc, contents2);
+      } catch (err) {
+        if (this.closed) return;
+        let box = h("div", "mr-message");
+        box.append(h("h2", "", view.doc.path), h("p", "", err instanceof Error ? err.message : String(err)));
+        let platform = h("a", "mr-outline", "Open platform diff");
+        platform.href = this.source.diffUrl, platform.target = "_blank", platform.rel = "noopener noreferrer", box.append(platform), box.append(actionButton("Try again", "retry-doc", "mr-outline")), view.section.replaceChildren(box), view.failed = !0, this.search.refresh(), this.chapters.update(), this.schedule(!0);
+      } finally {
+        this.loading.delete(view.doc), !this.closed && since !== this.sinceActive() && this.loadView(this.views.indexOf(view));
       }
     }
     /** Code moved within or between source files reads as moved, not as removed here and added there. */
@@ -25115,7 +25296,11 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
         let index = this.views.indexOf(view), link3 = h("button", "mr-file-link");
         link3.type = "button", link3.dataset.act = "doc", link3.dataset.doc = String(index), link3.title = view.doc.path, index === this.index && (link3.classList.add("is-current"), link3.setAttribute("aria-current", "true")), (view.quiet && !view.open || view.folded) && link3.classList.add("is-folded");
         let dot = h("span", `mr-status-dot is-${view.doc.status}`);
-        if (dot.setAttribute("aria-hidden", "true"), link3.append(dot, h("span", "mr-file-link-name", baseName(view.doc.path))), this.viewed.get(view.doc).value) {
+        if (dot.setAttribute("aria-hidden", "true"), link3.append(dot, h("span", "mr-file-link-name", baseName(view.doc.path))), this.updatedSince(view.doc)) {
+          let mark3 = h("span", "mr-file-updated");
+          mark3.setAttribute("role", "img"), mark3.setAttribute("aria-label", "Updated since you last looked"), link3.append(mark3);
+        }
+        if (this.viewed.get(view.doc).value) {
           let check = h("span", "mr-file-check");
           check.replaceChildren(glyph(icons.check)), check.setAttribute("aria-label", "Viewed"), link3.append(check);
         }
@@ -25134,10 +25319,10 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
       toc.replaceChildren();
       let files = this.settings.layout === "files" ? this.fileList() : null;
       if (files && toc.append(files), !r || r.isCode) return;
-      let all2 = [...r.content.querySelectorAll("h1, h2, h3")].filter((el) => el !== r.lead && !el.closest(".mr-ghost") && !el.hidden);
-      if (all2.length < 3) return;
-      let top = Math.min(...all2.map((el) => Number(el.tagName[1]))), list2 = files?.querySelector(".mr-file-headings");
-      list2 || (list2 = h("div", "mr-toc-list"), list2.append(h("p", "mr-toc-title", "Contents")), toc.append(list2)), all2.forEach((el, i) => {
+      let all3 = [...r.content.querySelectorAll("h1, h2, h3")].filter((el) => el !== r.lead && !el.closest(".mr-ghost") && !el.hidden);
+      if (all3.length < 3) return;
+      let top = Math.min(...all3.map((el) => Number(el.tagName[1]))), list2 = files?.querySelector(".mr-file-headings");
+      list2 || (list2 = h("div", "mr-toc-list"), list2.append(h("p", "mr-toc-title", "Contents")), toc.append(list2)), all3.forEach((el, i) => {
         let link3 = h("a", `lvl-${Math.min(3, Number(el.tagName[1]) - top + 1)}`);
         link3.href = "#", link3.dataset.act = "heading", link3.dataset.i = String(i), link3.append(h("span", "", textWithoutDeletions(el))), list2.append(link3), this.headings.push({ el, link: link3 });
       });
@@ -25151,8 +25336,129 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
     }
   };
 
+  // src/ui/review/reader-since.ts
+  var ReaderSince = class extends ReaderDocuments {
+    /** Remember this open, then ask the platform what changed since the earlier head the reviewer would expect. */
+    async initRevisions() {
+      let { diffUrl, history: history2 } = this.source;
+      await rememberSeen(diffUrl, history2.head);
+      let stored = await loadRevisions(diffUrl);
+      if (this.closed) return;
+      let state = {
+        head: history2.head,
+        stored,
+        baseline: baselineFor(stored, history2.head),
+        outcome: null,
+        active: !1,
+        bar: h("section", "mr-since"),
+        foot: h("section", "mr-reviewed")
+      };
+      state.bar.setAttribute("aria-label", "Changes since you last looked"), state.foot.setAttribute("aria-label", "Mark this version as reviewed"), this.revisions = state, this.el.doc.before(state.bar), this.el.doc.after(state.foot), this.drawRevisions(), await this.compare();
+    }
+    /** Ask the platform how the review stands against the baseline, and show what it says. */
+    async compare() {
+      let state = this.revisions, baseline = state.baseline;
+      if (state.outcome = null, baseline)
+        try {
+          state.outcome = await this.source.history.since(baseline.commit);
+        } catch (err) {
+          state.outcome = { state: "failed", message: problem(err) };
+        }
+      this.closed || state.baseline !== baseline || (this.drawRevisions(), this.refreshUpdated());
+    }
+    /** The file that changed since the baseline, if this document did. */
+    changedSince(doc) {
+      let outcome = this.revisions?.outcome;
+      return outcome?.state === "changes" ? outcome.files.find((file) => file.path === doc.path) : void 0;
+    }
+    sinceActive() {
+      return !!this.revisions?.active;
+    }
+    /** While only what changed is shown, the documents that did not change are out of the way. */
+    leftOut(doc) {
+      return this.sinceActive() && !this.changedSince(doc);
+    }
+    /** The short id of the head the document changed since, or null. */
+    updatedSince(doc) {
+      let baseline = this.revisions?.baseline;
+      return baseline && !this.sinceActive() && this.changedSince(doc) ? shortCommit(baseline.commit) : null;
+    }
+    /** The document as the reader draws it: the review's own, or against its earlier version while only what changed since is shown. */
+    async shown(view, contents2) {
+      let outcome = this.revisions?.outcome, file = this.changedSince(view.doc);
+      if (!this.sinceActive() || outcome?.state !== "changes" || !file) return { doc: view.doc, contents: contents2 };
+      let read = this.earlier.get(view.doc);
+      return read || (read = outcome.read(view.doc), this.earlier.set(view.doc, read), read.catch(() => this.earlier.delete(view.doc))), { doc: { ...view.doc, oldPath: file.oldPath, status: file.status }, contents: { base: await read, head: contents2.head } };
+    }
+    /** Show only what changed since the baseline, or the whole review again. Returns whether it did: unsent comments stay where they are written. */
+    setSinceMode(active) {
+      let state = this.revisions;
+      if (state.active === active) return !0;
+      if (this.drafts.length)
+        return this.toast("Post or discard your new comments first, then change the view."), !1;
+      state.active = active, this.closeMenus(), this.moves = new MoveFinder();
+      for (let view of this.views)
+        view.section.hidden = this.leftOut(view.doc) || view.doc.kind === "code" && !this.settings.codeFiles, view.rendered = null, view.quiet = void 0, view.folded = !1, view.failed = !1, view.section.classList.remove("is-quiet", "is-folded"), view.section.replaceChildren(this.skeleton());
+      return this.drawRevisions(), this.refreshUpdated(), this.root.scrollTo({ top: 0 }), this.loadAll(0), !0;
+    }
+    toggleSince() {
+      let state = this.revisions;
+      state?.outcome?.state !== "changes" || !state.active && !this.changedCount() || this.setSinceMode(!state.active);
+    }
+    async markReviewedNow() {
+      let state = this.revisions;
+      this.setSinceMode(!1) && (await markReviewed(this.source.diffUrl, state.head), state.stored = await loadRevisions(this.source.diffUrl), state.baseline = baselineFor(state.stored, state.head), state.outcome = null, this.drawRevisions(), this.refreshUpdated(), this.toast("Marked as reviewed. Next time, Galley shows what changes after this version."));
+    }
+    async unmarkReviewedNow() {
+      let state = this.revisions;
+      await unmarkReviewed(this.source.diffUrl), state.stored = await loadRevisions(this.source.diffUrl), state.baseline = baselineFor(state.stored, state.head), state.outcome = null, this.drawRevisions(), await this.compare();
+    }
+    /** The documents and code files the reader shows, which changed since the baseline, and how many it shows. */
+    changedCount() {
+      return this.shownViews().filter((view) => this.changedSince(view.doc)).length;
+    }
+    shownViews() {
+      return this.views.filter((view) => view.doc.kind !== "code" || this.settings.codeFiles);
+    }
+    /** The chip on a file's byline that says it changed since the baseline, drawn when the platform has answered and the file has loaded. */
+    markUpdated(view) {
+      let meta = view.section.querySelector(".mr-file-meta");
+      meta?.querySelector(".is-updated")?.remove();
+      let since = this.updatedSince(view.doc);
+      meta && since && meta.append(chip("updated", `Updated since ${since}`));
+    }
+    /** Every file's chip and the files menu, after the platform's answer or a change of view. */
+    refreshUpdated() {
+      for (let view of this.views) this.markUpdated(view);
+      this.updateFileButton();
+    }
+    /** The bar above the documents and the mark below them, from what the reader knows now. */
+    drawRevisions() {
+      let state = this.revisions, { baseline, outcome } = state, since = baseline?.kind === "reviewed" ? "you marked this reviewed" : "you last opened this", commit = baseline ? shortCommit(baseline.commit) : "", changed = this.changedCount(), total = this.shownViews().length, title = "", meta = "", actions = [];
+      if (outcome?.state === "changes" ? (state.active ? (title = `Showing what changed since ${commit}`, meta = `${changed} of ${total} files, ${commit} → ${shortCommit(state.head)}. To comment on removed text, show the whole review.`) : (title = `New changes since ${since}`, meta = changed ? `${changed} of ${total} files changed since ${commit}.` : outcome.files.length ? "None of the files Galley shows changed. Other files did." : `The files are the same as at ${commit}.`), (changed || state.active) && actions.push(this.sinceToggle(state.active))) : outcome?.state === "rewritten" ? (title = `The branch was rewritten since ${since}`, meta = "Galley cannot tell which parts are new, so the whole review is shown.") : outcome?.state === "unavailable" ? (title = "The earlier version is no longer available", meta = `It was at ${commit}. The whole review is shown.`) : outcome?.state === "incomplete" ? (title = "Too many files changed to compare", meta = `Galley cannot list every file that changed since ${commit}, so the whole review is shown.`) : outcome?.state === "failed" && (title = "Could not compare with the earlier version", meta = outcome.message, actions.push(actionButton("Try again", "retry-since", "mr-outline"))), state.bar.hidden = !title, state.bar.classList.toggle("is-active", state.active), title) {
+        let text5 = h("div", "mr-since-text");
+        text5.append(h("p", "mr-since-title", title), h("p", "mr-since-meta", meta)), actions.push(actionButton("Mark as reviewed", "mark-reviewed", "mr-outline"));
+        let buttons = h("div", "mr-since-actions");
+        buttons.append(...actions), state.bar.replaceChildren(text5, buttons);
+      } else state.bar.replaceChildren();
+      let marked = state.stored.reviewed === state.head, note = h(
+        "p",
+        "mr-reviewed-text",
+        marked ? `Marked as reviewed at ${shortCommit(state.head)}.` : "Mark this version as reviewed to see what changes after it."
+      ), caption = h("p", "mr-reviewed-note", "Saved on this device only. It does not approve the review or mark files Viewed."), words3 = h("div", "mr-reviewed-words");
+      words3.append(note, caption), state.foot.replaceChildren(
+        words3,
+        marked ? actionButton("Unmark", "unmark-reviewed", "mr-outline") : actionButton("Mark as reviewed", "mark-reviewed", "mr-outline")
+      );
+    }
+    sinceToggle(active) {
+      let toggle = actionButton(active ? "Show the whole review" : "Show only what changed", "since", active ? "mr-outline" : "mr-primary");
+      return toggle.title = `${toggle.textContent} (U)`, toggle;
+    }
+  };
+
   // src/ui/review/reader-chrome.ts
-  var ReaderChrome = class extends ReaderDocuments {
+  var ReaderChrome = class extends ReaderSince {
     // ---------------------------------------------------------------- chrome
     updateFileButton() {
       let visible = this.views.filter((view) => !view.section.hidden), docs2 = visible.map((view) => view.doc);
@@ -25180,7 +25486,7 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
         let name3 = h("span", "mr-menu-name"), dir = d.path.slice(0, d.path.length - baseName(d.path).length);
         name3.append(h("span", "mr-path-name", baseName(d.path))), dir && name3.append(h("span", "mr-path-dir", dir)), item.append(dot, name3);
         let { quiet, open: open2, folded: folded2 } = this.views[i];
-        if ((quiet && !open2 || folded2) && item.append(h("span", "mr-menu-quiet", quiet?.label ?? "Folded")), item.append(h("span", "mr-menu-status", STATUS_LABEL[d.status])), this.viewed.get(d)?.value) {
+        if ((quiet && !open2 || folded2) && item.append(h("span", "mr-menu-quiet", quiet?.label ?? "Folded")), this.updatedSince(d) && item.append(h("span", "mr-menu-quiet is-updated", "Updated")), item.append(h("span", "mr-menu-status", STATUS_LABEL[d.status])), this.viewed.get(d)?.value) {
           let check = h("span", "mr-file-check");
           check.replaceChildren(glyph(icons.check)), check.setAttribute("aria-label", "Viewed"), item.append(check);
         }
@@ -25346,8 +25652,8 @@ ${state.error ?? this.source.viewed?.label ?? "Saved in this browser; resets whe
       codeToggle.setAttribute("aria-checked", String(s.codeFiles)), codeToggle.title = `${this.source?.codeDocs?.length ?? 0} supported code files`;
       let loadCode = !1;
       for (let view of this.views)
-        view.doc.kind === "code" && (view.section.hidden = !s.codeFiles, loadCode ||= s.codeFiles && !view.rendered);
-      this.source && (this.updateFileButton(), this.buildToc(this.rendered)), loadCode && this.loadAll(0);
+        view.doc.kind === "code" && (view.section.hidden = !s.codeFiles || this.leftOut(view.doc), loadCode ||= !view.section.hidden && !view.rendered);
+      this.source && (this.updateFileButton(), this.buildToc(this.rendered)), this.revisions && this.drawRevisions(), loadCode && this.loadAll(0);
       for (let b of this.shadow.querySelectorAll("[data-scope]")) b.setAttribute("aria-pressed", String(b.dataset.scope === s.scope));
       r.classList.toggle("mode-changes", s.mode === "changes"), r.classList.toggle("mode-clean", s.mode === "clean"), r.dataset.font = s.font, r.dataset.theme = s.theme, r.dataset.layout = s.layout, r.dataset.density = s.density, r.classList.toggle("is-dark", s.appearance === "dark" || s.appearance === "auto" && this.dark.matches), this.applyFit(), applyReadingControls(this.shadow, s);
       for (let b of this.shadow.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String(b.dataset.mode === s.mode));
@@ -25763,6 +26069,9 @@ ${state.error ?? this.source.viewed?.label ?? "Saved in this browser; resets whe
             button3 && !button3.hidden && this.views.some((view) => !view.section.hidden) && this.toggleMenu(this.el.files, button3);
             break;
           }
+          case "u":
+            this.toggleSince();
+            break;
           case "a":
             this.update({ scope: this.settings.scope === "changed" ? "all" : "changed" }), this.toast(this.settings.scope === "all" ? "Whole files" : "Changed parts");
             break;
@@ -25933,6 +26242,18 @@ ${state.error ?? this.source.viewed?.label ?? "Saved in this browser; resets whe
             return;
           case "fold":
             this.update({ fold: !this.settings.fold });
+            return;
+          case "since":
+            this.toggleSince();
+            return;
+          case "mark-reviewed":
+            this.markReviewedNow();
+            return;
+          case "unmark-reviewed":
+            this.unmarkReviewedNow();
+            return;
+          case "retry-since":
+            this.compare();
             return;
           case "resume":
             this.continueReading();
@@ -26152,7 +26473,10 @@ ${state.error ?? this.source.viewed?.label ?? "Saved in this browser; resets whe
     }
     /** Open an editor for a new comment beside its text. Choosing the same text again returns to it. */
     startComment(target, elements, range) {
-      this.hideChip(), this.el.toast.hidden = !0;
+      if (this.hideChip(), this.el.toast.hidden = !0, target.side === "base" && this.sinceActive()) {
+        this.toast("That text is from an earlier version. Show the whole review to comment on it.");
+        return;
+      }
       let view = this.views.find((v) => v.doc === target.doc), anchor = elements.at(-1), existing = this.drafts.find((draft2) => sameTarget(draft2.target, target));
       if (existing) {
         this.focusEditor(existing);
@@ -26378,7 +26702,7 @@ ${state.error ?? this.source.viewed?.label ?? "Saved in this browser; resets whe
       let fileLevel = [];
       for (let thread of this.threads) {
         if (thread.doc !== view.doc) continue;
-        let card = this.threadCard(thread), line = thread.line, block2 = line === null ? void 0 : blockAt(r, thread.side, line);
+        let card = this.threadCard(thread), line = thread.line, block2 = line === null || thread.side === "base" && this.sinceActive() ? void 0 : blockAt(r, thread.side, line);
         if (!block2) {
           fileLevel.push(card);
           continue;
@@ -28273,8 +28597,8 @@ ${state.error ?? this.source.viewed?.label ?? "Saved in this browser; resets whe
         list2.append(group);
       }
       if (total > RESULT_LIMIT) {
-        let all2 = this.resultOption();
-        this.results.push(LIST_RESULTS), all2.classList.add("mr-atlas-result-all"), all2.textContent = `See all ${total} in List`, list2.append(all2);
+        let all3 = this.resultOption();
+        this.results.push(LIST_RESULTS), all3.classList.add("mr-atlas-result-all"), all3.textContent = `See all ${total} in List`, list2.append(all3);
       }
       if (empty.textContent = query && !total ? `No document matches “${query}”.` : "", !this.results.length && !empty.textContent) {
         this.closeResults();
@@ -28373,8 +28697,8 @@ ${state.error ?? this.source.viewed?.label ?? "Saved in this browser; resets whe
           for (let at of connection.proof.keys()) at < 2 && why.append(this.proofItem(connection, at));
           let count2 = connection.proof.length + connection.hiddenProof;
           if (count2 > 2) {
-            let all2 = button(`See all ${count2} source links`, "connection", "mr-btn mr-outline");
-            all2.dataset.id = connection.id, why.append(all2);
+            let all3 = button(`See all ${count2} source links`, "connection", "mr-btn mr-outline");
+            all3.dataset.id = connection.id, why.append(all3);
           }
         }
         body.append(why);
@@ -28659,6 +28983,20 @@ ${fixture === "dense" ? "[Next](000.md)" : ""}`
     }
   };
 
+  // src/platforms/since.ts
+  function sinceChanges(commit, files, readAt) {
+    let byPath = new Map(files.map((file) => [file.path, file]));
+    return {
+      state: "changes",
+      commit,
+      files,
+      read(doc) {
+        let file = byPath.get(doc.path);
+        return file?.status === "added" ? Promise.resolve("") : readAt(file?.oldPath ?? doc.path);
+      }
+    };
+  }
+
   // demo/main.ts
   var params = new URLSearchParams(location.search), docs = [
     { path: "docs/rfcs/0042-reading-first-reviews.md", oldPath: "docs/rfcs/0042-reading-first-reviews.md", status: "modified" },
@@ -28673,7 +29011,7 @@ ${fixture === "dense" ? "[Next](000.md)" : ""}`
     { path: "package-lock.json", oldPath: "package-lock.json", status: "modified", kind: "code" },
     { path: "src/legacy/format.ts", oldPath: "src/legacy/format.ts", status: "modified", kind: "code" },
     { path: "dist/limits.min.js", oldPath: "dist/limits.min.js", status: "modified", kind: "code" }
-  ], asText = /* @__PURE__ */ new Set([spec, notes, ...largeCode]);
+  ], asText = /* @__PURE__ */ new Set([spec, notes, ...largeCode]), HEADS = { earlier: "a".repeat(40), now: "b".repeat(40) };
   async function text4(url) {
     let res = await fetch(url);
     if (!res.ok) throw new Error(`${res.status} ${url}`);
@@ -28710,6 +29048,17 @@ ${fixture === "dense" ? "[Next](000.md)" : ""}`
     codeDocs: params.has("chapters") ? [...codeDocs, ...largeCode, spec] : params.has("large") ? largeCode : params.has("spec") ? [spec] : params.has("comments") ? [notes] : codeDocs,
     otherFiles: params.has("chapters") ? [{ path: "assets/review.png", oldPath: "assets/review.png", status: "added" }] : [],
     load: contents,
+    history: params.has("updated") ? {
+      head: HEADS.now,
+      // Since then the RFC was edited and the ADR was added; the README did not change.
+      async since(commit) {
+        let files = [
+          { path: docs[0].path, oldPath: docs[0].path, status: "modified" },
+          { path: docs[2].path, oldPath: docs[2].path, status: "added" }
+        ];
+        return sinceChanges(commit, files, (path) => text4(`samples/earlier/${path}`));
+      }
+    } : void 0,
     async prepareComment(target) {
       return {
         kind: "inline",
@@ -28903,9 +29252,11 @@ ${fixture === "dense" ? "[Next](000.md)" : ""}`
       openRepository(repository);
       return;
     }
-    let show = () => openReader(source, { start: Number(params.get("doc") ?? 0) });
+    let show = async () => {
+      params.has("updated") && (await rememberSeen(source.diffUrl, HEADS.earlier), await unmarkReviewed(source.diffUrl)), openReader(source, { start: Number(params.get("doc") ?? 0) });
+    };
     params.has("spec") || params.has("comments") ? loadSettings().then(async (settings) => {
-      await saveSettings({ ...settings, codeFiles: !0 }), show();
+      await saveSettings({ ...settings, codeFiles: !0 }), await show();
     }) : show();
   };
   new Launcher().show("demo", params.has("repo") || params.has("atlas") ? null : source.docs.length || source.codeDocs.length, open);
