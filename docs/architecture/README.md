@@ -151,8 +151,8 @@ A failure keeps the draft; writes are never retried ([ADR 0008](../adr/0008-comm
 | `src/content/` | Page detection, launcher, single-page navigation, token-change signal | `main.ts` | Page (jsdom in tests) |
 | `src/platforms/` | GitHub and GitLab adapters behind `ReviewSource` and `RepositorySource`; detection of reviews and repository pages; HTTP with retries; comments and threads; Viewed sync; tokens, enabled sites and the storage of remembered outlines | `types.ts`, `index.ts`, `detect.ts`, `github.ts`, `github-api.ts`, `github-read.ts`, `github-repo.ts`, `github-queries.ts`, `github-viewed.ts`, `gitlab.ts`, `gitlab-repo.ts`, `comments.ts`, `http.ts`, `tokens.ts`, `sites.ts`, `outline-store.ts` | Node in tests |
 | `src/core/` | Pure logic, no DOM: Markdown units, block and word diffs, limits, DOM highlighting of ops, patch reversal, paths and links, reading order, folded-file rules, chapters and session project context, review search matching; repository listing budgets, the document index, architecture and decision views, notes and their export | `markdown.ts`, `blockdiff.ts`, `worddiff.ts`, `limits.ts`, `highlight.ts`, `patch.ts`, `paths.ts`, `order.ts`, `quiet.ts`, `chapters.ts`, `review-context.ts`, `search.ts`, `discovery.ts`, `docindex.ts`, `blob-cache.ts`, `architecture.ts`, `notes.ts` | Node in tests |
-| `src/ui/review/` | Review shell, chapters, review search, moved lines, Viewed and reading positions | `reader.ts`, `chapters.ts`, `search.ts`, `moves.ts`, `viewed.ts`, `positions.ts` | jsdom in tests |
-| `src/ui/library/` | Project library shell, map and notes views, saved notes, configuration client | `repo-reader.ts`, `repo-views.ts`, `reading-sequence.ts`, `repo-styles.ts`, `styles/`, `project-store.ts`, `outline-cache.ts`, `configs.ts` | jsdom in tests |
+| `src/ui/review/` | Review shell (a chain of layers: `reader-base.ts` up to `reader.ts`), chapters, review search, moved lines, Viewed and reading positions | `reader.ts`, `reader-*.ts`, `chapters.ts`, `search.ts`, `moves.ts`, `viewed.ts`, `positions.ts` | jsdom in tests |
+| `src/ui/library/` | Project library shell and map (each a chain of layers), notes views, saved notes, configuration client | `repo-reader.ts`, `repo-reader-*.ts`, `map-view.ts`, `map-view-*.ts`, `repo-views.ts`, `reading-sequence.ts`, `repo-styles.ts`, `styles/`, `project-store.ts`, `outline-cache.ts`, `configs.ts` | jsdom in tests |
 | `src/ui/rendering/` | Sanitised Markdown, code, diagrams, images, source comments and reading behavior | `render.ts`, `reading.ts`, `code*.ts`, `diagrams.ts`, `image.ts`, `specs.ts`, `symbols.ts`, `source-comments.ts` | jsdom in tests |
 | `src/ui/sandbox/` | Opaque frame transport and bundled engines; isolated image fallback | `sandbox.ts`, `sandbox-frame.ts`, `*-frame.ts`, `*-frame.html`, `elk-shim.ts` | jsdom and Chrome |
 | `src/ui/components/` | Shared DOM controls, the side sheet and its stack, the slide that goes with it, layout picker, chapter context and attachment form, settings sheet, icons, fonts and common reader styles | `dom.ts`, `sheet.ts`, `motion.ts`, `layout-controls.ts`, `chapter-context.ts`, `chapter-attachment.ts`, `settings-sheet.ts`, `icons.ts`, `fonts.ts`, `fonts/`, `reader-styles.ts`, `styles/` | jsdom in tests |
@@ -193,6 +193,19 @@ The interface folders may import from each other in one direction only:
 | `ui/review` | `core`, `platforms`, `ui/components`, `ui/library`, `ui/preferences`, `ui/rendering` |
 
 Biome adds three more: no import cycles, kebab-case file names, and no barrel files. Run `npm run structure` to check the rest on its own.
+
+### How the large classes are laid out
+
+The review reader, the library reader and the Documents map are each one class, spread across files as a chain of abstract layers:
+
+- `<name>-base.ts` holds every field and the constructor, so the order in which a reader is built does not depend on how the files are cut.
+- Each layer above it (`reader-documents.ts`, `reader-chrome.ts`, `reader-search.ts` and so on) adds the methods for one responsibility and extends the layer below.
+- The file that carries the class's name (`reader.ts`, `repo-reader.ts`, `map-view.ts`) is the top of the chain and the module other code imports. It also holds the entry function, such as `openReader` or `openRepository`.
+- Types, constants and helpers that more than one layer uses are in `<name>-shared.ts`.
+- When a lower layer calls a method that lives higher up, the base declares it `abstract`, so the compiler checks that it exists.
+- Members are `protected` instead of `private` so the layers can reach each other. Nothing outside the chain should.
+
+To add behaviour, put the method in the layer for its responsibility. Start a new layer when none fits and a file would pass the size limit.
 
 ## The `ReviewSource` contract
 

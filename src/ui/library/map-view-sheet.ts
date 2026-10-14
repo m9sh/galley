@@ -4,6 +4,7 @@ import { button, chip, h } from '../components/dom.ts';
 import { CONNECTION_PAGE, LIST_PAGE, SHAPES, type Tab, ZOOM, act, cardName, iconAct, lineIcon, plural, previewable, typeBadge } from './map-view-shared.ts';
 import { DocumentMapDrawing } from './map-view-drawing.ts';
 
+/** The List, the details sheet and its evidence, and the camera. */
 export abstract class DocumentMapSheet extends DocumentMapDrawing {
   /** The same places as rows, by folder: everything the map can show, without geometry. */
   protected drawList(): void {

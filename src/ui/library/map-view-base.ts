@@ -13,6 +13,7 @@ import {
   lineIcon,
 } from './map-view-shared.ts';
 
+/** The Documents map's state: every field, and the constructor. The layers above it add drawing, the list and the details sheet; a method of a higher layer that this one calls is declared abstract at the end. */
 export abstract class DocumentMapBase {
   /** Map or List: the library places it beside its own heading. */
   readonly tools = h('div', 'mr-seg mr-pm-choices');

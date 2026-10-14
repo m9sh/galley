@@ -5,6 +5,7 @@ import { nextTab, PaletteCarousel, selectTab } from '../src/ui/components/settin
 import { TEXT_SIZES, type Settings } from '../src/ui/preferences/settings.ts';
 import { type Lane, SETTINGS_TABS, SHEET_TABS, type SheetTab } from './project-map-shared.ts';
 
+/** The prototype's state: every field, and the constructor. The layers above it add drawing, the list and the details; a method of a higher layer that this one calls is declared abstract at the end. */
 export abstract class PrototypeBase {
   protected readonly layout = new MapPlacement();
   protected readonly q = <T extends HTMLElement = HTMLElement>(selector: string) => this.root.querySelector<T>(selector)!;

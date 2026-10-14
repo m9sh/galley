@@ -6,6 +6,7 @@ import { renderDocument } from '../src/ui/rendering/render.ts';
 import { SHAPES, SHEET_TABS, type SheetTab, cardName, iconButton, lineIcon, placeBadge } from './project-map-shared.ts';
 import { PrototypeList } from './project-map-list.ts';
 
+/** The details sheet: the document preview, its links and evidence, and reading a document. */
 export abstract class PrototypeDetail extends PrototypeList {
   protected proofItem(connection: MapConnection, at: number): HTMLElement {
     const proof = connection.proof[at];

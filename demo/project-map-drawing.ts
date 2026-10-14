@@ -5,6 +5,7 @@ import { TEXT_SIZES, type Settings } from '../src/ui/preferences/settings.ts';
 import { type Lane, PHONE_LANE, SHAPES, STACK_BELOW, cardName, lineIcon, placeBadge } from './project-map-shared.ts';
 import { PrototypeBase } from './project-map-base.ts';
 
+/** Drawing the map: settings, places, lines and selection. */
 export abstract class PrototypeDrawing extends PrototypeBase {
   protected place(id: string): MapPlace {
     return this.places.get(id)!;

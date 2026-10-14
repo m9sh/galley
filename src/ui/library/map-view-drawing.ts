@@ -3,6 +3,7 @@ import { chip, h } from '../components/dom.ts';
 import { type Box, type Curve, type Lane, PHONE_LANE, SHAPES, STACK_BELOW, SVG, type Shape, act, cardName, lineIcon, typeBadge } from './map-view-shared.ts';
 import { DocumentMapBase } from './map-view-base.ts';
 
+/** Drawing the map: places, lines and selection. */
 export abstract class DocumentMapDrawing extends DocumentMapBase {
   protected place(id: string): MapPlace {
     return this.places.get(id)!;

@@ -24,7 +24,7 @@ Node 22.12 or newer is required (22.12+, 24 or 26+); `.nvmrc` names the version 
 - a folder passes 30 source files, or a new folder has tests but no Vitest project;
 - a new file appears at the repository root.
 
-When you split a large file, run `npm run structure -- --update` to lower its limit. Do not raise a limit or add a layer edge to get past a failure: move the code instead. A deliberate exception is a decision, so it needs a line in `scripts/structure.mjs` and an explanation in the pull request.
+When a source file grows toward the limit, split it by responsibility: a stylesheet into ordered parts, a large reader class into another layer of its chain (see [how the large classes are laid out](docs/architecture/README.md#how-the-large-classes-are-laid-out)). When you split a file that has a limit in the baseline, run `npm run structure -- --update` to lower it. Do not raise a limit or add a layer edge to get past a failure: move the code instead. A deliberate exception is a decision, so it needs a line in `scripts/structure.mjs` and an explanation in the pull request.
 
 ## Keeping the working copy clean
 

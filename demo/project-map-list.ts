@@ -4,6 +4,7 @@ import { icons } from '../src/ui/components/icons.ts';
 import { LIST_RESULTS, RESULT_LIMIT, cardName, highlight, iconButton, matchScore, searchWords, typeIcon } from './project-map-shared.ts';
 import { PrototypeDrawing } from './project-map-drawing.ts';
 
+/** The List and the search popup. */
 export abstract class PrototypeList extends PrototypeDrawing {
   protected drawList(): void {
     const list = this.q('.mr-atlas-list');
