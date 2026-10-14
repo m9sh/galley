@@ -48,7 +48,7 @@ Below 1,280 pixels the contents rail disappears and cards sit under the paragrap
 | Surface | What the reviewer sees | Code | States and notes |
 | --- | --- | --- | --- |
 | Progress bar | A 2-pixel line across the top | `.mr-progress` | Scales with scroll position |
-| Top bar | One row: close, wordmark, current file, change navigation, chapters, Viewed, settings | `.mr-topbar` (`.mr-tb-left`, `.mr-tb-center`, `.mr-tb-right`) | Sticky; translucent with backdrop blur; optional **top glow** (`no-top-glow` turns it off) |
+| Top bar | One row: close, wordmark, current file, change navigation, chapters, Viewed, settings | `.mr-topbar` (`.mr-tb-left`, `.mr-tb-center`, `.mr-tb-right`) | Sticky; clear at the top of the page, translucent with backdrop blur once the page scrolls under it (`is-scrolled`); optional **top glow** (`no-top-glow` turns it off), each colour faded in its own gradient so it stays smooth |
 | Close | **×** "Close reader (Esc)" | `[data-act="close"]` | Kept open while a comment is unsent |
 | Current file | Status dot, file name, "2 of 5", chevron | `.mr-file-btn` → `updateFileButton()` | `aria-haspopup="menu"`, `aria-expanded`; accessible name "Browse files: edited docs/guide.md, 2 of 5"; key <kbd>F</kbd> |
 | Change navigation | **▲ Change 3 of 12 ▼** | `.mr-pill` (`[data-act="prev"]`, `[data-act="next"]`) | Label is live (`aria-live="polite"`); keys <kbd>J</kbd> <kbd>K</kbd> |
