@@ -43,6 +43,7 @@ Each is an accepted decision; breaking one needs a new ADR, not an exception.
 
 ## How work is done here
 
+- **Organisation is enforced.** `npm run lint` fails on import cycles, a folder importing from a layer above it, a file over 800 lines (the few that are over may not grow), an export no other file uses, and a new file at the repository root. The layers and limits are in [the architecture notes](docs/architecture/README.md#structure-rules). Fix the cause; do not add to the baseline to make a check pass.
 - **Match the surrounding code.** TypeScript, plain DOM, single quotes, two spaces, 160-character lines (Biome formats). Doc comments explain why, in plain sentences. Click handling goes through `data-act` and `Reader.onClick()`; settings through `update()` and `applySettings()` ([patterns](docs/design/patterns.md)).
 - **Tests sit next to the code** (`foo.ts` → `foo.test.ts`), describe behaviour a reviewer would notice, and a bug fix starts with the failing test. Browser-only behaviour goes in `e2e/`.
 - **UI changes are looked at,** not just tested: `npm run screenshots`, then the [design checklist](docs/design/README.md#review-checklist).

@@ -1,7 +1,7 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { indexDocument, OUTLINE_FORMAT, type IndexedDoc } from '../../core/docindex.ts';
 import { recallOutlines, rememberOutlines, touchOutlines } from './outline-cache.ts';
-import { forgetOutlines, OUTLINE_CHARS, OUTLINE_LIFETIME, OUTLINE_PROJECT_CHARS, outlineUse, pruneOutlines } from './outline-store.ts';
+import { forgetOutlines, OUTLINE_CHARS, OUTLINE_LIFETIME, OUTLINE_PROJECT_CHARS, outlineUse, pruneOutlines } from '../../platforms/outline-store.ts';
 import { digestText } from './project-store.ts';
 
 const DAY = 24 * 60 * 60 * 1000;

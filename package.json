@@ -24,7 +24,7 @@
     "site": "npm run build:site && node scripts/serve-site.mjs",
     "test:site": "node e2e/site.mjs",
     "test:pages": "node --test scripts/pages-*.test.mjs",
-    "test:scripts": "node --test scripts/tidy.test.mjs",
+    "test:scripts": "node --test scripts/tidy.test.mjs scripts/structure.test.mjs",
     "test:docs": "node --test scripts/docs.test.mjs",
     "docs:check": "node scripts/docs.mjs",
     "docs:index": "node scripts/docs.mjs --write",
@@ -36,7 +36,8 @@
     "test:e2e": "node scripts/build.mjs && node e2e/reader.mjs",
     "screenshots": "node scripts/screenshots.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
-    "lint": "biome lint .",
+    "lint": "biome lint . && node scripts/structure.mjs",
+    "structure": "node scripts/structure.mjs",
     "lint:fix": "biome lint --write .",
     "format": "biome format --write .",
     "format:check": "biome format .",
@@ -65,6 +66,7 @@
     "yaml": "^2.9.1"
   },
   "devDependencies": {
+    "@babel/types": "7.29.8",
     "@biomejs/biome": "2.5.15",
     "@types/chrome": "^0.3.4",
     "@types/jsdom": "^30.0.0",

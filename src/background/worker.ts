@@ -2,7 +2,7 @@
 // Content scripts ask for specific API calls; the token never enters the page's renderer.
 import { allowedRequest, fetchGitHub, FORWARDED_HEADERS, type ApiMessage, type ApiReply } from '../platforms/github-api.ts';
 import { restoreSites } from '../platforms/sites.ts';
-import { pruneOutlines } from '../ui/library/outline-store.ts';
+import { pruneOutlines } from '../platforms/outline-store.ts';
 import { OPEN_READER, READ_COMMAND } from '../platforms/page-actions.ts';
 import { getToken, migrateTokens } from '../platforms/tokens.ts';
 

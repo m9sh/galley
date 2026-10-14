@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const tokens = vi.hoisted(() => ({ getToken: vi.fn(), setToken: vi.fn(), migrateTokens: vi.fn() }));
 vi.mock('../platforms/tokens.ts', () => tokens);
 const outlines = vi.hoisted(() => ({ forgetOutlines: vi.fn() }));
-vi.mock('../ui/library/outline-store.ts', () => outlines);
+vi.mock('../platforms/outline-store.ts', () => outlines);
 const html = readFileSync('src/popup/popup.html', 'utf8');
 let saved: string | null;
 let granted: boolean;

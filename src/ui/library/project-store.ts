@@ -17,7 +17,7 @@ export interface Copy {
   thinking: Thinking;
 }
 
-export interface Stored {
+interface Stored {
   saved: Copy | null;
   draft: Copy | null;
 }

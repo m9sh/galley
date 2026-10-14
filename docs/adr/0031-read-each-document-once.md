@@ -49,7 +49,7 @@ When it is on, the map's reading of each document is kept:
 - A small directory, `galley:outlines`, holds for each project a fingerprint, when it was last used, how much it holds and the site's origin.
 - One record per project, `galley:outlines:<sha256 of the repository id>`, holds the readings. Notes use the same scheme ([ADR 0028](0028-private-project-notes.md)).
 - The content script reads and writes them itself. No message to the worker is added, and no token is involved.
-- Storage, lifetime and forgetting live in `src/ui/library/outline-store.ts`. It holds no document parsing, so the popup, the settings page and the worker use it without loading the Markdown parser. The readings are in `outline-cache.ts`.
+- Storage, lifetime and forgetting live in `src/platforms/outline-store.ts`. It holds no document parsing, so the popup, the settings page and the worker use it without loading the Markdown parser. The readings are in `outline-cache.ts`.
 
 ### How long, and how much
 
