@@ -6,13 +6,27 @@ import { pruneOutlines } from '../platforms/outline-store.ts';
 import { OPEN_READER, READ_COMMAND } from '../platforms/page-actions.ts';
 import { getToken, migrateTokens } from '../platforms/tokens.ts';
 
+/**
+ * The page a request is for. The browser keeps `sender.url` at the address the document was loaded at, so once GitHub moves to
+ * another page without loading one (a click from the pull request list to a pull request) it names a page the reader has left,
+ * and every request would be judged against that. The tab's own address follows the navigation.
+ *
+ * Both come from the browser, never from the message. The tab's address counts only for the top frame and only on the site the
+ * frame is on, so a frame cannot name a page other than its own, and the token is still looked up by the frame's own site.
+ */
+function pageOf(sender: chrome.runtime.MessageSender): URL {
+  const loaded = new URL(sender.url!);
+  const current = sender.frameId === 0 && sender.tab?.url ? new URL(sender.tab.url) : null;
+  return current?.origin === loaded.origin ? current : loaded;
+}
+
 async function handle(message: ApiMessage, sender: chrome.runtime.MessageSender): Promise<ApiReply | { has: boolean }> {
   // Only Galley's own content scripts, and the site comes from the browser, not from the message.
   if (sender.id !== chrome.runtime.id || !sender.tab || !sender.url) return { error: 'Refused.' };
-  const page = new URL(sender.url);
+  const page = pageOf(sender);
   const token = page.protocol === 'https:' ? await getToken(page.origin) : null;
   if (message.type === 'galley:has-token') return { has: Boolean(token) };
-  if (!allowedRequest(page.origin, sender.url, message.url, message.method, message.body)) return { error: 'Galley does not make this request.' };
+  if (!allowedRequest(page.origin, page.href, message.url, message.method, message.body)) return { error: 'Galley does not make this request.' };
   try {
     const res = await fetchGitHub(message.url, message.method, message.body, token, message.etag);
     const headers: Record<string, string> = {};

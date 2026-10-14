@@ -1,6 +1,7 @@
 import { detectRepository, type GitHubRepoContext } from './detect.ts';
 import { GRAPHQL_OPERATIONS } from './github-queries.ts';
 import { HttpError } from './http.ts';
+import { ReaderError } from './types.ts';
 
 /**
  * GitHub API access for content scripts. The token is attached by the background worker, so it
@@ -128,11 +129,12 @@ export async function parseResponse<T>(url: string, status: number, text: string
 
 /** Content scripts: every request goes through the background worker, which holds the token. */
 export function backgroundApi(): GitHubApi {
+  /** The worker's answer, or `undefined` when there was none: it could not be reached, or it closed the port without one. */
   const send = async (message: ApiMessage): Promise<unknown> => {
     try {
       return await chrome.runtime.sendMessage(message);
     } catch {
-      return { error: 'Galley could not reach its background worker.' };
+      return undefined;
     }
   };
   return {
@@ -148,7 +150,18 @@ export function backgroundApi(): GitHubApi {
         ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),
         ...(init.etag === undefined ? {} : { etag: init.etag }),
       })) as ApiReply | undefined;
-      if (!reply || 'error' in reply) throw new HttpError(0, url, null);
+      // A write that got no answer may still have been made, so it stays as uncertain as a lost connection is (ADR 0008).
+      // A read that got none can only be tried again, which needs a page that can reach the worker.
+      if (!reply) {
+        if (init.method === 'POST') throw new HttpError(0, url, null);
+        throw new ReaderError(
+          'Galley could not reach its background worker.',
+          'Reload this page. After the extension is updated or reloaded, pages that were open need that once.',
+        );
+      }
+      // Refused before any request was made, so nothing was sent, whichever method it was.
+      if ('error' in reply)
+        throw new ReaderError('Galley could not ask GitHub for this page.', `Reload the page and open the reader again. The worker said: ${reply.error}`);
       return parseResponse<T>(url, reply.status, reply.body, new Headers(reply.headers));
     },
   };

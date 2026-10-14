@@ -127,6 +127,44 @@ it('refuses requests the reader never makes, without contacting GitHub', async (
   expect(fetchSpy).not.toHaveBeenCalled();
 });
 
+/** A click inside GitHub moves the tab without loading a page, so the browser still reports the page the reader started on. */
+const LIST = 'https://github.com/acme/docs/pulls?q=is%3Apr';
+const NEXT = 'https://github.com/acme/docs/pull/13';
+const next = (overrides: Record<string, unknown> = {}) => sender(LIST, { frameId: 0, tab: { id: 1, url: NEXT }, ...overrides });
+
+it('judges a request against the page the tab is on now, not the one the reader was loaded on', async () => {
+  const fetchSpy = mockFetch(() => jsonResponse([]));
+  const pull = 'https://api.github.com/repos/acme/docs/pulls/13/files?per_page=100&page=1';
+  // From a list page, the browser still says the reader was loaded on the list; the tab itself is on pull request 13.
+  expect(await send(request(pull), next())).toMatchObject({ status: 200 });
+  expect(fetchSpy).toHaveBeenCalledTimes(1);
+  // It is that page that is allowed, and nothing else: not another pull request, and not what the old page would have allowed.
+  expect(await send(request(FILES), next())).toStrictEqual({ error: 'Galley does not make this request.' });
+  expect(fetchSpy).toHaveBeenCalledTimes(1);
+});
+
+it('uses the tab’s page only for the top frame and only on the site the frame is on', async () => {
+  const fetchSpy = mockFetch(() => jsonResponse([]));
+  const pull = 'https://api.github.com/repos/acme/docs/pulls/13/files?per_page=100&page=1';
+  // A frame cannot name a page other than its own, whatever the tab shows.
+  expect(await send(request(pull), next({ frameId: 3 }))).toStrictEqual({ error: 'Galley does not make this request.' });
+  // Nor can a tab address on another site stand in for the frame's: the token and the allowance stay with the frame's site.
+  await setToken('https://git.example.com', 'github_pat_other_site');
+  expect(await send(request(pull), next({ tab: { id: 1, url: 'https://git.example.com/acme/docs/pull/13' } }))).toStrictEqual({
+    error: 'Galley does not make this request.',
+  });
+  // Without a readable tab address the page it was loaded on is what counts, as before.
+  expect(await send(request(FILES), sender(PULL, { frameId: 0, tab: { id: 1 } }))).toMatchObject({ status: 200 });
+  expect(fetchSpy).toHaveBeenCalledTimes(1);
+});
+
+it('looks the token up by the frame’s own site even when the tab has moved', async () => {
+  await setToken('https://github.com', 'github_pat_secret');
+  const fetchSpy = mockFetch(() => jsonResponse([]));
+  await send(request('https://api.github.com/repos/acme/docs/pulls/13/files?per_page=100&page=1'), next());
+  expect(headersOf(fetchSpy.mock.calls[0][1]).Authorization).toBe('Bearer github_pat_secret');
+});
+
 it('sends an allowed request with the token of that site and returns only the headers the reader needs', async () => {
   await setToken('https://github.com', 'github_pat_secret');
   await setToken('https://git.example.com', 'github_pat_other_site');
