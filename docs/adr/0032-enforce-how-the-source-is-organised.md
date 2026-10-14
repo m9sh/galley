@@ -51,7 +51,8 @@ It checks what Biome cannot see across files and folders:
 - **Good:** the large files that exist today cannot grow, and their limits ratchet down as they are split.
 - **Costs:** a new top-level folder, a new root file or a deliberately large file needs a line in `scripts/structure.mjs` or the baseline. That is the point: it becomes a decision.
 - **Costs:** the unused-export check matches names, not symbols. A name that is also used elsewhere for something else hides an unused export. It never reports a used one.
-- **Follow-up:** the baseline lists `review/reader.ts`, `library/repo-reader.ts`, `library/map-view.ts`, `library/repo.css` and the demo's project-map files. Splitting them lowers their limits.
+- **Follow-up:** the baseline started with six files over the limit: `review/reader.ts`, `library/repo-reader.ts`, `library/map-view.ts`, `library/repo.css` and the demo's two project-map files. They are now split, the baseline is empty, and it stays as the place to record a deliberate exception.
+- **Costs:** the three large classes are split as chains of abstract layers, with their members `protected` rather than `private`. That keeps every method body and field initialisation unchanged, but it is a layout, not a decoupling. Turning layers into separate objects is a later refactor that this check does not require.
 
 ## Alternatives considered
 

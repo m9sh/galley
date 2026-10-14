@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { MapConnection, MapPlace, ProjectMapModel } from '../../core/project-map.ts';
 import { Sheet } from '../components/sheet.ts';
-import { DocumentMap, type DocumentMapHost, type DocumentMapState } from './map-view.ts';
+import { DocumentMap } from './map-view.ts';
+import type { DocumentMapHost, DocumentMapState } from './map-view-shared.ts';
 
 /**
  * The Documents map on its own, with a stand-in for the library and the library's sheet. jsdom has no layout, so

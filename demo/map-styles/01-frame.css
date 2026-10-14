@@ -1,0 +1,239 @@
+.mr-atlas,
+.mr-atlas * {
+  box-sizing: border-box;
+}
+/* Demo-only proposal: Galley's existing tokens, type settings, 760px phone breakpoint and sheet layer. */
+.mr-atlas {
+  --sheet-width: clamp(320px, 34vw, 440px);
+  font-family: var(--sans);
+}
+.mr-atlas.mr-root [hidden] {
+  display: none;
+}
+.mr-atlas button,
+.mr-atlas input,
+.mr-atlas select {
+  font-family: var(--sans);
+  font-size: calc(14px * var(--type));
+}
+.mr-atlas button {
+  cursor: pointer;
+}
+.mr-atlas button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+.mr-atlas button:focus-visible,
+.mr-atlas summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ---- top bar: where you are, finding, how to look */
+.mr-atlas-chrome {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 520px) minmax(0, 1fr);
+  border-bottom-color: var(--rule);
+}
+.mr-atlas-crumb {
+  color: var(--muted);
+}
+.mr-atlas-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  font: 500 calc(15px * var(--type)) / 1.2 var(--sans);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Reading: the way back leads the bar, and the document joins the breadcrumb. */
+.mr-atlas .mr-atlas-back {
+  gap: 2px;
+  padding: 0 12px 0 6px;
+  border: 1px solid var(--rule);
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-back .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+.mr-atlas.is-reading .mr-atlas-chrome .mr-brand,
+.mr-atlas.is-reading .mr-atlas-chrome .mr-brand + .mr-atlas-crumb {
+  display: none;
+}
+.mr-atlas-reading {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: calc(15px * var(--type));
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mr-atlas-reading::before {
+  content: "/";
+  margin-right: 8px;
+}
+.mr-atlas-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.mr-atlas-search > .mr-icon {
+  position: absolute;
+  left: 13px;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.mr-atlas-search input {
+  width: 100%;
+  height: 36px;
+  padding: 0 40px 0 38px;
+  border: 1px solid var(--control-rule);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--fg);
+}
+.mr-atlas-search input::placeholder {
+  color: var(--muted);
+}
+/* Escape clears the field; the browser's own clear button would bring a colour from outside the palette. */
+.mr-atlas-search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.mr-atlas-search input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.mr-atlas-search kbd {
+  position: absolute;
+  right: 12px;
+  min-width: 20px;
+  padding: 1px 6px;
+  border: 1px solid var(--control-rule);
+  border-radius: 5px;
+  color: var(--muted);
+  font: 500 12px / 1.3 var(--sans);
+  text-align: center;
+  pointer-events: none;
+}
+.mr-atlas-search input:focus ~ kbd,
+.mr-atlas-search input:not(:placeholder-shown) ~ kbd {
+  display: none;
+}
+/* The search popup: a short ranked list under the field, never a change of view. */
+.mr-atlas-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: min(60vh, 480px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+.mr-atlas-results-heading {
+  padding: 8px 10px 4px;
+  color: var(--muted);
+  font: 600 calc(11px * var(--type)) / 1.4 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mr-atlas-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  color: var(--fg);
+  cursor: pointer;
+}
+.mr-atlas-result:hover {
+  background: var(--soft);
+}
+.mr-atlas-result[aria-selected="true"] {
+  background: var(--selected-bg);
+}
+.mr-atlas-result > .mr-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+.mr-atlas-result-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.mr-atlas-result-title,
+.mr-atlas-result-path {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mr-atlas-result-title {
+  font-size: calc(14px * var(--type));
+}
+.mr-atlas-result-path {
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+/* A match is bold and underlined; colour stays free to mean change. */
+.mr-atlas-result mark {
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.mr-atlas-result-relation {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--control-rule);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: calc(11px * var(--type));
+  white-space: nowrap;
+}
+.mr-atlas-result.mr-atlas-result-all {
+  justify-content: center;
+  margin-top: 4px;
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-results-empty {
+  margin: 0;
+  padding: 12px 10px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-results-empty:empty {
+  display: none;
+}
+.mr-atlas-chrome .mr-atlas-choices {
+  margin-right: 6px;
+}
+.mr-atlas-choices button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-choices .mr-icon,
+.mr-atlas-choice-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.mr-atlas-choice-icon {
+  display: inline-flex;
+}

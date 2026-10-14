@@ -1,0 +1,262 @@
+/* ---- the details sheet: a fixed header and footer around one scrolling body */
+.mr-atlas-detail {
+  display: none;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: calc(14px * var(--type));
+  line-height: 1.5;
+}
+.mr-atlas-detail.is-open {
+  display: flex;
+}
+.mr-atlas-sheet-header {
+  position: relative;
+  flex: none;
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  padding: 12px 12px 14px 24px;
+  border-bottom: 1px solid var(--rule);
+}
+.mr-atlas-sheet-header > :not(.mr-atlas-sheet-top) {
+  margin-right: 12px;
+}
+.mr-atlas-sheet-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  justify-self: stretch;
+  min-height: 34px;
+}
+.mr-atlas-sheet-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.mr-atlas .mr-atlas-sheet-read {
+  gap: 6px;
+  padding: 0 12px 0 10px;
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-sheet-read .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+.mr-atlas .mr-atlas-sheet-back {
+  gap: 2px;
+  margin-left: -10px;
+  padding: 0 10px 0 4px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas .mr-atlas-sheet-back:hover {
+  color: var(--fg);
+}
+.mr-atlas-sheet-back .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+.mr-atlas-sheet-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.mr-atlas-sheet-badges .mr-atlas-here {
+  position: static;
+  transform: none;
+}
+.mr-atlas-sheet-header h2 {
+  margin: 0;
+  font: 400 calc(24px * var(--type)) / 1.2 var(--heading-font, var(--body-font));
+  overflow-wrap: anywhere;
+}
+.mr-atlas-sheet-description {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+  overflow-wrap: anywhere;
+}
+.mr-atlas-tabs {
+  display: flex;
+  gap: 2px;
+  justify-self: stretch;
+  margin-top: 10px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--code-bg);
+}
+.mr-atlas .mr-atlas-tab {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-tab[aria-selected="true"] {
+  background: var(--selected-bg);
+  color: var(--fg);
+}
+.mr-atlas-tab span {
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+.mr-atlas-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 16px 24px 24px;
+}
+.mr-atlas-sheet-body:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.mr-atlas-kicker {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(11px * var(--type));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mr-atlas-detail h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0 4px;
+  font-size: calc(14px * var(--type));
+  font-weight: 500;
+}
+.mr-atlas-detail h3 span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+.mr-atlas-path {
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.mr-atlas-why {
+  margin: 0 0 4px;
+  padding: 14px 16px 4px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--card);
+}
+.mr-atlas-detail .mr-atlas-why h3 {
+  margin: 0;
+}
+.mr-atlas-why-direction {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+.mr-atlas-why > .mr-btn {
+  margin: 0 0 12px;
+}
+.mr-atlas-proof {
+  padding: 12px 0 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.mr-atlas-why .mr-atlas-proof {
+  padding: 6px 0 12px;
+  border-bottom: 0;
+}
+.mr-atlas-proof blockquote {
+  margin: 0;
+  font: 400 calc(19px * var(--type)) / 1.35 var(--heading-font, var(--body-font));
+  overflow-wrap: anywhere;
+}
+.mr-atlas-proof .mr-atlas-path {
+  margin: 4px 0 8px;
+}
+.mr-atlas-connection {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 20px 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  background: transparent;
+  color: var(--fg);
+  text-align: left;
+}
+.mr-atlas-connection::after {
+  content: "›";
+  position: absolute;
+  top: 10px;
+  right: 2px;
+  color: var(--muted);
+}
+.mr-atlas-connection:hover strong {
+  text-decoration: underline;
+}
+.mr-atlas-connection strong {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.mr-atlas-connection small {
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+.mr-atlas-detail .mr-atlas-more {
+  margin-top: 16px;
+}
+.mr-atlas-issues,
+.mr-atlas-source {
+  margin-top: 20px;
+  color: var(--muted);
+}
+.mr-atlas-issues summary,
+.mr-atlas-source summary {
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: calc(12px * var(--type));
+}
+.mr-atlas-source {
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+.mr-atlas-preview .mr-content {
+  width: 100%;
+  margin: 0 0 24px;
+}
+.mr-atlas-preview .mr-unit {
+  max-width: 100%;
+}
+.mr-atlas-preview .mr-block {
+  margin-top: var(--block-gap);
+}
+.mr-atlas-preview .mr-content h1 {
+  font-size: 1.5em;
+}
+/* With the title in the sheet's header, the document starts at its first section. */
+.mr-atlas-preview .mr-content > :first-child,
+.mr-atlas-preview .mr-content > [hidden]:first-child + * {
+  margin-top: 0;
+}
+.mr-atlas-preview .mr-content h2 {
+  margin-top: var(--heading-gap, 1.95em);
+  font-size: 1.25em;
+}
+.mr-atlas-preview .mr-content h3 {
+  display: block;
+  margin-top: var(--heading-gap, 1.95em);
+  font-size: 1.1em;
+}

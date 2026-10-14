@@ -1,0 +1,273 @@
+/* ------------------------------------------------------------------ export */
+
+/* Export is a sheet like the settings: the preview is what leaves, word for word. */
+.mr-export-preview {
+  max-height: 40vh;
+  margin: 12px 0;
+  overflow: auto;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--code-bg);
+  font: 12.5px / 1.5 var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mr-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.mr-repo-export .mr-set-row .mr-btn {
+  text-decoration: none;
+}
+
+/* ------------------------------------------------------------------ enlarged diagram */
+
+.mr-repo-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  background: var(--bg);
+}
+
+.mr-repo-zoom[hidden] {
+  display: none;
+}
+
+.mr-repo-zoom img {
+  max-width: none;
+  margin: 64px 24px;
+}
+
+.mr-repo-zoom .mr-btn {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+}
+
+/* ------------------------------------------------------------------ narrow screens */
+
+@media (max-width: 960px) {
+  .mr-map-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .mr-map-center {
+    position: static;
+    order: -1;
+  }
+
+  .mr-map-col:first-child .mr-repo-edge::after,
+  .mr-map-col:last-child .mr-repo-edge::before {
+    content: none;
+  }
+}
+
+@media (max-width: 760px) {
+  /* Phones keep Back and a readable document name; view choices move into its menu. */
+  .mr-repo-commit-label,
+  .mr-repo-commit:disabled,
+  .mr-repo-history [data-act="forward"] {
+    display: none;
+  }
+
+  .mr-repo-commit {
+    width: 34px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .mr-views-pick {
+    display: none;
+  }
+  .mr-repo-menu-views {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 8px 16px;
+    gap: 6px;
+  }
+  .mr-repo-menu-views button {
+    min-height: 44px;
+    gap: 6px;
+  }
+  .mr-repo-menu-views .mr-icon {
+    display: none;
+  }
+
+  .mr-repo .mr-brand {
+    display: none;
+  }
+
+  .mr-repo-docs {
+    width: calc(100vw - 12px);
+  }
+}
+
+/* A quiet return path belongs beside the article, without crowding the top bar. */
+/* Opened over a review, the one way back leads the top bar, in place of Close and the wordmark. */
+.is-over-review .mr-brand {
+  display: none;
+}
+
+.mr-repo .mr-repo-return {
+  gap: 2px;
+  margin-right: 4px;
+  padding: 0 12px 0 6px;
+  border: 1px solid var(--rule);
+  font: 500 13px / 1 var(--sans);
+  white-space: nowrap;
+}
+
+.mr-repo .mr-repo-return:hover {
+  background: var(--soft);
+}
+
+.mr-repo-return .mr-icon,
+.mr-review-continue .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.mr-repo-return .mr-label-short {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .mr-repo-return .mr-label-long {
+    display: none;
+  }
+
+  .mr-repo-return .mr-label-short {
+    display: inline;
+  }
+}
+
+/* The review chapter the reader came from, and the way on with it: a quiet bar above the document, and the
+   same line under the title of This review. */
+.mr-review-route {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 0 0 40px;
+  padding: 4px 4px 4px 18px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted);
+  font: 400 13px / 1.4 var(--sans);
+}
+
+.mr-repo-read > .mr-review-route {
+  max-width: var(--measure);
+  margin: 0 auto 40px;
+}
+
+.mr-review-route-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mr-review-route strong {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.mr-repo .mr-review-continue {
+  gap: 2px;
+  padding: 0 8px 0 14px;
+  background: var(--fg);
+  color: var(--bg);
+  font: 500 13px / 1 var(--sans);
+}
+
+.mr-repo .mr-review-continue:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 85%, var(--bg));
+}
+
+.mr-repo .mr-review-continue:disabled {
+  background: var(--soft);
+  color: var(--muted);
+  cursor: default;
+}
+
+@media (max-width: 760px) {
+  .mr-repo .mr-repo-return,
+  .mr-repo .mr-review-continue {
+    min-height: 44px;
+  }
+
+  .mr-review-route {
+    border-radius: 16px;
+  }
+}
+
+.mr-chapter-attachment {
+  margin: 20px 0;
+  font: 400 14px / 1.4 var(--sans);
+}
+.mr-chapter-attachment summary {
+  cursor: pointer;
+  padding: 12px 0;
+  color: var(--accent);
+}
+.mr-chapter-attachment form {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  background: var(--soft);
+  border-radius: 12px;
+}
+.mr-chapter-attachment label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+}
+.mr-chapter-attachment select {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--control-rule);
+  border-radius: 6px;
+  font: inherit;
+}
+.mr-chapter-attachment .mr-btn {
+  min-height: 44px;
+  justify-self: start;
+}
+.mr-repo .mr-file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+@media (max-width: 760px) {
+  /* Compact's desktop title scale must not override the phone's comfortable heading size. */
+  .mr-root.mr-repo[data-density="compact"] :is(.mr-title, .mr-content > h1.mr-lead):not(.mr-code-title) {
+    font-size: min(38px, calc(40px * var(--type)));
+  }
+  .mr-repo .mr-byline {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .mr-repo .mr-file-meta,
+  .mr-repo .mr-file-actions {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .mr-repo .mr-repo-at {
+    flex: 1 1 100%;
+  }
+}
