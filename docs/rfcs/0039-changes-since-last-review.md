@@ -6,6 +6,7 @@ discussion: https://github.com/m9sh/galley/issues/39
 theme: Never lose the thread
 phase: Follow-up after the core experience
 progress: The file-level and incremental view are built for GitHub and GitLab, with an explicit Mark as reviewed; choosing any earlier head, chapter marks, and reconfirming private notes are open
+implemented-in: [https://github.com/m9sh/galley/pull/93]
 adrs: [19, 34]
 ---
 
