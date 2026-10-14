@@ -1,0 +1,308 @@
+/* ---------------------------------------------------------------- layouts and density (Settings, Layout)
+   A layout sets how long the lines of text run (--measure-max), the contents column, how wide the
+   comments column may be (--rail-min, --rail-max), how comments are set, and where the composition is
+   centred (--shift). The wide-screen rules above share the window out from those. Below 1280px every
+   layout reads in one column. */
+
+/* Balanced (the defaults at the top): the text centred, contents and comments in its margins. */
+
+/* Review: the conversation first. A slimmer contents column and text and a comments column as wide as
+   the text, with larger comment text. The whole composition is centred rather than the text, so the
+   comments get their room before the margins do. */
+.mr-root[data-layout="review"] {
+  --measure-max: 640px;
+  --toc-width: 150px;
+  --toc-gap: 64px;
+  --rail-min: 680px;
+  --rail-max: 680px;
+  --shift: calc((var(--rail-gap) + var(--rail-max) - var(--toc-width) - var(--toc-gap)) / 2);
+  --comment-size: calc(15px * var(--type));
+}
+
+/* Wide text: longer lines for documents full of tables, code and diagrams. */
+.mr-root[data-layout="wide"] {
+  --measure-max: 920px;
+}
+@media (min-width: 1280px) {
+  /* Code blocks in a document are as wide as their longest line (--chars, set by render.ts), up to
+     120 characters. They grow to the left, into the contents column and the margin beyond it, so the
+     comments column beside the text stays clear; the contents step aside while one passes. */
+  .mr-root:where(:not(.is-narrowed)) {
+    --code-md-width: calc(var(--code-size) * 73.2 + 52px);
+    --code-md-span: min(var(--code-md-width), calc(var(--measure) + var(--toc-width) + var(--toc-gap) + var(--left)));
+  }
+
+  :where(.mr-root:not(.is-narrowed)) .mr-content > pre {
+    width: clamp(100%, calc(var(--chars, 0) * 1ch + 2ch + 52px), var(--code-md-span));
+    margin-left: calc(100% - clamp(100%, calc(var(--chars, 0) * 1ch + 2ch + 52px), var(--code-md-span)));
+  }
+}
+
+/* Fit to screen: the balanced composition for a 1440px window, scaled by --fit (set by reader.ts). */
+.mr-root[data-layout="fit"] {
+  --measure-max: calc(680px * var(--fit));
+  --toc-width: calc(176px * var(--fit));
+  --toc-gap: calc(80px * var(--fit));
+  --rail-gap: calc(56px * var(--fit));
+  --rail-min: calc(360px * var(--fit));
+  --rail-max: calc(440px * var(--fit));
+}
+@media (min-width: 1280px) {
+  /* Focus: the text alone and centred; reader.ts keeps comments below the text they discuss. */
+  .mr-root:where(:not(.is-narrowed))[data-layout="focus"] {
+    --toc-width: 0px;
+    --toc-gap: 0px;
+    --measure: min(720px, calc(var(--vw) - 2 * var(--edge)));
+    --text-left: calc((var(--vw) - var(--measure)) / 2);
+  }
+
+  .mr-root:where(:not(.is-narrowed))[data-layout="focus"] .mr-toc {
+    display: none;
+  }
+
+  /* Source files and code blocks still run to 120 characters, centred on the text. */
+  .mr-root:where(:not(.is-narrowed))[data-layout="focus"] {
+    --code-span: min(var(--code-width), calc(var(--vw) - 2 * var(--edge)));
+    --code-left: calc((var(--vw) - var(--code-span)) / 2);
+    --code-md-span: min(var(--code-md-width), calc(var(--vw) - 2 * var(--edge)));
+  }
+
+  .mr-root:where(:not(.is-narrowed))[data-layout="focus"] .mr-content > pre {
+    margin-left: calc((100% - clamp(100%, calc(var(--chars, 0) * 1ch + 2ch + 52px), var(--code-md-span))) / 2);
+  }
+}
+
+/* Compact: tighter lines and less space between blocks, files and comments, for long reviews and
+   smaller screens. Proportions stay the same, so it works at every text size and with every layout. */
+.mr-root[data-density="compact"] {
+  --leading: 1.46;
+  --list-leading: 1.35;
+  --block-gap: 0.9em;
+  --heading-gap: 1.35em;
+  --item-gap: 0.4em;
+}
+.mr-root[data-density="compact"] .mr-main {
+  padding-top: 56px;
+}
+@media (max-width: 760px) {
+  .mr-root[data-density="compact"] .mr-main {
+    padding-top: 32px;
+  }
+}
+.mr-root[data-density="compact"] :is(.mr-title, .mr-content > h1.mr-lead):not(.mr-code-title) {
+  font-size: calc(40px * var(--type));
+}
+.mr-root[data-density="compact"] .mr-title.mr-code-title {
+  font-size: calc(28px * var(--type));
+}
+.mr-root[data-density="compact"] .mr-byline {
+  /* biome-ignore lint/complexity/noImportantStyles: the byline's own margin is !important for the same reason */
+  margin: 20px 0 28px !important;
+  padding: 10px 0;
+}
+.mr-root[data-density="compact"] .mr-document:not([hidden]) ~ .mr-document::before {
+  margin-top: 56px;
+}
+.mr-root[data-density="compact"] .mr-content .mr-diagram {
+  margin: 22px 0;
+}
+.mr-root[data-density="compact"] .mr-toc a {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+.mr-root[data-density="compact"] .mr-code-line {
+  min-height: 20px;
+  line-height: 1.55;
+}
+.mr-root[data-density="compact"] .mr-thread {
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+.mr-root[data-density="compact"] .mr-content :is(.mr-thread, .mr-composer) {
+  margin: 8px 0 16px;
+}
+
+/* Layout choices are drawn as pages: contents (c), text with its lines (t) and comments (m). */
+.mr-layout-preview {
+  display: flex;
+  gap: 3px;
+  height: 40px;
+  margin-bottom: 8px;
+  padding: 5px;
+  border-radius: 6px;
+  background: var(--soft);
+}
+.mr-layout-preview i {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-radius: 3px;
+}
+/* Balanced: the text centred, contents and comments in its margins. */
+.mr-layout-preview .c {
+  flex: 0 0 14%;
+  margin-left: 12%;
+  background:
+    linear-gradient(var(--rule) 0 0) 2px 3px / 60% 2px no-repeat,
+    linear-gradient(var(--rule) 0 0) 2px 8px / 50% 2px no-repeat;
+}
+.mr-layout-preview .t {
+  flex: 0 0 42%;
+  padding: 3px 4px;
+  box-sizing: border-box;
+  background: var(--bg);
+}
+.mr-layout-preview .t b {
+  height: 2px;
+  border-radius: 1px;
+  background: var(--muted);
+  opacity: 0.55;
+}
+.mr-layout-preview .t b:nth-child(2n) {
+  width: 82%;
+}
+.mr-layout-preview .m {
+  flex: 1 1 auto;
+  padding: 3px;
+  box-sizing: border-box;
+}
+.mr-layout-preview .m b {
+  height: 9px;
+  border-radius: 2px;
+  background: var(--card);
+  box-shadow: 0 0 0 1px var(--rule);
+}
+[data-value="review"] .mr-layout-preview .c {
+  flex-basis: 10%;
+  margin-left: 0;
+}
+[data-value="review"] .mr-layout-preview .t {
+  flex-basis: 38%;
+}
+[data-value="review"] .mr-layout-preview .m b {
+  height: 13px;
+}
+[data-value="wide"] .mr-layout-preview .c {
+  flex-basis: 12%;
+  margin-left: 4%;
+}
+[data-value="wide"] .mr-layout-preview .t {
+  flex-basis: 56%;
+}
+[data-value="focus"] .mr-layout-preview {
+  justify-content: center;
+}
+[data-value="focus"] .mr-layout-preview :is(.c, .m) {
+  display: none;
+}
+[data-value="focus"] .mr-layout-preview .t {
+  flex-basis: 52%;
+}
+[data-value="fit"] .mr-layout-preview .t b {
+  height: 3px;
+}
+[data-value="files"] .mr-layout-preview .c {
+  flex-basis: 18%;
+  margin-left: 4%;
+  background:
+    linear-gradient(var(--muted) 0 0) 2px 3px / 70% 2px no-repeat,
+    linear-gradient(var(--rule) 0 0) 2px 8px / 60% 2px no-repeat,
+    linear-gradient(var(--rule) 0 0) 2px 13px / 66% 2px no-repeat,
+    linear-gradient(var(--rule) 0 0) 2px 18px / 50% 2px no-repeat,
+    linear-gradient(var(--rule) 0 0) 2px 23px / 62% 2px no-repeat;
+}
+
+/* Files: every file of the review in the left margin, the current one open to its headings, for finding
+   your way through a large review. Code starts beside the list instead of under it, so the list stays. */
+.mr-root[data-layout="files"] {
+  --toc-width: 236px;
+  --toc-gap: 52px;
+}
+@media (min-width: 1280px) {
+  .mr-root:where(:not(.is-narrowed))[data-layout="files"] {
+    --code-span: min(var(--code-width), calc(var(--rail-end) - var(--text-left) - var(--rail-gap) - 300px));
+    --code-left: var(--text-left);
+    --code-md-span: var(--measure);
+  }
+}
+
+.mr-file-list .mr-toc-title {
+  margin-left: 10px;
+}
+.mr-file-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  padding: 4px 8px 4px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: 13px / 1.35 var(--sans);
+  text-align: left;
+  cursor: pointer;
+}
+.mr-file-link:hover {
+  background: var(--soft);
+  color: var(--fg);
+}
+.mr-file-link.is-current {
+  background: var(--soft);
+  color: var(--fg);
+  font-weight: 600;
+}
+.mr-file-link.is-folded .mr-file-link-name {
+  opacity: 0.7;
+}
+.mr-file-link .mr-status-dot {
+  flex: none;
+}
+.mr-file-link-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mr-file-link .mr-file-check {
+  flex: none;
+  margin-left: auto;
+}
+.mr-file-headings {
+  margin: 2px 0 8px 18px;
+}
+
+/* The pull or merge request's own description: the first document when chosen in the Review settings.
+   Its title is a size smaller than a document's, and the description folds under a quiet label. */
+.mr-overview-kind {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font: 600 11px / 1.4 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mr-overview .mr-title {
+  font-size: calc(40px * var(--type));
+}
+.mr-overview .mr-byline a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+.mr-overview-body > summary {
+  width: max-content;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font: 600 11px / 1.4 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.mr-overview-body[open] > summary {
+  margin-bottom: 18px;
+}
+.mr-overview-empty {
+  color: var(--muted);
+  font-style: italic;
+}

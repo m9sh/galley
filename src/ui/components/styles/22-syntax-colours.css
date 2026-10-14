@@ -1,0 +1,319 @@
+/* ------------------------------------------------------------------ syntax colours */
+/* Quiet, per-theme token colours: code should read as code without competing with change marks. */
+
+.mr-root {
+  --hl-comment: #535e68;
+  --hl-keyword: #b42b40;
+  --hl-string: #0b5a35;
+  --hl-number: #0b4f9c;
+  --hl-title: #6639ba;
+  --hl-attr: #0b4f9c;
+  --hl-builtin: #8a4600;
+  --hl-tag: #116329;
+  --hl-meta: #57606a;
+}
+
+.mr-root[data-theme="sepia"] {
+  --hl-comment: #66543d;
+  --hl-keyword: #9b3a26;
+  --hl-string: #4f6b1d;
+  --hl-number: #2b5a85;
+  --hl-title: #74468f;
+  --hl-attr: #2b5a85;
+  --hl-builtin: #8a5a12;
+  --hl-tag: #4f6b1d;
+  --hl-meta: #65543e;
+}
+
+.mr-root.is-dark {
+  --hl-comment: #b4becb;
+  --hl-keyword: #ff8f87;
+  --hl-string: #a5d6ff;
+  --hl-number: #79c0ff;
+  --hl-title: #d2a8ff;
+  --hl-attr: #79c0ff;
+  --hl-builtin: #ffa657;
+  --hl-tag: #7ee787;
+  --hl-meta: #9ea7b3;
+}
+
+/* Night keeps code warm too: no cold blues on an amber page. */
+.mr-root[data-theme="night"] {
+  --hl-comment: #6b5638;
+  --hl-keyword: #9b3a26;
+  --hl-string: #4f6b1d;
+  --hl-number: #2b5a85;
+  --hl-title: #74468f;
+  --hl-attr: #2b5a85;
+  --hl-builtin: #7a4d0c;
+  --hl-tag: #4f6b1d;
+  --hl-meta: #6b5638;
+}
+
+/* Hackerman's code glows green, like everything else on its screen. */
+.mr-root.is-dark[data-theme="hackerman"] {
+  --hl-comment: #5fbf7f;
+  --hl-keyword: #39ff7a;
+  --hl-string: #c8ff8a;
+  --hl-number: #8affd8;
+  --hl-title: #f6ff7a;
+  --hl-attr: #8affd8;
+  --hl-builtin: #ffd166;
+  --hl-tag: #39ff7a;
+  --hl-meta: #6fd98f;
+}
+.mr-root.is-dark[data-theme="hackerman"] :is(.mr-title, .mr-content h1, .mr-content h2) {
+  text-shadow: 0 0 14px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.mr-root.is-dark[data-theme="night"] {
+  --hl-comment: #cbbda3;
+  --hl-keyword: #f2a27d;
+  --hl-string: #c7d08a;
+  --hl-number: #e8c17a;
+  --hl-title: #e3a9c9;
+  --hl-attr: #e8c17a;
+  --hl-builtin: #f0b36b;
+  --hl-tag: #c7d08a;
+  --hl-meta: #cbbda3;
+}
+
+.mr-root :is(.hljs-comment, .hljs-quote) {
+  color: var(--hl-comment);
+  font-style: italic;
+}
+
+.mr-root :is(.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-doctag, .hljs-template-tag) {
+  color: var(--hl-keyword);
+}
+
+.mr-root :is(.hljs-string, .hljs-regexp, .hljs-char, .hljs-link) {
+  color: var(--hl-string);
+}
+
+.mr-root :is(.hljs-number, .hljs-symbol, .hljs-bullet) {
+  color: var(--hl-number);
+}
+
+.mr-root :is(.hljs-title, .hljs-section, .hljs-selector-id, .hljs-selector-class) {
+  color: var(--hl-title);
+}
+
+.mr-root :is(.hljs-attr, .hljs-attribute, .hljs-property, .hljs-variable, .hljs-template-variable, .hljs-params) {
+  color: var(--hl-attr);
+}
+
+.mr-root :is(.hljs-built_in, .hljs-type, .hljs-class) {
+  color: var(--hl-builtin);
+}
+
+.mr-root :is(.hljs-name, .hljs-tag) {
+  color: var(--hl-tag);
+}
+
+.mr-root :is(.hljs-meta, .hljs-subst) {
+  color: var(--hl-meta);
+}
+
+.mr-root .hljs-emphasis {
+  font-style: italic;
+}
+
+.mr-root .hljs-strong {
+  font-weight: 600;
+}
+
+/* Source files are titled by path, in the code face. */
+.mr-content .mr-code-title,
+/* A source file is titled like a document: the same face and weight, a size a long path can carry. */
+.mr-title.mr-code-title {
+  font-size: calc(36px * var(--type));
+  line-height: 1.18;
+  overflow-wrap: anywhere;
+}
+
+.mr-code-dir {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* A whole new or deleted file is announced once, in its byline, not by tinting every line. */
+.mr-document:is(.doc-added, .doc-removed) .mr-code-line[data-mr-change] {
+  background: none;
+  box-shadow: none;
+  color: inherit;
+}
+
+/* One typeface picker and a live reading sample keep typography within reach. */
+.mr-font-select {
+  position: relative;
+  flex: 0 1 210px;
+  min-width: 0;
+}
+.mr-font-select select {
+  appearance: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 36px 10px 14px;
+  border: 1px solid var(--control-rule);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px / 1.4 var(--sans);
+  cursor: pointer;
+}
+.mr-font-select > .mr-icon {
+  position: absolute;
+  right: 12px;
+  top: 14px;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  color: var(--muted);
+}
+/* A one-line text field, the same size and edge as the select beside it. */
+.mr-field {
+  box-sizing: border-box;
+  flex: 0 1 210px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--control-rule);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px / 1.4 var(--sans);
+}
+.mr-field::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+.mr-size-control {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--control-rule);
+  border-radius: 10px;
+  background: var(--bg);
+}
+.mr-size-control .mr-btn {
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 9px;
+}
+.mr-size-control .mr-btn:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+.mr-text-size {
+  min-width: 62px;
+  color: var(--fg);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.mr-type-preview {
+  margin: 16px 0 12px;
+  padding: 16px 18px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--code-bg);
+}
+.mr-type-preview p {
+  margin: 0 0 6px;
+  font: calc(var(--body-size) * 1.15) / 1.3 var(--heading-font, var(--body-font));
+  overflow-wrap: anywhere;
+}
+.mr-type-preview span {
+  color: var(--muted);
+  font: 13px / 1.5 var(--body-font);
+}
+.mr-context-toggle {
+  min-height: 44px;
+}
+
+@media (min-width: 761px) and (max-width: 1279px) {
+  .mr-document.is-code {
+    width: min(calc(var(--vw) - 48px), var(--code-width));
+    margin-left: calc((100% - min(calc(var(--vw) - 48px), var(--code-width))) / 2);
+  }
+}
+/* A sheet beside the review can leave a wide window with less than the wide layout needs. */
+@media (min-width: 761px) {
+  :where(.mr-root.is-narrowed) .mr-document.is-code {
+    width: min(calc(var(--vw) - 48px), var(--code-width));
+    margin-left: calc((100% - min(calc(var(--vw) - 48px), var(--code-width))) / 2);
+  }
+}
+@media (min-width: 1280px) {
+  /* Contents, document, conversation, set the way a reading site sets an article: the text is centred in
+     the window, the contents hang in the margin to its left and the comments column fills the margin to
+     its right, up to a comfortable card width (--rail-max). Even margins read as a frame around the text;
+     one empty column the size of the text reads as a hole. The text only moves left of centre when the
+     comments column would otherwise be narrower than --rail-min, and on very wide windows the margins
+     simply grow, evenly. */
+  .mr-root:where(:not(.is-narrowed)) {
+    --measure: min(var(--measure-max), calc(var(--vw) - 2 * var(--edge) - var(--toc-width) - var(--toc-gap) - var(--rail-gap) - 320px));
+    /* Where the text starts: centred (less the layout's --shift), but never so far right that the
+       comments column drops below --rail-min, nor so far left that the contents leave the window. */
+    --text-left: max(
+      calc(var(--edge) + var(--toc-width) + var(--toc-gap)),
+      min(calc((var(--vw) - var(--measure)) / 2 - var(--shift)), calc(var(--vw) - var(--edge) - var(--rail-min) - var(--rail-gap) - var(--measure)))
+    );
+    --left: calc(var(--text-left) - var(--edge) - var(--toc-width) - var(--toc-gap));
+    --rail-width: min(var(--rail-max), calc(var(--vw) - var(--edge) - var(--text-left) - var(--measure) - var(--rail-gap)));
+    --rail-end: calc(var(--text-left) + var(--measure) + var(--rail-gap) + var(--rail-width));
+    /* Source files have no contents, so they start in that column (further left only where their
+       comments would otherwise get less than 300px) and run to 120 characters where the window allows;
+       their comments start where the code ends and stop where every other comment does, so commenting
+       works the same everywhere. */
+    --code-span: min(var(--code-width), calc(var(--rail-end) - var(--edge) - var(--rail-gap) - 300px));
+    --code-left: max(var(--edge), min(calc(var(--left) + var(--edge)), calc(var(--rail-end) - var(--rail-gap) - 300px - var(--code-span))));
+  }
+
+  :where(.mr-root:not(.is-narrowed)) .mr-main {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  :where(.mr-root:not(.is-narrowed)) .mr-article {
+    margin-right: 0;
+    margin-left: var(--text-left);
+  }
+
+  /* The current document's name starts where the document does: its dot lines up with the text. */
+  :where(.mr-root:not(.is-narrowed)) .mr-topbar {
+    grid-template-columns: minmax(0, calc(var(--text-left) - 24px)) minmax(0, var(--measure)) minmax(0, 1fr);
+  }
+
+  :where(.mr-root:not(.is-narrowed)) .mr-tb-center {
+    justify-content: flex-start;
+  }
+
+  :where(.mr-root:not(.is-narrowed)) .mr-file-btn {
+    margin-left: -12px;
+  }
+
+  :where(.mr-root:not(.is-narrowed)) .mr-document.is-code {
+    width: var(--code-span);
+    margin-left: calc(var(--code-left) - var(--text-left));
+  }
+
+  :where(.mr-root:not(.is-narrowed)) .mr-threads > .is-code-card {
+    right: auto;
+    left: calc(var(--code-left) + var(--code-span) - var(--text-left) - var(--measure));
+    width: calc(var(--rail-end) - var(--code-left) - var(--code-span) - var(--rail-gap));
+  }
+
+  :where(.mr-root:not(.is-narrowed)) .mr-comment-btn.is-lane.is-beside-code {
+    left: calc(var(--code-left) + var(--code-span) - var(--text-left) + var(--rail-gap));
+    width: calc(var(--rail-end) - var(--code-left) - var(--code-span) - var(--rail-gap));
+  }
+
+  :where(.mr-root:not(.is-narrowed)) .mr-comment-btn.is-lane.is-beside-code.is-gap {
+    left: calc(var(--code-left) + var(--code-span) - var(--text-left) + (var(--rail-gap) - 34px) / 2);
+    width: 34px;
+  }
+}

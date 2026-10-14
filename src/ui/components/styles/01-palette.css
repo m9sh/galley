@@ -1,0 +1,740 @@
+:host {
+  all: initial;
+}
+
+/* ------------------------------------------------------------------ palette */
+
+/* Theme cards use the same tokens as the document they preview. */
+.mr-root,
+.mr-theme-options button {
+  --bg: #fcfdf9;
+  --fg: #29322b;
+  --muted: #566058;
+  --soft: #edf0e8;
+  --rule: #dde2d8;
+  --code-bg: #f3f5ee;
+  --accent: #506b38;
+  --card: color-mix(in srgb, var(--soft) 72%, var(--bg));
+  --control-rule: color-mix(in srgb, var(--muted) 80%, var(--bg));
+  --selected-bg: color-mix(in srgb, var(--accent) 12%, var(--card));
+  /* Change colours: clear green, amber and rose, so added, edited and removed never look alike. Every
+     light palette below re-tints them to sit on its own page tone. */
+  --add: #3b6a2b;
+  --add-bg: #d5ebcb;
+  --add-wash: #eef6e8;
+  --mod: #8f5d00;
+  --del: #9c3a35;
+  --del-bg: #f9e1dc;
+  --del-strike: #c0645c;
+  /* Soft word highlights, with stronger margin markers for scanning changes. */
+  --ins-band: #d5ebcb;
+  --gutter-added: #4c8c3a;
+  --gutter-modified: #b27a0e;
+  --gutter-removed: #c0554c;
+  --code-add: #eaf4e3;
+  --code-del: #fbe9e5;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+  /* Comment cards: a tone of their own and a soft shadow instead of an outline. */
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 6px 20px -10px rgba(0, 0, 0, 0.22);
+  --raised-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 18px 40px -16px rgba(0, 0, 0, 0.3);
+  /* A sheet waiting beneath another, in shade. */
+  --recede: rgba(0, 0, 0, 0.05);
+}
+
+.mr-root {
+  --serif: "Galley Newsreader", Georgia, "Times New Roman", serif;
+  --sans: "Galley DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  /* Columns: contents, document, comments. Wide screens lay them out from the left (see the end). */
+  --edge: 24px;
+  --toc-width: 176px;
+  --toc-gap: 80px;
+  --rail-width: 240px;
+  --rail-gap: 56px;
+  --left: 0px;
+  /* Source files fit 120 characters of their monospace text, plus line numbers and signs. */
+  --code-size: calc(var(--body-size) * 0.65 * var(--size-scale));
+  --code-width: calc(var(--code-size) * 73.2 + 122px);
+  /* Moved code is neither added nor removed: a tint of the palette's accent instead of green or red. */
+  --code-moved: color-mix(in srgb, var(--accent) 8%, var(--bg));
+  --gutter-moved: color-mix(in srgb, var(--accent) 75%, var(--code-bg));
+  --body-font: var(--serif);
+  --body-size: 20px;
+  --size-scale: 1;
+  --measure: 680px;
+  /* Layouts (Settings, Layout) set these; see the end of this file. */
+  --measure-max: 680px;
+  --rail-min: 360px;
+  --rail-max: 440px;
+  --shift: 0px;
+  --fit: 1;
+  --text-scale: 1;
+  /* The width the layout shares out: the window, less a side sheet that has narrowed the reader. */
+  --vw: 100vw;
+  /* Titles, standfirsts, bylines, contents and comments follow the text size (reader.ts sets the parts). */
+  --type: calc(var(--text-scale) * var(--fit));
+  --comment-size: calc(13.5px * var(--type));
+  --card-max: 100%;
+  --select: var(--accent);
+  --select-ink: var(--bg);
+
+  position: fixed;
+  inset: 0;
+  z-index: 2147483600;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg);
+  /* Gradient palettes glow in the margins of the page; where the text is read, the page stays plain. */
+  background-image: var(--page-art, none);
+  color: var(--fg);
+  color-scheme: light;
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
+  outline: none;
+}
+
+.mr-root[data-font="sans"] {
+  --body-font: var(--sans);
+}
+
+/* Galley, chosen for long reviews on screen: Newsreader sets titles, headings and quotations, where its
+   display cut gives the page a voice; DM Sans sets the running text, where its large x-height and open
+   letters stay clear at reading sizes and beside code; code keeps the system monospace. */
+.mr-root[data-font="galley"] {
+  --body-font: var(--sans);
+  --heading-font: var(--serif);
+}
+.mr-root[data-font="galley"] .mr-content blockquote:not(.mr-alert) {
+  font-family: var(--serif);
+}
+
+.mr-root[data-font="georgia"] {
+  --body-font: Georgia, "Times New Roman", serif;
+}
+.mr-root[data-font="system"] {
+  --body-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.mr-root[data-font="mono"] {
+  --body-font: var(--mono);
+}
+
+.mr-root[data-theme="paper"],
+.mr-theme-options [data-value="paper"] {
+  --accent: #3d5366;
+  --bg: #ffffff;
+  --fg: #292929;
+  --muted: #55554f;
+  --soft: #f0f1ef;
+  --rule: #deded8;
+  --code-bg: #f6f6f3;
+  --add: #2f6f3e;
+  --add-bg: #d6efd9;
+  --add-wash: #eef7f0;
+  --mod: #8f5d00;
+  --del: #a13a38;
+  --del-bg: #fce4e3;
+  --del-strike: #c4635f;
+  --ins-band: #d6efd9;
+  --gutter-added: #3b8c4f;
+  --gutter-modified: #b27a0e;
+  --gutter-removed: #c4504d;
+  --code-add: #ebf6ed;
+  --code-del: #fdeded;
+}
+
+.mr-root[data-theme="slate"],
+.mr-theme-options [data-value="slate"] {
+  --bg: #f7f9fc;
+  --fg: #293745;
+  --muted: #53606d;
+  --soft: #eaeef2;
+  --rule: #dbe1e8;
+  --code-bg: #f0f3f6;
+  --accent: #466b96;
+  /* Teal and cool rose keep the highlights in the page's blue family. */
+  --add: #2a6b54;
+  --add-bg: #cfeade;
+  --add-wash: #e9f5ef;
+  --mod: #8a5f10;
+  --del: #a03850;
+  --del-bg: #f9e1e6;
+  --del-strike: #bd6579;
+  --ins-band: #cfeade;
+  --gutter-added: #3a8a6c;
+  --gutter-modified: #b0801f;
+  --gutter-removed: #bf4a63;
+  --code-add: #e4f3ec;
+  --code-del: #fae9ed;
+}
+
+.mr-root[data-theme="sepia"],
+.mr-theme-options [data-value="sepia"] {
+  --bg: #f8f1e3;
+  --fg: #3b2f22;
+  --muted: #65543e;
+  --soft: #ede5d7;
+  --rule: #ded3bf;
+  --code-bg: #f1e9db;
+  /* Warm olive, ochre and brick sit on the paper tone instead of fighting it. */
+  --accent: #5a7d2a;
+  --add: #3e6020;
+  --add-bg: rgba(85, 122, 44, 0.16);
+  --add-wash: rgba(85, 122, 44, 0.08);
+  --mod: #745009;
+  --del: #75452f;
+  --del-strike: #aa7760;
+  --del-bg: rgba(168, 67, 46, 0.1);
+  --ins-band: #e4e7c9;
+  --gutter-added: #55772e;
+  --gutter-modified: #8c6110;
+  --gutter-removed: #9c4935;
+  --code-add: rgba(85, 122, 44, 0.08);
+  --code-del: rgba(168, 67, 46, 0.07);
+}
+
+.mr-root[data-theme="dusk"],
+.mr-theme-options [data-value="dusk"] {
+  --bg: #faf8fc;
+  --fg: #342d3d;
+  --muted: #625b6c;
+  --soft: #edeaef;
+  --rule: #dfdbe4;
+  --code-bg: #f3f0f5;
+  --accent: #72528f;
+  --add: #2d6c4c;
+  --add-bg: #d3eddc;
+  --add-wash: #ebf5ef;
+  --mod: #8a5a10;
+  --del: #9d3454;
+  --del-bg: #fae0e9;
+  --del-strike: #bb6382;
+  --ins-band: #d3eddc;
+  --gutter-added: #3d8b62;
+  --gutter-modified: #b0801f;
+  --gutter-removed: #bd4966;
+  --code-add: #e7f4ec;
+  --code-del: #fbeaf0;
+}
+
+.mr-root[data-theme="contrast"],
+.mr-theme-options [data-value="contrast"] {
+  --bg: #fdfdff;
+  --fg: #111318;
+  --muted: #3e424b;
+  --soft: #eceef3;
+  --rule: #888d98;
+  --code-bg: #f3f4f8;
+  --accent: #174ea6;
+  /* Crisper ink: the same hues, with stronger bands and markers. */
+  --add: #14692c;
+  --add-bg: #c4ebcd;
+  --add-wash: #e1f4e6;
+  --mod: #7f5200;
+  --del: #a31f1f;
+  --del-bg: #f9d5d5;
+  --del-strike: #b02a2a;
+  --ins-band: #c4ebcd;
+  --gutter-added: #1a7f37;
+  --gutter-modified: #9a6200;
+  --gutter-removed: #c0302a;
+  --code-add: #dff3e4;
+  --code-del: #fbdfdf;
+}
+
+/* Reading palettes added for long reviews; their contrast is checked by e2e/reader.mjs like the rest. */
+.mr-root[data-theme="cream"],
+.mr-theme-options [data-value="cream"] {
+  --accent: #775329;
+  --bg: #fcf8ef;
+  --fg: #302c26;
+  --muted: #625b50;
+  --soft: #eeebe3;
+  --rule: #dfd9ce;
+  --code-bg: #f4f0e7;
+  --add: #2f6b33;
+  --add-bg: #dcebc9;
+  --add-wash: #eef4e2;
+  --mod: #855a00;
+  --del: #9e3b2e;
+  --del-bg: #f7ded3;
+  --del-strike: #c0705f;
+  --ins-band: #dcebc9;
+  --gutter-added: #4a8a3c;
+  --gutter-modified: #b07a12;
+  --gutter-removed: #c0574a;
+  --code-add: #e9f0d9;
+  --code-del: #f8e6dc;
+}
+
+.mr-root[data-theme="eink"],
+.mr-theme-options [data-value="eink"] {
+  --accent: #485a52;
+  --bg: #efeee9;
+  --fg: #1e1e1c;
+  --muted: #53524d;
+  --soft: #e5e4de;
+  --rule: #d3d2cb;
+  --code-bg: #e8e7e1;
+  --add: #2e6534;
+  --add-bg: #d3e3cf;
+  --add-wash: #e6ede2;
+  --mod: #7d5a0b;
+  --del: #973a35;
+  --del-bg: #efd9d4;
+  --del-strike: #b86d66;
+  --ins-band: #d3e3cf;
+  --gutter-added: #4f8150;
+  --gutter-modified: #a27a1b;
+  --gutter-removed: #b65b52;
+  --code-add: #dfe7da;
+  --code-del: #eedfda;
+}
+
+.mr-root[data-theme="night"],
+.mr-theme-options [data-value="night"] {
+  --bg: #f6ead3;
+  --fg: #3a2a17;
+  --muted: #685234;
+  --soft: #ece0ca;
+  --rule: #deceb1;
+  --code-bg: #f1e5d0;
+  --accent: #7a5214;
+  --add: #3d6420;
+  --add-bg: #dde5be;
+  --add-wash: #ecebd2;
+  --mod: #8a5300;
+  --del: #9a3523;
+  --del-bg: #f3d2c2;
+  --del-strike: #bb6b52;
+  --ins-band: #dde5be;
+  --gutter-added: #5e8a36;
+  --gutter-modified: #a8710f;
+  --gutter-removed: #be5a3e;
+  --code-add: #e7e6c6;
+  --code-del: #f3dac8;
+}
+
+.mr-root[data-theme="seafoam"],
+.mr-theme-options [data-value="seafoam"] {
+  --accent: #216b68;
+  --bg: #f3f8f5;
+  --fg: #273630;
+  --muted: #51615a;
+  --soft: #e8eeea;
+  --rule: #d8e2dc;
+  --code-bg: #edf2ee;
+  --add: #22663f;
+  --add-bg: #cde8d6;
+  --add-wash: #e3f1e8;
+  --mod: #7e5800;
+  --del: #9b3a3e;
+  --del-bg: #f3dcdc;
+  --del-strike: #bc6a6c;
+  --ins-band: #cde8d6;
+  --gutter-added: #3e8a5e;
+  --gutter-modified: #a9790e;
+  --gutter-removed: #be5257;
+  --code-add: #dcede2;
+  --code-del: #f2e1e1;
+}
+
+.mr-root[data-theme="blush"],
+.mr-theme-options [data-value="blush"] {
+  --accent: #97495f;
+  --bg: #fcf7f5;
+  --fg: #332b2e;
+  --muted: #62585c;
+  --soft: #efeae7;
+  --rule: #dfd7d5;
+  --code-bg: #f5efec;
+  --add: #2e6a3a;
+  --add-bg: #dcead3;
+  --add-wash: #eef3e7;
+  --mod: #865700;
+  --del: #a0323f;
+  --del-bg: #f6d9dc;
+  --del-strike: #c26573;
+  --ins-band: #dcead3;
+  --gutter-added: #4b8a51;
+  --gutter-modified: #ae7a13;
+  --gutter-removed: #c24e5e;
+  --code-add: #e8eedc;
+  --code-del: #f8e2e3;
+}
+
+.mr-root[data-theme="nord"],
+.mr-theme-options [data-value="nord"] {
+  --bg: #eff2f6;
+  --fg: #2e3440;
+  --muted: #4c566a;
+  --soft: #e4e8ed;
+  --rule: #d4dae2;
+  --code-bg: #e9edf2;
+  --accent: #486784;
+  --add: #2f6b3e;
+  --add-bg: #d3e5d3;
+  --add-wash: #e4eee6;
+  --mod: #7a5a10;
+  --del: #9c3d45;
+  --del-bg: #f0d9dc;
+  --del-strike: #bf616a;
+  --ins-band: #d3e5d3;
+  --gutter-added: #4f8a5b;
+  --gutter-modified: #a57a14;
+  --gutter-removed: #b8545e;
+  --code-add: #dce9de;
+  --code-del: #f0dfe2;
+}
+
+.mr-root[data-theme="ocean"],
+.mr-theme-options [data-value="ocean"] {
+  --bg: #f5f9fa;
+  --fg: #253b43;
+  --muted: #50636a;
+  --soft: #e7edf0;
+  --rule: #d5e0e3;
+  --code-bg: #edf3f5;
+  --accent: #176b77;
+}
+
+.mr-root[data-theme="clay"],
+.mr-theme-options [data-value="clay"] {
+  --bg: #fbf7f2;
+  --fg: #3c322b;
+  --muted: #685c53;
+  --soft: #eee9e2;
+  --rule: #dfd6cc;
+  --code-bg: #f4eee7;
+  --accent: #935638;
+}
+
+.mr-root[data-theme="orchid"],
+.mr-theme-options [data-value="orchid"] {
+  --bg: #fcf8fb;
+  --fg: #3b303e;
+  --muted: #6a5a6d;
+  --soft: #eee9ed;
+  --rule: #e0d6df;
+  --code-bg: #f5eff4;
+  --accent: #86558a;
+}
+
+.mr-root[data-theme="graphite"],
+.mr-theme-options [data-value="graphite"] {
+  --bg: #f4f5f7;
+  --fg: #2d333d;
+  --muted: #58616e;
+  --soft: #e7e9ed;
+  --rule: #d7dce3;
+  --code-bg: #edf0f3;
+  --accent: #4667aa;
+}
+
+/* Hackerman: a terminal. Green on near-black in the dark, green ink on pale terminal paper in the light. */
+.mr-root[data-theme="hackerman"],
+.mr-theme-options [data-value="hackerman"] {
+  --bg: #f1faf2;
+  --fg: #0a3a17;
+  --muted: #2d6a3c;
+  --soft: #dcefe0;
+  --rule: #c3dfc9;
+  --code-bg: #e5f4e8;
+  --accent: #12803a;
+}
+
+/* Aurora and Sunset: lively glows in the corners of the page, fading to plain paper under the text. */
+.mr-root[data-theme="aurora"],
+.mr-theme-options [data-value="aurora"] {
+  --bg: #f7f8fd;
+  --fg: #22273f;
+  --muted: #4f5675;
+  --soft: #e8eaf7;
+  --rule: #d6dbf0;
+  --code-bg: #eef0fa;
+  --accent: #5848d4;
+  --page-art:
+    radial-gradient(60% 45% at 0% 0%, rgba(94, 234, 212, 0.28), transparent 70%),
+    radial-gradient(55% 50% at 100% 0%, rgba(167, 139, 250, 0.26), transparent 70%),
+    radial-gradient(70% 55% at 50% 110%, rgba(244, 114, 182, 0.18), transparent 70%);
+}
+.mr-root[data-theme="sunset"],
+.mr-theme-options [data-value="sunset"] {
+  --bg: #fff8f2;
+  --fg: #3b2420;
+  --muted: #6f4a43;
+  --soft: #fbe6da;
+  --rule: #f2d2c4;
+  --code-bg: #fcefe7;
+  --accent: #c2410c;
+  --page-art:
+    radial-gradient(60% 45% at 0% 0%, rgba(253, 186, 116, 0.32), transparent 70%),
+    radial-gradient(55% 50% at 100% 0%, rgba(251, 113, 133, 0.24), transparent 70%),
+    radial-gradient(70% 55% at 50% 110%, rgba(250, 204, 21, 0.16), transparent 70%);
+}
+
+/* Surface-first hierarchy: page, code, neutral secondary cards, then controls. The accent is used
+   sparingly for focus and selection; decorative rules are quieter than interactive control borders. */
+.mr-root.is-dark,
+.is-dark .mr-theme-options:where(:not(.mr-layout-options)) button {
+  --add: #a7ebc0;
+  --add-bg: #224532;
+  --add-wash: #192d23;
+  --mod: #f4cc79;
+  --del: #ffb6c2;
+  --del-strike: #ec91a2;
+  --del-bg: #4b2834;
+  --ins-band: #284c37;
+  --gutter-added: #85d9a3;
+  --gutter-modified: #f4cc79;
+  --gutter-removed: #f59aaa;
+  --code-add: #203b2d;
+  --code-del: #3d252f;
+  --shadow: 0 16px 48px rgba(0, 0, 0, 0.65);
+  --control-rule: color-mix(in srgb, var(--fg) 52%, var(--bg));
+  --card-shadow: 0 4px 14px -8px rgba(0, 0, 0, 0.5);
+  --raised-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+  --recede: rgba(0, 0, 0, 0.32);
+  color-scheme: dark;
+}
+
+.mr-root.is-dark[data-theme="sage"],
+.is-dark .mr-theme-options [data-value="sage"] {
+  --bg: #151a17;
+  --fg: #eef2ed;
+  --muted: #b8c3ba;
+  --soft: #414641;
+  --rule: #454e47;
+  --code-bg: #262d28;
+  --accent: #b5cfa0;
+  --card: #343b35;
+}
+
+.mr-root.is-dark[data-theme="paper"],
+.is-dark .mr-theme-options [data-value="paper"] {
+  --bg: #151719;
+  --fg: #f2f2ef;
+  --muted: #bcc0c2;
+  --soft: #414446;
+  --rule: #46494c;
+  --code-bg: #26292c;
+  --accent: #b4c9db;
+  --card: #33373a;
+}
+
+.mr-root.is-dark[data-theme="sepia"],
+.is-dark .mr-theme-options [data-value="sepia"] {
+  --bg: #1b1813;
+  --fg: #f3eadc;
+  --muted: #cbc0ae;
+  --soft: #4a463f;
+  --rule: #504a40;
+  --code-bg: #2c2821;
+  --accent: #d4bc8c;
+  --card: #3e3930;
+}
+
+.mr-root.is-dark[data-theme="slate"],
+.is-dark .mr-theme-options [data-value="slate"] {
+  --bg: #15191f;
+  --fg: #edf1f6;
+  --muted: #b8c2ce;
+  --soft: #41464e;
+  --rule: #424c5a;
+  --code-bg: #262d35;
+  --accent: #abc7e4;
+  --card: #343b43;
+}
+
+.mr-root.is-dark[data-theme="dusk"],
+.is-dark .mr-theme-options [data-value="dusk"] {
+  --bg: #19181e;
+  --fg: #f0edf5;
+  --muted: #c1bacb;
+  --soft: #44434b;
+  --rule: #49484f;
+  --code-bg: #29282f;
+  --accent: #c4aedb;
+  --card: #36353d;
+}
+
+.mr-root.is-dark[data-theme="contrast"],
+.is-dark .mr-theme-options [data-value="contrast"] {
+  --bg: #090b10;
+  --fg: #ffffff;
+  --muted: #d9e0ed;
+  --soft: #343f53;
+  --rule: #8e9cb2;
+  --code-bg: #1c2535;
+  --accent: #b5d8f3;
+  --card: #293449;
+}
+
+.mr-root.is-dark[data-theme="cream"],
+.is-dark .mr-theme-options [data-value="cream"] {
+  --bg: #1b1915;
+  --fg: #f4eddf;
+  --muted: #c9c1b1;
+  --soft: #4a453e;
+  --rule: #514a40;
+  --code-bg: #2c2821;
+  --accent: #ddc296;
+  --card: #3e3931;
+}
+
+.mr-root.is-dark[data-theme="eink"],
+.is-dark .mr-theme-options [data-value="eink"] {
+  --bg: #191a18;
+  --fg: #eeeee8;
+  --muted: #c0c3ba;
+  --soft: #45473f;
+  --rule: #4b4d46;
+  --code-bg: #2b2d27;
+  --accent: #c5cec1;
+  --card: #363931;
+}
+
+.mr-root.is-dark[data-theme="night"],
+.is-dark .mr-theme-options [data-value="night"] {
+  --bg: #1b1711;
+  --fg: #f2e5cc;
+  --muted: #cebea1;
+  --soft: #4e4538;
+  --rule: #564a37;
+  --code-bg: #2e261b;
+  --accent: #dfbf84;
+  --card: #40372a;
+}
+
+.mr-root.is-dark[data-theme="seafoam"],
+.is-dark .mr-theme-options [data-value="seafoam"] {
+  --bg: #151c1b;
+  --fg: #edf4f1;
+  --muted: #b7c9c3;
+  --soft: #3c4945;
+  --rule: #43524c;
+  --code-bg: #25312e;
+  --accent: #a3cebf;
+  --card: #303f38;
+}
+
+.mr-root.is-dark[data-theme="blush"],
+.is-dark .mr-theme-options [data-value="blush"] {
+  --bg: #1c181a;
+  --fg: #f5edef;
+  --muted: #c9bdc2;
+  --soft: #4c4549;
+  --rule: #52484c;
+  --code-bg: #2f292c;
+  --accent: #dcb1be;
+  --card: #3f373b;
+}
+
+.mr-root.is-dark[data-theme="nord"],
+.is-dark .mr-theme-options [data-value="nord"] {
+  --bg: #171c23;
+  --fg: #eef2f8;
+  --muted: #bdc7d5;
+  --soft: #404853;
+  --rule: #47515f;
+  --code-bg: #252e3a;
+  --accent: #aecdd6;
+  --card: #343e4c;
+}
+
+.mr-root.is-dark[data-theme="ocean"],
+.is-dark .mr-theme-options [data-value="ocean"] {
+  --bg: #141c21;
+  --fg: #edf4f6;
+  --muted: #b8c8ce;
+  --soft: #3f494e;
+  --rule: #42525c;
+  --code-bg: #283136;
+  --accent: #9acacb;
+  --card: #333c41;
+}
+
+.mr-root.is-dark[data-theme="clay"],
+.is-dark .mr-theme-options [data-value="clay"] {
+  --bg: #1d1916;
+  --fg: #f4ede5;
+  --muted: #cdc0b6;
+  --soft: #4c443e;
+  --rule: #554a42;
+  --code-bg: #2f2823;
+  --accent: #dcb89d;
+  --card: #403832;
+}
+
+.mr-root.is-dark[data-theme="orchid"],
+.is-dark .mr-theme-options [data-value="orchid"] {
+  --bg: #1c181e;
+  --fg: #f4edf5;
+  --muted: #c9bccb;
+  --soft: #49434b;
+  --rule: #514655;
+  --code-bg: #2d292f;
+  --accent: #ceb0d2;
+  --card: #3a353d;
+}
+
+.mr-root.is-dark[data-theme="graphite"],
+.is-dark .mr-theme-options [data-value="graphite"] {
+  --bg: #16191f;
+  --fg: #edf0f6;
+  --muted: #bdc4d0;
+  --soft: #424750;
+  --rule: #464e5b;
+  --code-bg: #292f38;
+  --accent: #b1c0df;
+  --card: #363c46;
+}
+.mr-root.is-dark[data-theme="hackerman"],
+.is-dark .mr-theme-options [data-value="hackerman"] {
+  --bg: #030a05;
+  --fg: #7dffa1;
+  --muted: #4fcf78;
+  --soft: #1d4a2c;
+  --rule: #1f5a33;
+  --code-bg: #0c2213;
+  --accent: #39ff6a;
+  --card: #143a22;
+  --control-rule: #4fa86b;
+}
+.mr-root.is-dark[data-theme="aurora"],
+.is-dark .mr-theme-options [data-value="aurora"] {
+  --bg: #0c0f1f;
+  --fg: #eef0ff;
+  --muted: #b8bddb;
+  --soft: #3a4170;
+  --rule: #3a4170;
+  --code-bg: #191e3a;
+  --accent: #a99cff;
+  --card: #2a3058;
+  --page-art:
+    radial-gradient(55% 45% at 0% 0%, rgba(20, 184, 166, 0.3), transparent 70%), radial-gradient(55% 50% at 100% 0%, rgba(124, 92, 255, 0.32), transparent 70%),
+    radial-gradient(70% 50% at 50% 115%, rgba(219, 39, 119, 0.22), transparent 70%);
+}
+.mr-root.is-dark[data-theme="sunset"],
+.is-dark .mr-theme-options [data-value="sunset"] {
+  --bg: #1b1015;
+  --fg: #ffeef0;
+  --muted: #e2b9c0;
+  --soft: #613846;
+  --rule: #613846;
+  --code-bg: #311c25;
+  --accent: #ff9e7a;
+  --card: #4a2a35;
+  --page-art:
+    radial-gradient(55% 45% at 0% 0%, rgba(251, 146, 60, 0.26), transparent 70%), radial-gradient(55% 50% at 100% 0%, rgba(225, 29, 72, 0.26), transparent 70%),
+    radial-gradient(70% 50% at 50% 115%, rgba(147, 51, 234, 0.2), transparent 70%);
+}
+
+.mr-root ::selection {
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+}

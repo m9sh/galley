@@ -11,7 +11,7 @@ import { slideWith } from './motion.ts';
  * A sheet is a stack. What a page opens from a list (a chapter, a document, a link in it) slides in on top; the
  * sheets beneath wait as edges, which go back to them, and Back or Esc goes down one at a time, then closes. Every
  * sheet is laid out the same way: a header (a way back or a switch, its actions, Close), one scrolling body of
- * sections and rows, and on screens with a keyboard the keys that work there. reader.css draws it (`.mr-sheet`).
+ * sections and rows, and on screens with a keyboard the keys that work there. styles/14-sheet.css draws it (`.mr-sheet`).
  */
 
 export interface SheetOptions {
@@ -428,7 +428,7 @@ export class Sheet {
     this.element.removeAttribute('aria-modal');
   }
 
-  /** The page takes the width the sheet leaves, sliding with it; on a phone nothing narrows behind it (reader.css). */
+  /** The page takes the width the sheet leaves, sliding with it; on a phone nothing narrows behind it (styles/17-sheet-motion.css). */
   private resize(open: boolean): void {
     const change = () => this.options.root.classList.toggle('has-sheet', open);
     slideWith(this.options.parts(), () => {

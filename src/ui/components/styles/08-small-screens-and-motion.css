@@ -1,0 +1,76 @@
+/* ------------------------------------------------------------------ small screens & motion */
+
+@media (max-width: 760px) {
+  .mr-root {
+    --size-scale: 0.9;
+  }
+
+  .mr-main {
+    padding: 36px 16px 132px;
+  }
+
+  .mr-title,
+  .mr-content > h1.mr-lead {
+    font-size: 38px;
+  }
+
+  .mr-subtitle {
+    font-size: 19px;
+  }
+
+  .mr-gutter {
+    left: -11px;
+  }
+
+  .mr-seg button {
+    padding: 0 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mr-root *,
+  .mr-root {
+    /* biome-ignore lint/complexity/noImportantStyles: a reader's motion preference must win over every animation rule */
+    animation: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: see above */
+    transition: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: see above */
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Continuous review: every document in one stream. */
+.mr-root [hidden] {
+  /* biome-ignore lint/complexity/noImportantStyles: `hidden` must hide whatever display rule an element otherwise has */
+  display: none !important;
+}
+/* Files follow one another closely, each opening with a slug, the way proofs on a galley are marked: its
+   place in the review, under a hairline that ends the file before it. */
+.mr-doc {
+  counter-reset: galley-file galley-files var(--files, 0);
+}
+.mr-document:not(.mr-overview, [hidden]) {
+  counter-increment: galley-file;
+}
+.mr-document:not(.mr-overview)::before {
+  content: "File " counter(galley-file) " of " counter(galley-files);
+  display: block;
+  margin: 0 0 18px;
+  color: var(--muted);
+  font: 600 11px / 1.4 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mr-doc[data-files="1"] .mr-document::before {
+  content: none;
+}
+.mr-document:not([hidden]) ~ .mr-document::before {
+  margin-top: 88px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+}
+@media (max-width: 760px) {
+  .mr-document:not([hidden]) ~ .mr-document::before {
+    margin-top: 60px;
+  }
+}

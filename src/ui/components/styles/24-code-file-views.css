@@ -1,0 +1,78 @@
+/* ---------------------------------------------------------------- views of a code file
+   Code comments and test files have a second way to be read: comments as formatted notes, tests as a
+   test plan. Reading settings → Review chooses, for every file; Source is the exact diff. Either way the
+   rows, line numbers and comment anchors stay the same. */
+/* Code comments as notes: set in the reading type, lined up with the code they describe. Their surface
+   separates them from code; the words inside show what changed. */
+.mr-source-comment {
+  position: relative;
+  margin: 10px 16px 10px calc(12px + 2 * (var(--digits, 3) * 1ch + 0.6ch) + var(--sign-width));
+  padding: 12px 18px 15px;
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: none;
+  font: var(--code-size) / 1.8 var(--mono);
+}
+/* A comment that moved with its code says so, instead of reading as removed here and new there. */
+.mode-changes .mr-content .mr-source-comment:has([data-mr-moved]) .mr-ghost {
+  color: var(--muted);
+}
+.mode-changes .mr-content .mr-source-comment:has([data-mr-moved]) .mr-ghost::before {
+  content: "Moved";
+  color: var(--accent);
+}
+.mr-source-comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font: 500 11px / 1.5 var(--sans);
+  letter-spacing: 0.02em;
+}
+.mr-source-comment-meta::before {
+  content: "//";
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
+  font: 600 11px / 1 var(--mono);
+}
+.mr-content.mr-source-comment-body {
+  font: calc(16px * var(--type)) / 1.65 var(--body-font);
+}
+.mr-source-comment-body > :last-child {
+  margin-bottom: 0;
+}
+.mr-source-comment-body > :first-child {
+  margin-top: 0;
+}
+.mr-source-comment-body :is(p, ul, ol, blockquote) {
+  max-width: 72ch;
+}
+.mr-content.mr-source-comment-body :is(h1, h2) {
+  margin: 14px 0 8px;
+  font-size: calc(22px * var(--type));
+  line-height: 1.25;
+}
+.mr-content.mr-source-comment-body h3 {
+  margin: 12px 0 6px;
+  font-size: calc(19px * var(--type));
+}
+.mr-source-comment-hint {
+  color: var(--muted);
+  font: 12px / 1.5 var(--sans);
+}
+.is-comment-source .mr-source-comment {
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.is-comment-source .mr-source-comment-meta {
+  display: none;
+}
+@media (max-width: 760px) {
+  .mr-source-comment {
+    margin: 8px 8px 8px 12px;
+    padding: 10px 14px 12px;
+  }
+}

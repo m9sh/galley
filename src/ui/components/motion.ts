@@ -4,7 +4,7 @@
  * step with the sheet, using only transforms, so long documents never lay out again on every frame.
  */
 
-/** The sheet's own slide in and out (reader.css, `.mr-sheet`, uses the same timing). */
+/** The sheet's own slide in and out (styles/17-sheet-motion.css, `.mr-sheet`, uses the same timing). */
 export const SHEET_IN: KeyframeAnimationOptions = { duration: 280, easing: 'cubic-bezier(0.32, 0.72, 0, 1)' };
 export const SHEET_OUT: KeyframeAnimationOptions = { duration: 220, easing: 'ease-in' };
 

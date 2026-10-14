@@ -1,0 +1,119 @@
+/* ------------------------------------------------------------------ chrome */
+
+.mr-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  height: 2px;
+  pointer-events: none;
+}
+
+.mr-progress > div {
+  height: 100%;
+  background: var(--fg);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+.mr-btn {
+  appearance: none;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.mr-btn:hover {
+  background: var(--soft);
+}
+
+.mr-root :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.mr-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.mr-seg {
+  display: inline-flex;
+  flex: none;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--code-bg);
+}
+
+.mr-seg button {
+  appearance: none;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mr-seg button[aria-pressed="true"] {
+  background: var(--selected-bg);
+  color: var(--fg);
+  box-shadow: none;
+}
+
+.mr-seg button.mr-serif-sample {
+  font-family: var(--serif);
+}
+
+.mr-keys {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 7px 14px;
+  align-items: center;
+  margin: 4px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mr-keys dt {
+  white-space: nowrap;
+}
+
+.mr-keys dd {
+  margin: 0;
+}
+
+.mr-root kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 0.35em;
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* Sheets sit above the page; the reading toolbar keeps the page's quieter tone. */
+.mr-root.is-dark .mr-settings-panel {
+  background: var(--card);
+}

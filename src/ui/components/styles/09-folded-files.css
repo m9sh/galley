@@ -1,0 +1,276 @@
+/* ------------------------------------------------------------------ folded files
+   Lockfiles, generated code and whitespace-only edits read as one quiet line each, one click from their
+   changes. A run of them stacks without the usual break between documents. */
+.mr-document.is-quiet::before {
+  margin-bottom: 12px;
+}
+.mr-document.is-quiet + .mr-document.is-quiet::before {
+  content: none;
+}
+.mr-document.is-quiet + .mr-document.is-quiet {
+  margin-top: 8px;
+}
+.mr-quiet {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px 14px 20px;
+  border-radius: 12px;
+  background: var(--card);
+}
+.mr-quiet-text {
+  flex: 1;
+  min-width: 0;
+}
+.mr-quiet-name {
+  margin: 0;
+  font: 500 calc(var(--code-size) * 1.05) / 1.5 var(--mono);
+  overflow-wrap: anywhere;
+}
+.mr-quiet-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font: 400 13px / 1.5 var(--sans);
+}
+.mr-quiet-label {
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--fg);
+  font-weight: 600;
+  font-size: 11.5px;
+}
+.mr-quiet-show {
+  flex: none;
+  height: 36px;
+  padding: 0 12px;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--rule));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg));
+  color: var(--fg);
+  font: 500 13px / 1 var(--sans);
+}
+.mr-quiet-show:hover {
+  background: color-mix(in srgb, var(--accent) 13%, var(--bg));
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--rule));
+}
+/* The checkbox marks progress; the disclosure puts a file away. Clear labels stay visible on phones. */
+.mr-file-actions,
+.mr-quiet-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+.mr-file-actions {
+  margin-left: auto;
+}
+.mr-file-meta {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  min-width: 0;
+}
+.mr-file-actions::before {
+  content: "";
+  width: 1px;
+  height: 16px;
+  margin-right: 8px;
+  background: var(--rule);
+}
+.mr-btn:is(.mr-fold-file, .mr-file-viewed) {
+  height: 34px;
+  padding: 0 8px;
+  gap: 8px;
+  border-radius: 6px;
+  color: var(--muted);
+  font: 500 13px / 1 var(--sans);
+}
+:is(.mr-fold-file, .mr-file-viewed):hover {
+  color: var(--fg);
+}
+.mr-file-viewed-box {
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--control-rule);
+  border-radius: 3px;
+}
+.mr-file-viewed[aria-checked="true"] {
+  color: var(--fg);
+}
+.mr-file-viewed[aria-checked="true"] .mr-file-viewed-box {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.mr-file-viewed[aria-checked="true"] .mr-file-viewed-box::after {
+  content: "";
+  width: 7px;
+  height: 4px;
+  border-bottom: 1.5px solid var(--bg);
+  border-left: 1.5px solid var(--bg);
+  transform: translateY(-1px) rotate(-45deg);
+}
+.mr-file-viewed:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.mr-file-action-icon {
+  display: inline-flex;
+  align-items: center;
+}
+.mr-file-action-icon svg {
+  width: 16px;
+  height: 16px;
+}
+@media (max-width: 760px) {
+  .mr-byline {
+    column-gap: 12px;
+  }
+  .mr-file-meta {
+    column-gap: 12px;
+  }
+  .mr-file-actions::before {
+    content: none;
+  }
+  .mr-btn:is(.mr-fold-file, .mr-file-viewed) {
+    height: 44px;
+  }
+}
+@media (max-width: 360px) {
+  .mr-file-meta {
+    flex-basis: 100%;
+  }
+}
+.mr-document.is-folded > :not(.mr-quiet) {
+  display: none;
+}
+.mr-menu-quiet {
+  flex: none;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 12px;
+}
+.mr-files-folded::before {
+  content: "·";
+  margin: 0 6px;
+}
+@media (max-width: 760px) {
+  .mr-quiet {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 16px;
+  }
+  .mr-quiet-show {
+    min-height: 44px;
+  }
+  .mr-quiet-actions {
+    justify-content: space-between;
+  }
+}
+.mr-article {
+  isolation: isolate;
+}
+.mr-doc {
+  position: relative;
+  z-index: 1;
+}
+.mr-gutter {
+  z-index: 2;
+}
+.mr-empty-changes {
+  color: var(--muted);
+  font-size: 15px;
+}
+.mr-content .mr-context-gap {
+  margin: 18px 0;
+  list-style: none;
+  font: 12px / 1.4 var(--sans);
+}
+.mr-context-toggle {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.mr-context-toggle::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  margin-left: 4px;
+  background: var(--rule);
+}
+.mr-context-toggle:hover {
+  color: var(--fg);
+  background: var(--soft);
+}
+.mr-context-toggle:focus-visible {
+  outline: 2px solid var(--muted);
+  outline-offset: 2px;
+  color: var(--fg);
+}
+/* The same right/down disclosure arrow is used for context, metadata and diagram source. */
+.mr-content summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  list-style: none;
+}
+.mr-content summary::-webkit-details-marker {
+  display: none;
+}
+.mr-content summary::marker {
+  content: "";
+}
+.mr-context-toggle::before,
+.mr-content summary::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin: 0 3px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 140ms ease;
+}
+.mr-context-toggle[aria-expanded="true"]::before,
+.mr-content details[open] > summary::before {
+  transform: rotate(45deg);
+}
+@media (max-width: 760px) {
+  .mr-context-toggle {
+    min-height: 44px;
+  }
+}
+
+/* The first title starts well below the bar, like the top of a page. */
+.mr-main {
+  padding-top: 104px;
+}
+@media (max-width: 760px) {
+  .mr-main {
+    padding-top: 48px;
+  }
+}

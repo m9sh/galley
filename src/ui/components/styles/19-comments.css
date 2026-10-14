@@ -1,0 +1,664 @@
+/* ------------------------------------------------------------------ comments */
+
+.mr-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Beside the block under the pointer. In the comments column it is a placeholder for the comment to
+   come, level with its text; in a narrower margin, a small button. */
+.mr-comment-btn {
+  position: absolute;
+  left: calc(100% + 14px);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 13px 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font: 600 13px / 1 var(--sans);
+  white-space: nowrap;
+  box-shadow: var(--card-shadow);
+  transform: translateY(-50%);
+  cursor: pointer;
+  animation: mr-fade 0.16s ease-out;
+}
+
+.mr-comment-btn:hover {
+  color: var(--fg);
+}
+
+.mr-comment-btn .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.mr-comment-btn.is-compact {
+  justify-content: center;
+  width: 36px;
+  padding: 0;
+}
+
+.mr-comment-btn.is-compact .mr-comment-btn-label {
+  display: none;
+}
+
+.mr-comment-btn.is-lane {
+  left: calc(100% + var(--rail-gap));
+  box-sizing: border-box;
+  width: var(--rail-width);
+  height: 42px;
+  gap: 9px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card) 60%, transparent);
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 500;
+  transform: none;
+}
+
+.mr-comment-btn.is-lane:hover {
+  background: var(--card);
+  box-shadow: var(--card-shadow);
+}
+
+.mr-comment-btn.is-lane.is-beside-code {
+  background: var(--card);
+}
+
+.mr-comment-btn.is-lane.is-gap {
+  left: calc(100% + (var(--rail-gap) - 34px) / 2);
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  box-shadow: var(--card-shadow);
+  transform: translateY(-50%);
+}
+
+.mr-comment-btn.is-gap .mr-comment-btn-label {
+  display: none;
+}
+
+@media (max-width: 860px), (hover: none) {
+  .mr-comment-btn {
+    display: none;
+  }
+}
+
+.mr-select-chip {
+  position: fixed;
+  z-index: 25;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 15px 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font: 600 13px / 1 var(--sans);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  animation: mr-pop 0.14s ease-out;
+}
+
+.mr-select-chip .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.mr-select-chip:disabled {
+  background: var(--soft);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* The text being discussed, or pointed at through its card: a flat neutral tint laid over whatever
+   the text already shows (green and red mean changes). */
+.mr-content :is(.mr-targeted, .mr-linked, .mr-hovered) {
+  --tint: color-mix(in srgb, var(--fg) 6%, transparent);
+  border-radius: 4px;
+  background-image: linear-gradient(var(--tint), var(--tint));
+  box-shadow: 0 0 0 8px var(--tint);
+}
+
+.mr-content .mr-code-line:is(.mr-targeted, .mr-linked, .mr-hovered) {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.mr-content .mr-code-line[data-mr-change="added"]:is(.mr-targeted, .mr-linked, .mr-hovered) {
+  box-shadow: inset 3px 0 0 var(--gutter-added);
+}
+.mr-content .mr-code-line[data-mr-change="removed"]:is(.mr-targeted, .mr-linked, .mr-hovered) {
+  box-shadow: inset 3px 0 0 var(--gutter-removed);
+}
+
+::highlight(galley-quote) {
+  background-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* A search result: the found words, tinted and underlined, so colour is not the only cue. */
+::highlight(galley-search) {
+  background-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  text-decoration: underline 2px var(--accent);
+  text-underline-offset: 3px;
+}
+
+/* A new comment, written where its thread will appear. The card is the field. */
+.mr-composer {
+  box-sizing: border-box;
+  padding: 13px 15px 10px;
+  border-radius: 14px;
+  background: var(--bg);
+  box-shadow: var(--raised-shadow);
+  color: var(--fg);
+  font: 14px / 1.5 var(--sans);
+  letter-spacing: 0;
+  cursor: text;
+  animation: mr-pop 0.16s ease-out;
+}
+
+/* The field being written in is ringed with the accent. */
+.mr-composer:focus-within {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent),
+    var(--raised-shadow);
+}
+
+.mr-reply:focus-within {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.mr-comment-target {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font: 600 11px / 1.4 var(--sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mr-comment-quote {
+  display: -webkit-box;
+  margin: 0 0 8px;
+  padding: 0 0 0 10px;
+  overflow: hidden;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  color: var(--muted);
+  font: italic 14px / 1.5 var(--body-font);
+  white-space: pre-wrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.mr-comment-quote.is-code {
+  font: 12.5px / 1.6 var(--mono);
+  overflow-wrap: anywhere;
+}
+
+.mr-composer textarea,
+.mr-reply textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: 15px / 1.55 var(--sans);
+  resize: none;
+}
+
+.mr-composer textarea {
+  min-height: 74px;
+  max-height: 320px;
+}
+
+/* The card shows focus; the field inside it does not need a second ring. */
+.mr-composer textarea:focus-visible,
+.mr-reply textarea:focus-visible {
+  outline: none;
+}
+
+.mr-composer textarea::placeholder,
+.mr-reply textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+/* Editors size their footer to themselves: a narrow one gives the status a line of its own and keeps
+   both buttons together on the right. */
+:is(.mr-composer, .mr-reply) {
+  container-type: inline-size;
+}
+
+.mr-compose-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+/* Status takes the row when there is room, and a row of its own in a narrow card. */
+.mr-comment-status {
+  flex: 1 1 150px;
+  min-width: 0;
+  margin: 0 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+@container (max-width: 380px) {
+  .mr-comment-status {
+    flex-basis: 100%;
+    margin-bottom: 2px;
+  }
+}
+
+.mr-compose-actions .mr-btn {
+  height: 34px;
+  padding: 0 13px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mr-cancel {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.mr-submit:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.mr-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 30;
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font: 13px / 1.3 var(--sans);
+  box-shadow: var(--shadow);
+  transform: translateX(-50%);
+  animation: mr-pop 0.18s ease-out;
+}
+
+.mr-toast a {
+  color: inherit;
+  font-weight: 600;
+}
+
+/* Search across the review (RFC 0045): a field and its results under the top bar, by the controls on the right. */
+.mr-search {
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  width: min(560px, calc(100vw - 24px));
+  max-height: min(78vh, 640px);
+  padding: 0;
+  overflow: hidden;
+}
+.mr-search[hidden],
+.mr-search-filters[hidden],
+.mr-search-bar[hidden] {
+  display: none;
+}
+.mr-search-label {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--rule);
+  color: var(--muted);
+}
+.mr-search-label:focus-within {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+.mr-search-field {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--fg);
+  font: 15px / 1.4 var(--sans);
+}
+.mr-search-field:focus-visible {
+  outline: none;
+}
+.mr-search-field::placeholder {
+  color: var(--muted);
+}
+.mr-search-field::-webkit-search-cancel-button {
+  appearance: none;
+}
+.mr-search-filters {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 14px 2px;
+}
+.mr-search-chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: 12.5px / 1 var(--sans);
+  cursor: pointer;
+}
+.mr-search-chip[aria-pressed="true"] {
+  border-color: var(--control-rule);
+  background: var(--selected-bg);
+  color: var(--fg);
+}
+.mr-search-count {
+  font-variant-numeric: tabular-nums;
+}
+.mr-search-changed {
+  margin-left: auto;
+}
+.mr-search-status {
+  flex: none;
+  margin: 0;
+  padding: 8px 14px;
+  color: var(--muted);
+  font: 12.5px / 1.4 var(--sans);
+}
+.mr-search-results {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0 6px 6px;
+}
+.mr-search-results:empty {
+  display: none;
+}
+.mr-search-file {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 8px 4px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 600 12.5px / 1.3 var(--sans);
+}
+.mr-search-file-dir {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-weight: 400;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mr-search-result {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  /* Keeps a result clear of its file's sticky heading when the arrow keys bring it into view. */
+  scroll-margin-top: 36px;
+}
+.mr-search-result:hover {
+  background: var(--soft);
+}
+/* The result Enter opens: tinted, and marked by a bar at its edge. */
+.mr-search-result[aria-selected="true"] {
+  background: var(--selected-bg);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.mr-search-where {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  color: var(--muted);
+  font: 12px / 1.35 var(--sans);
+}
+.mr-search-tag {
+  color: var(--fg);
+  font-weight: 600;
+}
+.mr-search-private {
+  font-style: italic;
+}
+.mr-search-excerpt {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--fg);
+  font: 14px / 1.45 var(--body-font);
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.mr-search-result:is(.is-code, .is-test) .mr-search-excerpt {
+  font: 13px / 1.5 var(--mono);
+}
+.mr-search-excerpt mark {
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  box-shadow: 0 2px 0 var(--accent);
+  color: inherit;
+}
+.mr-search-scope {
+  flex: none;
+  padding: 8px 14px 10px;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font: 12px / 1.45 var(--sans);
+}
+.mr-search-scope p {
+  margin: 2px 0;
+}
+.mr-search-unsearched {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+.mr-search-code {
+  appearance: none;
+  padding: 5px 11px;
+  border: 1px solid var(--control-rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+  font: 600 12px / 1.2 var(--sans);
+  cursor: pointer;
+}
+/* After choosing a result: where it is in the results, the next and previous ones, and the way back. */
+/* Centred by its insets, not a transform, so the pop-in animation cannot move it sideways. */
+.mr-search-bar {
+  position: fixed;
+  right: 16px;
+  bottom: 24px;
+  left: 16px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: fit-content;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 4px 4px 4px 16px;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font: 13px / 1.3 var(--sans);
+  box-shadow: var(--shadow);
+  animation: mr-pop 0.18s ease-out;
+}
+.mr-search-bar-text {
+  min-width: 0;
+  margin-right: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mr-search-step,
+.mr-search-close {
+  appearance: none;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.mr-search-step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.mr-search-step .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+.mr-search-back {
+  appearance: none;
+  flex: none;
+  margin-left: 4px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 600 13px / 1 var(--sans);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.mr-search-close {
+  font: 18px / 1 var(--sans);
+  opacity: 0.75;
+}
+.mr-search-close:hover {
+  opacity: 1;
+}
+@media (max-width: 760px) {
+  .mr-search {
+    right: 6px;
+    left: 6px;
+    width: auto;
+    max-height: calc(100dvh - 72px);
+  }
+  .mr-search-bar {
+    bottom: 16px;
+    padding-left: 14px;
+  }
+  .mr-search-back-rest {
+    display: none;
+  }
+}
+@media (hover: none), (max-width: 760px) {
+  .mr-search-chip,
+  .mr-search-code,
+  .mr-search-back,
+  .mr-search-result {
+    min-height: 44px;
+  }
+  .mr-search-step,
+  .mr-search-close {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Picking up a review read over several sittings: a quiet offer at the bottom, gone once reading moves on. */
+.mr-resume {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  padding: 6px 6px 6px 18px;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font: 13px / 1.3 var(--sans);
+  box-shadow: var(--shadow);
+  transform: translateX(-50%);
+  animation: mr-pop 0.18s ease-out;
+}
+.mr-resume-text {
+  min-width: 0;
+  margin-right: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mr-resume-go {
+  flex: none;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 600 13px / 1 var(--sans);
+  cursor: pointer;
+}
+.mr-resume-close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font: 18px / 1 var(--sans);
+  cursor: pointer;
+  opacity: 0.75;
+}
+.mr-resume-close:hover {
+  opacity: 1;
+}
+@media (hover: none), (max-width: 760px) {
+  .mr-resume-go {
+    min-height: 44px;
+  }
+  .mr-resume-close {
+    width: 44px;
+    height: 44px;
+  }
+}

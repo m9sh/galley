@@ -1,0 +1,220 @@
+/* ------------------------------------------------------------------ changes */
+
+.mr-content ins {
+  text-decoration: none;
+}
+
+/* Paper-like highlights follow each wrapped fragment without changing word spacing. */
+.mode-changes .mr-content ins.mr-ins {
+  background: var(--ins-band);
+  border-radius: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Warm deletion highlights retain the strike-through as a second change cue. */
+.mode-changes .mr-content del.mr-del {
+  color: var(--del);
+  background: var(--del-bg);
+  border-radius: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: var(--del-strike);
+}
+
+/* Separate the old and new wording of a replacement without adding spaces to the document. */
+.mode-changes .mr-content :is(del.mr-del + ins.mr-ins, ins.mr-ins + del.mr-del):not(.mr-line) {
+  margin-inline-start: 0.18em;
+}
+
+/* Code wraps instead of scrolling sideways: every line is a block, and wrapped parts continue under
+   the line's own indentation plus two characters (--indent is set per line). */
+.mr-content pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* --hang is declared on each line, where that line's own --indent is visible. */
+.mr-content pre :is(.mr-cl, .mr-line) {
+  --hang: calc(var(--indent, 0ch) + 2ch);
+}
+
+.mr-content pre .mr-cl {
+  display: block;
+  padding-left: var(--hang);
+  text-indent: calc(-1 * var(--hang));
+}
+
+.mr-root .mr-content pre .mr-line {
+  display: block;
+  margin: 0 -26px;
+  padding: 0 26px 0 calc(26px + var(--hang));
+  border-radius: 0;
+  text-decoration: none;
+  text-indent: calc(-1 * var(--hang));
+}
+
+.mr-content pre :is(.mr-cl, .mr-line):empty::before,
+.mr-code-text:empty::before {
+  content: "\200b";
+}
+
+.mode-changes .mr-content pre ins.mr-line {
+  background: var(--code-add);
+  box-shadow: inset 3px 0 0 var(--gutter-added);
+}
+
+.mode-changes .mr-content pre del.mr-line {
+  background: var(--code-del);
+  box-shadow: inset 3px 0 0 var(--gutter-removed);
+  color: color-mix(in srgb, var(--del) 60%, var(--fg));
+}
+
+.mode-changes .mr-content tr.mr-row-added > * {
+  background: var(--add-wash);
+}
+
+.mr-content tr.mr-ghost-row > * {
+  color: var(--del);
+}
+
+.mode-changes .mr-content tr.mr-ghost-row > * {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--del) 60%, transparent);
+}
+
+.mode-clean .mr-content tr.mr-ghost-row {
+  display: none;
+}
+
+/* New blocks are not tinted: the green margin bar marks them, and the text reads as text. */
+.mode-changes .mr-content pre[data-mr-change="added"] {
+  background-color: color-mix(in srgb, var(--add) 4%, var(--code-bg));
+}
+
+/* Removed blocks stay where they were, quietly: muted text under a small label, no fill. */
+.mode-changes .mr-content .mr-ghost {
+  color: color-mix(in srgb, var(--del) 35%, var(--muted));
+}
+
+.mode-changes .mr-content .mr-ghost::before {
+  content: "Removed";
+  display: block;
+  margin: 0 0 2px;
+  color: var(--del);
+  font: 600 10.5px / 1.6 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mr-content .mr-ghost > :first-child {
+  margin-top: 0;
+}
+
+.mode-changes .mr-content .mr-ghost:has(+ .mr-rewritten)::before {
+  content: "Previous version";
+}
+
+.mode-changes .mr-content li.mr-ghost::before {
+  display: inline;
+  margin-right: 8px;
+}
+
+.mode-changes .mr-content .mr-code-line.mr-ghost::before {
+  content: none;
+}
+
+.mr-content .mr-ghost :where(a, code, blockquote, th) {
+  color: inherit;
+  border-color: currentColor;
+}
+
+.mr-content li.mr-ghost::marker {
+  color: var(--del);
+}
+
+.mode-clean .mr-content .mr-ghost,
+.mode-clean .mr-content del.mr-del {
+  display: none;
+}
+
+.mr-flash {
+  animation: mr-flash 1.6s ease-out;
+}
+
+@keyframes mr-flash {
+  0%,
+  35% {
+    background-color: color-mix(in srgb, var(--fg) 5%, var(--bg));
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.mr-gutter {
+  position: absolute;
+  top: 0;
+  left: -36px;
+  width: 4px;
+  height: 100%;
+}
+
+/* Change markers stay quiet while reading: thin, half-strength bars that still tell added, edited and
+   removed apart. Pointing at one, or at the text beside it, brings it to full strength; the words
+   themselves carry the detail. */
+.mr-mark {
+  position: absolute;
+  left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--gutter-modified) 50%, var(--bg));
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    width 0.15s ease,
+    left 0.15s ease;
+}
+
+.mr-mark::before {
+  content: "";
+  position: absolute;
+  inset: -2px -7px;
+}
+
+.mr-mark.is-added {
+  background: color-mix(in srgb, var(--gutter-added) 50%, var(--bg));
+}
+
+.mr-mark.is-removed {
+  background: color-mix(in srgb, var(--gutter-removed) 50%, var(--bg));
+}
+
+.mr-mark:is(:hover, .is-hot) {
+  left: -0.5px;
+  width: 3px;
+  background: var(--gutter-modified);
+}
+.mr-mark.is-added:is(:hover, .is-hot) {
+  background: var(--gutter-added);
+}
+.mr-mark.is-removed:is(:hover, .is-hot) {
+  background: var(--gutter-removed);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mr-mark {
+    transition: none;
+  }
+}
+
+.mr-mark.is-point {
+  left: -2px;
+  width: 8px;
+  /* biome-ignore lint/complexity/noImportantStyles: the bar's height is set inline from its measured position */
+  height: 8px !important;
+  border-radius: 50%;
+}

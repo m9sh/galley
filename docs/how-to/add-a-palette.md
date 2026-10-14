@@ -7,7 +7,7 @@ A palette is a set of colour token values with a light and a dark version ([ADR 
 - `src/ui/preferences/settings.ts`: add the id to `THEMES`, in its place in the order (neutral, warm, cool, then expressive).
 - `src/ui/review/reader.ts`: add `[id, 'Name', 'Short caption']` to `PALETTES`, in the same place. The caption says what it is like ("Warm paper", "Arctic blue"). The carousel shows six to a page and its dots update by themselves.
 
-## 2. Light values: `src/ui/components/reader.css`
+## 2. Light values: `src/ui/components/styles/01-palette.css`
 
 Add a block next to the other light palettes. The selector covers both the page and the palette card that previews it:
 

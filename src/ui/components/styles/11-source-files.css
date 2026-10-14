@@ -1,0 +1,166 @@
+/* Optional source files follow the document stream. Source is always plain text. */
+.mr-empty-reader {
+  padding: 24px 0;
+}
+.mr-code-lines {
+  box-sizing: border-box;
+  width: 100%;
+  overflow: auto;
+  border-radius: 6px;
+  background: var(--code-bg);
+}
+/* The space above and below the lines is a strip of its own, so a changed first or last line can carry its
+   colour and margin bar through it instead of ending in a band of neutral shade. */
+.mr-code-lines::before,
+.mr-code-lines::after {
+  content: "";
+  display: block;
+  height: 12px;
+}
+.mr-code-lines::before {
+  background: var(--lead-bg, transparent);
+  box-shadow: var(--lead-bar, none);
+}
+.mr-code-lines::after {
+  background: var(--tail-bg, transparent);
+  box-shadow: var(--tail-bar, none);
+}
+.mode-changes .mr-document:not(.doc-added, .doc-removed) .mr-code-lines:has(> :first-child[data-mr-change="added"]) {
+  --lead-bg: var(--code-add);
+  --lead-bar: inset 3px 0 0 var(--gutter-added);
+}
+.mode-changes .mr-document:not(.doc-added, .doc-removed) .mr-code-lines:has(> :first-child[data-mr-change="removed"]) {
+  --lead-bg: var(--code-del);
+  --lead-bar: inset 3px 0 0 var(--gutter-removed);
+}
+.mode-changes .mr-document:not(.doc-added, .doc-removed) .mr-code-lines:has(> :last-child[data-mr-change="added"]) {
+  --tail-bg: var(--code-add);
+  --tail-bar: inset 3px 0 0 var(--gutter-added);
+}
+.mode-changes .mr-document:not(.doc-added, .doc-removed) .mr-code-lines:has(> :last-child[data-mr-change="removed"]) {
+  --tail-bg: var(--code-del);
+  --tail-bar: inset 3px 0 0 var(--gutter-removed);
+}
+/* The gutter keeps old number, new number and sign close together, set apart from the code by space. */
+.mr-code-lines {
+  --gutter: calc((var(--digits, 3) * 2 + 3.4) * 0.6 * var(--code-size) + 27px);
+}
+/* + and − beside changed lines are optional (Reading settings → Review); without them the column narrows to a gap. */
+.mr-root {
+  --sign-width: 2.2ch;
+}
+.mr-root.no-signs {
+  --sign-width: 0.6ch;
+}
+.no-signs .mr-code-sign {
+  visibility: hidden;
+}
+.mr-code-line {
+  display: grid;
+  grid-template-columns: calc(var(--digits, 3) * 1ch + 0.6ch) calc(var(--digits, 3) * 1ch + 0.6ch) var(--sign-width) minmax(0, 1fr);
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 24px;
+  padding-right: 16px;
+  padding-left: 12px;
+  font: var(--code-size) / 1.8 var(--mono);
+  white-space: pre-wrap;
+}
+.mr-code-text {
+  --hang: calc(var(--indent, 0ch) + 2ch);
+  padding-left: calc(var(--hang) + 15px);
+  text-indent: calc(-1 * var(--hang));
+  overflow-wrap: anywhere;
+}
+.mr-code-number {
+  color: var(--muted);
+  text-align: right;
+  padding-right: 0.6ch;
+  user-select: none;
+}
+.mr-code-sign {
+  color: var(--muted);
+  text-align: center;
+  user-select: none;
+}
+.mr-code-line[data-mr-change="added"] {
+  background: var(--code-add);
+  box-shadow: inset 3px 0 0 var(--gutter-added);
+}
+.mr-code-line[data-mr-change="removed"] {
+  background: var(--code-del);
+  box-shadow: inset 3px 0 0 var(--gutter-removed);
+  color: color-mix(in srgb, var(--del) 60%, var(--fg));
+}
+.mr-content .mr-code-line.mr-ghost {
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border: 0;
+  text-decoration: none;
+}
+.mr-code-lines .mr-context-gap {
+  padding: 0 12px;
+}
+.mode-clean .mr-code-line[data-mr-change="added"] {
+  background: transparent;
+  box-shadow: none;
+}
+/* Moved code, at both ends: its own calm tint, even in a new or deleted file, and a note that goes to the
+   other end. The note sits in the code column, where the eye already is. */
+.mode-changes .mr-document .mr-code-line[data-mr-moved][data-mr-change] {
+  background: var(--code-moved);
+  box-shadow: inset 3px 0 0 var(--gutter-moved);
+  color: inherit;
+}
+.mode-changes .mr-document .mr-code-lines:has(> :first-child[data-mr-moved][data-mr-change]) {
+  --lead-bg: var(--code-moved);
+  --lead-bar: inset 3px 0 0 var(--gutter-moved);
+}
+.mode-changes .mr-document .mr-code-lines:has(> :last-child[data-mr-moved][data-mr-change]) {
+  --tail-bg: var(--code-moved);
+  --tail-bar: inset 3px 0 0 var(--gutter-moved);
+}
+.mr-move-note {
+  display: grid;
+  grid-template-columns: calc(var(--digits, 3) * 1ch + 0.6ch) calc(var(--digits, 3) * 1ch + 0.6ch) var(--sign-width) minmax(0, 1fr);
+  padding: 6px 16px 2px 12px;
+  background: var(--code-moved);
+  box-shadow: inset 3px 0 0 var(--gutter-moved);
+  font: var(--code-size) / 1.8 var(--mono);
+}
+.mr-move-link {
+  grid-column: 4;
+  justify-self: start;
+  margin-left: 15px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: 600 12px / 1.8 var(--sans);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.mr-move-link::after {
+  content: " →";
+}
+.mr-move-link:hover {
+  text-decoration-style: solid;
+}
+.mr-move-note.is-flash {
+  animation: mr-move-flash 1.2s ease-out;
+}
+@keyframes mr-move-flash {
+  from {
+    box-shadow:
+      inset 3px 0 0 var(--gutter-moved),
+      inset 0 0 0 2px var(--gutter-moved);
+  }
+}
+.mode-clean .mr-move-note {
+  display: none;
+}
+.mr-chip.is-moved .mr-dot {
+  color: var(--gutter-moved);
+}
