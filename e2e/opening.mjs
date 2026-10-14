@@ -23,6 +23,29 @@ export async function checkOpening(executablePath, screenshots) {
     await settings.click('#read-button');
     await settings.waitForFunction(() => document.querySelector('#status').textContent.includes('button is off'));
     console.log('Opening: page-button choice saved.');
+    // Remembering project outlines starts off, keeps what it keeps in extension storage, and forgets all of it when turned off.
+    assert.equal(await settings.$eval('#remember-outlines', (control) => control.checked), false);
+    assert.equal(await settings.$eval('#forget-outlines', (button) => button.disabled), true);
+    await settings.click('#remember-outlines');
+    await settings.waitForFunction(() => document.querySelector('#status').textContent.includes('will remember project outlines'));
+    await settings.evaluate(() =>
+      chrome.storage.local.set({
+        'galley:outlines': { fingerprint: { used: Date.now(), chars: 2500, site: 'https://github.com' } },
+        'galley:outlines:fingerprint': { v: 1, docs: {} },
+      }),
+    );
+    await settings.reload();
+    await settings.waitForFunction(() => document.querySelector('#remembered').textContent === 'Remembered now: 1 project, about 3 KB.');
+    await settings.click('#forget-outlines');
+    await settings.waitForFunction(() => document.querySelector('#remembered').textContent === 'Nothing is remembered now.');
+    assert.deepEqual(
+      await settings.evaluate(async () => Object.keys(await chrome.storage.local.get(null)).filter((key) => key.startsWith('galley:outlines'))),
+      [],
+    );
+    await settings.click('#remember-outlines');
+    await settings.waitForFunction(() => document.querySelector('#status').textContent.includes('no longer remembers'));
+    assert.equal(await settings.evaluate(async () => (await chrome.storage.local.get('galley:settings'))['galley:settings'].rememberOutlines), false);
+    console.log('Opening: remembering project outlines is off by default, shows what is kept, and forgets it.');
     const commands = await settings.evaluate(() => chrome.commands.getAll());
     assert.equal(
       commands.some((command) => command.name === 'read-page' && command.description === 'Read this page in Galley'),

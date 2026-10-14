@@ -29,6 +29,7 @@ Describe the benefit before the visual metaphor. The book-proof origin of Galley
 | Changed parts / Whole files | The exact Context choices in the reader |
 | Marked / Clean | The exact Change marks choices in the reader |
 | Viewed | File review progress, saved locally or synced with GitHub when a token is available |
+| Remember project outlines on this device / Forget remembered outlines | The optional setting that keeps each document's title, headings and links (never its text) for a week, and the control that removes them |
 
 Use actual control labels in help text. Calls to action should say what happens: **Add to Chrome**, **Try the live demo**, **Save token**.
 

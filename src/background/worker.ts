@@ -2,6 +2,7 @@
 // Content scripts ask for specific API calls; the token never enters the page's renderer.
 import { allowedRequest, fetchGitHub, FORWARDED_HEADERS, type ApiMessage, type ApiReply } from '../platforms/github-api.ts';
 import { restoreSites } from '../platforms/sites.ts';
+import { pruneOutlines } from '../ui/library/outline-store.ts';
 import { OPEN_READER, READ_COMMAND } from '../platforms/page-actions.ts';
 import { getToken, migrateTokens } from '../platforms/tokens.ts';
 
@@ -13,7 +14,7 @@ async function handle(message: ApiMessage, sender: chrome.runtime.MessageSender)
   if (message.type === 'galley:has-token') return { has: Boolean(token) };
   if (!allowedRequest(page.origin, sender.url, message.url, message.method, message.body)) return { error: 'Galley does not make this request.' };
   try {
-    const res = await fetchGitHub(message.url, message.method, message.body, token);
+    const res = await fetchGitHub(message.url, message.method, message.body, token, message.etag);
     const headers: Record<string, string> = {};
     for (const name of FORWARDED_HEADERS) {
       const value = res.headers.get(name);
@@ -35,6 +36,10 @@ chrome.runtime.onMessage.addListener((message: ApiMessage, sender, reply) => {
 const restore = () => {
   restoreSites().catch(() => {
     // A site the browser cannot register for stays listed as off in the popup, where it can be enabled again.
+  });
+  // Remembered project outlines expire a week after their last use even when nothing is read or saved in the meantime.
+  pruneOutlines().catch(() => {
+    // They are checked again on the next start, and are never used past their week.
   });
 };
 chrome.runtime.onInstalled.addListener(restore);

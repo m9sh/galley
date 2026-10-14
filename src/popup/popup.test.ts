@@ -3,6 +3,8 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 const tokens = vi.hoisted(() => ({ getToken: vi.fn(), setToken: vi.fn(), migrateTokens: vi.fn() }));
 vi.mock('../platforms/tokens.ts', () => tokens);
+const outlines = vi.hoisted(() => ({ forgetOutlines: vi.fn() }));
+vi.mock('../ui/library/outline-store.ts', () => outlines);
 const html = readFileSync('src/popup/popup.html', 'utf8');
 let saved: string | null;
 let granted: boolean;
@@ -22,6 +24,7 @@ beforeEach(() => {
   granted = false;
   registered = false;
   tokens.migrateTokens.mockResolvedValue(undefined);
+  outlines.forgetOutlines.mockResolvedValue(undefined);
   tokens.getToken.mockImplementation(async () => saved);
   tokens.setToken.mockImplementation(async (_origin, value) => {
     saved = value;
@@ -82,6 +85,18 @@ it('keeps a GitHub token out of the input and scopes saving and removal to the d
   q('#token-status button').click();
   await vi.waitFor(() => expect(q('#token-status').textContent).toBe(''));
   expect(tokens.setToken).toHaveBeenLastCalledWith('https://github.com', null);
+  // What was remembered about that site's projects goes with its token.
+  expect(outlines.forgetOutlines).toHaveBeenCalledExactlyOnceWith('https://github.com');
+});
+
+it('removes a token even when what was remembered about the site cannot be forgotten right now', async () => {
+  saved = 'secret';
+  outlines.forgetOutlines.mockRejectedValue(new Error('storage unavailable'));
+  await open();
+  await vi.waitFor(() => expect(q('#token-status').textContent).toContain('A token is saved'));
+  q('#token-status button').click();
+  await vi.waitFor(() => expect(q('#token-status').textContent).toBe(''));
+  expect(saved).toBeNull();
 });
 
 it('shows built-in GitLab support without requesting a GitHub token', async () => {

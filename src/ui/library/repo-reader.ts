@@ -1,3 +1,4 @@
+import { BlobCache } from '../../core/blob-cache.ts';
 import { relatedDocuments, type ChapterContext } from '../../core/review-context.ts';
 import { chapterAttachment } from '../components/chapter-attachment.ts';
 import type { ContextOpening } from '../components/chapter-context.ts';
@@ -9,7 +10,6 @@ import {
   fileTitle,
   folderTree,
   indexCoverage,
-  indexDocument,
   KIND_NAMES,
   KIND_SOURCES,
   ProjectIndex,
@@ -46,6 +46,7 @@ import { digestText, ProjectNotes, when } from './project-store.ts';
 import { loadImage, renderDocument, type RenderedDoc } from '../rendering/render.ts';
 import { button, configStatus, exportSheet, external, h, lensSwitch, lensView, notesView, type ConfigState } from './repo-views.ts';
 import repoCss from './repo.css';
+import { recallOutlines, rememberOutlines, touchOutlines, type Remembered } from './outline-cache.ts';
 import { ReadingSequence, sequenceRoute, sequenceView, type ReadingStop } from './reading-sequence.ts';
 import { documentMap, reviewMap } from '../../core/project-map.ts';
 import { DocumentMap } from './map-view.ts';
@@ -282,6 +283,12 @@ class RepoReader {
   private index: ProjectIndex | null = null;
   private readonly corrections: Corrections = { docs: new Map(), folders: new Map() };
   private readonly cache = new Map<string, Promise<string>>();
+  /** Documents read so far by the hash of their content, kept across a refresh: a newer commit reads only what changed (RFC 0074). */
+  private readonly blobs = new BlobCache();
+  /** The listing's hash for each document at this snapshot's commit. */
+  private readonly blobOf = new Map<string, string>();
+  /** What this device remembers of the project's documents, asked for once and only when the reader allows it (outline-cache.ts). */
+  private remembered: Promise<Map<string, Remembered>> | null = null;
   /** Documents read in this snapshot; those read before the listing arrived join the map as soon as it exists. */
   private readonly read = new Map<string, string>();
   /** The pass reading documents for the map, while it runs. */
@@ -499,6 +506,7 @@ class RepoReader {
     if (this.config.run) this.config.run.cancelled = true;
     this.mapView?.destroy();
     this.reviewMap?.destroy();
+    this.blobs.clear();
     this.notes?.flush();
     for (const type of ['keydown', 'keyup', 'keypress']) window.removeEventListener(type, this.shield, true);
     this.dark.removeEventListener('change', this.onSchemeChange);
@@ -517,9 +525,11 @@ class RepoReader {
       (found) => {
         if (this.source === source) {
           this.listing = found;
+          for (const doc of [...found.docs, ...found.configs.files]) if (doc.blob !== undefined) this.blobOf.set(doc.path, doc.blob);
           this.index = new ProjectIndex(found.docs.map((doc) => doc.path));
-          // Documents already read in this snapshot count for the map at once.
-          for (const [path, text] of this.read) this.index.add(indexDocument(path, text));
+          // Documents already read in this snapshot count for the map at once, and are remembered by their hash.
+          for (const [path, pending] of this.cache) this.keep(path, pending);
+          for (const [path, text] of this.read) this.index.add(this.indexed(path, text));
           this.buildOutline();
           this.updateBacklinks();
         }
@@ -533,14 +543,33 @@ class RepoReader {
     return this.discovery;
   }
 
+  /** One document at this snapshot's commit: one already read with the same content is not read again. */
   private load(path: string): Promise<string> {
     let text = this.cache.get(path);
     if (!text) {
-      text = this.source!.load(path);
+      const blob = this.blobOf.get(path);
+      const kept = blob === undefined ? undefined : this.blobs.text(blob);
+      text = kept === undefined ? this.source!.load(path) : Promise.resolve(kept);
       this.cache.set(path, text);
       text.catch(() => this.cache.delete(path));
+      if (kept === undefined) this.keep(path, text);
     }
     return text;
+  }
+
+  /** Remember a document by its hash once it is read, and once the listing has said what the hash is. */
+  private keep(path: string, pending: Promise<string>): void {
+    const blob = this.blobOf.get(path);
+    if (blob !== undefined)
+      void pending.then(
+        (text) => this.blobs.put(blob, text),
+        () => undefined,
+      );
+  }
+
+  /** What the map learns from a document, reused when the same content was read at this path before. */
+  private indexed(path: string, text: string) {
+    return this.blobs.indexed(this.blobOf.get(path), path, text);
   }
 
   private showSnapshot(): void {
@@ -611,6 +640,7 @@ class RepoReader {
     this.listing = null;
     this.index = null;
     this.cache.clear();
+    this.blobOf.clear();
     this.read.clear();
     this.unreadable.failed.clear();
     this.unreadable.skipped.clear();
@@ -668,7 +698,7 @@ class RepoReader {
     }
     if (this.closed || this.path !== path || this.source !== source) return;
     this.read.set(path, text);
-    if (this.index && !this.index.docs.has(path)) this.index.add(indexDocument(path, text));
+    if (this.index && !this.index.docs.has(path)) this.index.add(this.indexed(path, text));
     let r: RenderedDoc;
     try {
       r = renderDocument(document, {
@@ -726,7 +756,7 @@ class RepoReader {
       const attachment = chapterAttachment({
         chapters: review.chapters.map((chapter) => ({ id: chapter.id!, title: chapter.title })),
         current: review.entry?.chapter,
-        headings: indexDocument(path, this.read.get(path)!).headings,
+        headings: this.indexed(path, this.read.get(path)!).headings,
         add: (chapter, heading, label) => {
           review.context!.add({ chapter, commit: source.commit, path, heading, title: heading ? `${title} — ${label}` : title });
         },
@@ -737,7 +767,7 @@ class RepoReader {
       intro.push(
         chapterAttachment({
           chapters: [{ id: 'library', title: 'Your reading sequence' }],
-          headings: indexDocument(path, this.read.get(path)!).headings,
+          headings: this.indexed(path, this.read.get(path)!).headings,
           scope: 'library',
           add: (_chapter, anchor, label) => this.addStop({ path, anchor, title: anchor ? `${title} — ${label}` : title }),
         }),
@@ -790,7 +820,7 @@ class RepoReader {
     pane.replaceChildren(sequenceView(this.sequence.items, this.sequence.current(this.path, this.readingAnchor), shortSha(this.source!.commit)));
     // Only links written in the current document are offered. No index scan or folder inference.
     if (this.path && this.read.has(this.path)) {
-      const doc = indexDocument(this.path, this.read.get(this.path)!);
+      const doc = this.indexed(this.path, this.read.get(this.path)!);
       const links = doc.links.filter((link) => link.path && link.path !== this.path && /\.(md|markdown|mdown|mkd|mdx)$/i.test(link.path));
       if (links.length) {
         const section = h('section', 'mr-sequence-links');
@@ -1150,6 +1180,8 @@ class RepoReader {
     this.indexedOnce = true;
     this.refreshIndexViews();
     const sizes = new Map(this.listing!.docs.flatMap((doc) => (doc.size === undefined ? [] : [[doc.path, doc.size] as [string, number]])));
+    const remembered = await this.recall();
+    let recalled = 0;
     let last = 0;
     // Documents read for the map also count for suggestions in the architecture views.
     const load = async (path: string) => {
@@ -1160,6 +1192,14 @@ class RepoReader {
     const result = await readForIndex(index, load, {
       sizes,
       signal,
+      // A document whose content hash is the one remembered is not read again.
+      known: (path) => {
+        const item = remembered.get(path);
+        if (item === undefined || item.blob !== this.blobOf.get(path)) return undefined;
+        recalled++;
+        return item.doc;
+      },
+      parse: (path, text) => this.indexed(path, text),
       progress: () => {
         if (Date.now() - last < 250) return;
         last = Date.now();
@@ -1171,6 +1211,32 @@ class RepoReader {
     for (const path of result.failed) this.unreadable.failed.add(path);
     for (const path of result.skipped) this.unreadable.skipped.add(path);
     if (!this.closed) this.refreshIndexViews();
+    if (this.settings.rememberOutlines) this.saveOutlines(remembered, result.read > recalled);
+  }
+
+  private recall(): Promise<Map<string, Remembered>> {
+    this.remembered ??= this.settings.rememberOutlines ? recallOutlines(this.source!.id) : Promise.resolve(new Map());
+    return this.remembered;
+  }
+
+  /**
+   * Keep what the map learned, with what was remembered before and is still the same content, on this device. Nothing
+   * new to keep only marks the project as used, so it is forgotten a week after the last visit, not the last change.
+   */
+  private saveOutlines(before: Map<string, Remembered>, changed: boolean): void {
+    const source = this.source!;
+    if (!changed) return void touchOutlines(source.id);
+    const docs = new Map<string, Remembered>();
+    for (const [path, item] of before) if (item.blob === this.blobOf.get(path)) docs.set(path, item);
+    for (const doc of this.index!.docs.values()) {
+      const blob = this.blobOf.get(doc.path);
+      if (blob !== undefined && !doc.unread) docs.set(doc.path, { blob, doc });
+    }
+    void rememberOutlines(
+      source.id,
+      new URL(source.url).origin,
+      [...docs].map(([path, item]) => ({ path, ...item })),
+    );
   }
 
   /** Only offered while a pass runs: the status is redrawn as soon as one starts or ends. */
@@ -1544,7 +1610,7 @@ class RepoReader {
     const path = this.path;
     const text = path === null ? undefined : this.read.get(path);
     if (text === undefined) return options;
-    const doc = indexDocument(path!, text);
+    const doc = this.indexed(path!, text);
     const title = doc.title.slice(0, 200);
     options.set(`${path}\u0000`, { path: path!, heading: null, label: title, text });
     for (const heading of doc.headings.filter((heading) => heading.id.length <= 200))

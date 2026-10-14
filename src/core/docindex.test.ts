@@ -6,9 +6,12 @@ import {
   INDEX_BATCH,
   indexCoverage,
   indexDocument,
+  OUTLINE_FORMAT,
   pathKind,
   ProjectIndex,
   readForIndex,
+  restoreDoc,
+  storeDoc,
   type Corrections,
 } from './docindex.ts';
 import { MAX_DOCUMENT_CHARS } from './limits.ts';
@@ -197,4 +200,81 @@ it('says what an index was built from, what the listing left out and what could 
     '2 documents could not be read.',
     '1 document is too large to read.',
   ]);
+});
+
+it('documents whose reading is known are added without being read, and a text is read by the caller’s own parse', async () => {
+  const index = new ProjectIndex(['a.md', 'b.md', 'c.md']);
+  const known = indexDocument('a.md', '# Remembered');
+  const read: string[] = [];
+  const parsed: string[] = [];
+  const result = await readForIndex(
+    index,
+    async (path) => {
+      read.push(path);
+      return `# ${path}`;
+    },
+    {
+      // Remembered even though the listing calls it too large: a reading is only kept for a document that was read.
+      sizes: new Map([['a.md', MAX_DOCUMENT_CHARS + 1]]),
+      known: (path) => (path === 'a.md' ? known : undefined),
+      parse: (path, src) => {
+        parsed.push(path);
+        return indexDocument(path, src);
+      },
+    },
+  );
+  expect(result).toStrictEqual({ read: 3, failed: [], skipped: [] });
+  expect(read).toStrictEqual(['b.md', 'c.md']);
+  expect(parsed).toStrictEqual(['b.md', 'c.md']);
+  expect(index.docs.get('a.md')).toBe(known);
+});
+
+const FIXTURE =
+  '---\ntype: ADR\nstatus: Accepted\n---\n# Queue\n\n## Status\n\nAccepted\n\n## Context\n\nSee [the spec](../specs/reading.md#goals) and <a id="raw"></a>.';
+
+it('a reading survives being kept and restored, as plain data', () => {
+  const doc = indexDocument('docs/adr/0002-queue.md', FIXTURE);
+  const stored = JSON.parse(JSON.stringify(storeDoc({ ...doc, unread: 'failed' })));
+  expect(stored.unread).toBeUndefined();
+  expect(stored.anchors).toStrictEqual(['queue', 'status', 'context', 'raw']);
+  expect(restoreDoc(stored, 'docs/adr/0002-queue.md')).toStrictEqual(doc);
+});
+
+it('what a reading holds is part of the version of readings kept on a device: change OUTLINE_FORMAT when this changes', () => {
+  expect(OUTLINE_FORMAT).toBe(1);
+  expect(JSON.stringify(storeDoc(indexDocument('docs/adr/0002-queue.md', FIXTURE)))).toBe(
+    '{"path":"docs/adr/0002-queue.md","title":"Queue","kind":"decision","kindFrom":"metadata","status":"Accepted","statusAlso":null,' +
+      '"meta":{"type":"ADR","status":"Accepted"},"headings":[{"level":1,"text":"Queue","id":"queue","line":5},{"level":2,"text":"Status","id":"status","line":7},' +
+      '{"level":2,"text":"Context","id":"context","line":11}],"links":[{"href":"../specs/reading.md#goals","text":"the spec","line":13,"section":"Context",' +
+      '"path":"docs/specs/reading.md","anchor":"goals"}],"anchors":["queue","status","context","raw"]}',
+  );
+});
+
+it('a stored reading is trusted only when every part of it is what it should be, and only for its own path', () => {
+  const good = JSON.parse(JSON.stringify(storeDoc(indexDocument('a.md', FIXTURE))));
+  expect(restoreDoc(good, 'a.md')).not.toBeNull();
+  expect(restoreDoc(good, 'b.md')).toBeNull();
+  const damaged: Array<[string, unknown]> = [
+    ['title', 7],
+    ['kind', 'poem'],
+    ['kind', 'toString'],
+    ['kindFrom', 'guess'],
+    ['status', 7],
+    ['statusAlso', undefined],
+    ['meta', []],
+    ['meta', null],
+    ['meta', { type: 1 }],
+    ['headings', 'none'],
+    ['headings', [{ level: 1.5, text: 'x', id: 'x', line: 1 }]],
+    ['headings', [null]],
+    ['links', [{ href: 'x.md', text: 'x', line: 1, section: 3, path: null, anchor: '' }]],
+    ['links', [{ href: 'x.md', text: 'x', line: 1, section: null, path: 4, anchor: '' }]],
+    ['anchors', [1]],
+    ['anchors', 'queue'],
+  ];
+  for (const [field, value] of damaged) expect(restoreDoc({ ...good, [field]: value }, 'a.md'), `${field}: ${JSON.stringify(value)}`).toBeNull();
+  for (const value of [null, 'a.md', 7, undefined]) expect(restoreDoc(value, 'a.md')).toBeNull();
+  // A document with no front matter, section or links still restores.
+  const bare = JSON.parse(JSON.stringify(storeDoc(indexDocument('b.md', 'hello'))));
+  expect(restoreDoc(bare, 'b.md')).toMatchObject({ title: 'b', status: null, links: [] });
 });

@@ -104,33 +104,47 @@ const missingIn = (hasToken: boolean) => (what: string) => () =>
     !hasToken,
   );
 
-/** The repository page's branch, tag or commit, resolved to one commit. */
-export async function loadGitHubRepository(ctx: GitHubRepoContext, github: GitHubApi): Promise<RepositorySource> {
+/**
+ * The repository page's branch, tag or commit, resolved to one commit. A refresh passes the snapshot it is checking
+ * (`again`): GitHub is asked whether its answer has changed, and "not modified" returns that snapshot at no cost to the hourly limit.
+ */
+export async function loadGitHubRepository(
+  ctx: GitHubRepoContext,
+  github: GitHubApi,
+  again?: { source: RepositorySource; etag: string },
+): Promise<RepositorySource> {
   const hasToken = await github.hasToken();
   const repoApi = `${ctx.apiBase}/repos/${ctx.owner}/${ctx.repo}`;
   const missing = missingIn(hasToken);
   // The shortest ref GitHub knows wins, as on github.com itself. One small request per candidate.
-  let resolved: { ref: string | null; path: string; commit: string } | null = null;
-  for (const candidate of refCandidates(ctx)) {
+  let resolved: { ref: string | null; path: string; commit: string; etag: string | null; first: boolean } | null = null;
+  for (const [at, candidate] of refCandidates(ctx).entries()) {
     const query = candidate.ref === null ? '' : `sha=${encodeURIComponent(candidate.ref)}&`;
     try {
-      const [latest] = await readWithRetry(() => github.request<Array<{ sha: string }>>(`${repoApi}/commits?${query}per_page=1`)).then((r) => r.data);
-      resolved = { ...candidate, commit: latest.sha };
+      // Only the first candidate is asked again: a shorter ref cannot have appeared in front of it.
+      const conditional = at === 0 && again ? { etag: again.etag } : undefined;
+      const {
+        data: [latest],
+        headers,
+      } = await readWithRetry(() => github.request<Array<{ sha: string }>>(`${repoApi}/commits?${query}per_page=1`, conditional));
+      resolved = { ...candidate, commit: latest.sha, etag: headers.get('etag'), first: at === 0 };
       break;
     } catch (err) {
+      if (err instanceof HttpError && err.status === 304) return again!.source;
       if (err instanceof HttpError && err.status === 409) throw new ReaderError('This repository has no commits yet.', 'There is nothing to read here.');
       // Not a branch, tag or commit: the ref may be longer.
       if (!(err instanceof HttpError) || (err.status !== 404 && err.status !== 422)) throw explainGitHub(err, hasToken, missing('repository'));
     }
   }
   if (!resolved) throw missing(ctx.view === 'root' ? 'repository' : 'branch or tag')();
-  const { ref, path, commit } = resolved;
-  return githubRepositoryAt(ctx, github, hasToken, {
+  const { ref, path, commit, etag, first } = resolved;
+  const source: RepositorySource = githubRepositoryAt(ctx, github, hasToken, {
     ref,
     commit,
     // A commit never moves; a branch or tag can be checked again.
     pinned: ref !== null && commit.startsWith(ref),
     start: { path, folder: ctx.view !== 'blob' },
-    refresh: () => loadGitHubRepository(ctx, github),
+    refresh: () => loadGitHubRepository(ctx, github, first && etag ? { source, etag } : undefined),
   });
+  return source;
 }

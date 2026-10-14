@@ -167,6 +167,65 @@ export function indexDocument(path: string, src: string): IndexedDoc {
   };
 }
 
+/**
+ * The version of what `indexDocument` returns. A reading kept on the device (library/outline-cache.ts) from another
+ * version is ignored, so change this whenever a document would be read differently. docindex.test.ts fails when it should change.
+ */
+export const OUTLINE_FORMAT = 1;
+
+/** A document's reading as plain data, for keeping on the device. */
+export type StoredDoc = Omit<IndexedDoc, 'anchors' | 'unread'> & { anchors: string[] };
+
+export function storeDoc(doc: IndexedDoc): StoredDoc {
+  const { anchors, unread: _unread, ...rest } = doc;
+  return { ...rest, anchors: [...anchors] };
+}
+
+type Check = (value: unknown) => boolean;
+const text: Check = (value) => typeof value === 'string';
+const whole: Check = (value) => Number.isInteger(value);
+const maybe =
+  (check: Check): Check =>
+  (value) =>
+    value === null || check(value);
+const word =
+  (words: object): Check =>
+  (value) =>
+    typeof value === 'string' && Object.hasOwn(words, value);
+const listOf =
+  (check: Check): Check =>
+  (value) =>
+    Array.isArray(value) && value.every(check);
+const mapOf =
+  (check: Check): Check =>
+  (value) =>
+    typeof value === 'object' && value !== null && !Array.isArray(value) && Object.values(value).every(check);
+const shaped =
+  (shape: Record<string, Check>): Check =>
+  (value) =>
+    typeof value === 'object' && value !== null && Object.entries(shape).every(([key, check]) => check((value as Record<string, unknown>)[key]));
+
+/** Everything a stored reading must hold, checked before it is trusted: storage can be damaged or written by another version. */
+export const isStoredDoc: Check = shaped({
+  path: text,
+  title: text,
+  kind: word(KIND_NAMES),
+  kindFrom: word(KIND_SOURCES),
+  status: maybe(text),
+  statusAlso: maybe(text),
+  meta: mapOf(text),
+  headings: listOf(shaped({ level: whole, text, id: text, line: whole })),
+  links: listOf(shaped({ href: text, text, line: whole, section: maybe(text), path: maybe(text), anchor: text })),
+  anchors: listOf(text),
+});
+
+/** A reading kept by `storeDoc`, or null when it is not one for this path. */
+export function restoreDoc(value: unknown, path: string): IndexedDoc | null {
+  if (!isStoredDoc(value) || (value as StoredDoc).path !== path) return null;
+  const stored = value as StoredDoc;
+  return { ...stored, anchors: new Set(stored.anchors) };
+}
+
 /** The kind the reader sees: their correction first, then the document's own. */
 export function classify(doc: IndexedDoc, corrections: Corrections): { kind: DocKind; from: KindSource } {
   const own = corrections.docs.get(doc.path);
@@ -309,13 +368,22 @@ export function folderTree(paths: string[]): FolderNode {
 
 /**
  * Read documents for the map, a few at a time, stopping at INDEX_BATCH or when cancelled. Documents
- * that cannot be read or are too large are reported, never guessed at.
+ * that cannot be read or are too large are reported, never guessed at. The caller can reuse what it
+ * already learned: `known` gives a document whose reading was remembered, which is then not read at all,
+ * and `parse` the reading of a text.
  */
 export async function readForIndex(
   index: ProjectIndex,
   load: (path: string) => Promise<string>,
-  options: { sizes?: Map<string, number>; signal?: { cancelled: boolean }; progress?: () => void } = {},
+  options: {
+    sizes?: Map<string, number>;
+    signal?: { cancelled: boolean };
+    progress?: () => void;
+    known?: (path: string) => IndexedDoc | undefined;
+    parse?: (path: string, src: string) => IndexedDoc;
+  } = {},
 ): Promise<{ read: number; failed: string[]; skipped: string[] }> {
+  const parse = options.parse ?? indexDocument;
   const queue = index.unread().slice(0, INDEX_BATCH);
   const failed: string[] = [];
   const skipped: string[] = [];
@@ -326,7 +394,11 @@ export async function readForIndex(
   };
   const worker = async () => {
     for (let path = queue.shift(); path !== undefined && !options.signal?.cancelled; path = queue.shift()) {
-      if ((options.sizes?.get(path) ?? 0) > MAX_DOCUMENT_CHARS) unread(path, 'too-large');
+      const remembered = options.known?.(path);
+      if (remembered) {
+        index.add(remembered);
+        read++;
+      } else if ((options.sizes?.get(path) ?? 0) > MAX_DOCUMENT_CHARS) unread(path, 'too-large');
       else {
         let src: string;
         try {
@@ -340,7 +412,7 @@ export async function readForIndex(
         if (options.signal?.cancelled) return;
         if (src.length > MAX_DOCUMENT_CHARS) unread(path, 'too-large');
         else {
-          index.add(indexDocument(path, src));
+          index.add(parse(path, src));
           read++;
         }
       }

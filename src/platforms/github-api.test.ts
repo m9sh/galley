@@ -140,3 +140,36 @@ it('treats a refusal or a missing background worker as GitHub being unreachable'
   expect(await worker.hasToken()).toBe(false);
   await expect(worker.request(`${api}/pulls/12`)).rejects.toMatchObject({ status: 0 });
 });
+
+it('a read is made conditional by a well-formed ETag, and never a write or a malformed one', async () => {
+  const seen: Array<Record<string, string>> = [];
+  mockFetch((_url, init) => {
+    seen.push(headersOf(init));
+    return new Response('{}');
+  });
+  const url = 'https://api.github.com/repos/a/b/commits?per_page=1';
+  await fetchGitHub(url, 'GET', undefined, null, '"abc"');
+  await fetchGitHub(url, 'GET', undefined, null, 'W/"abc"');
+  await fetchGitHub(url, 'GET', undefined, null, 'abc"; x-evil: 1');
+  await fetchGitHub(url, 'POST', '{}', null, '"abc"');
+  await fetchGitHub(url, 'GET', undefined, null);
+  expect(seen.map((headers) => headers['If-None-Match'])).toStrictEqual(['"abc"', 'W/"abc"', undefined, undefined, undefined]);
+});
+
+it('a conditional read that GitHub says has not changed fails with status 304, and the ETag reaches the page', async () => {
+  const sendMessage = vi.fn();
+  vi.stubGlobal('chrome', { runtime: { sendMessage } });
+  const worker = backgroundApi();
+  sendMessage.mockResolvedValueOnce({ status: 200, body: '[]', headers: { etag: '"v1"' } });
+  expect((await worker.request(`${api}/commits?per_page=1`)).headers.get('etag')).toBe('"v1"');
+  sendMessage.mockResolvedValueOnce({ status: 304, body: '', headers: { etag: '"v1"' } });
+  await expect(worker.request(`${api}/commits?per_page=1`, { etag: '"v1"' })).rejects.toMatchObject({ status: 304 });
+  expect(sendMessage).toHaveBeenLastCalledWith({ type: 'galley:github', url: `${api}/commits?per_page=1`, method: 'GET', etag: '"v1"' });
+  const seen: Array<Record<string, string>> = [];
+  mockFetch((_url, init) => {
+    seen.push(headersOf(init));
+    return new Response(null, { status: 304 });
+  });
+  await expect(directApi('https://github.com', async () => null).request(`${api}/commits?per_page=1`, { etag: '"v1"' })).rejects.toMatchObject({ status: 304 });
+  expect(seen[0]['If-None-Match']).toBe('"v1"');
+});

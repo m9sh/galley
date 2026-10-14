@@ -69,6 +69,8 @@ export interface Settings {
   density: Density;
   /** Show the pull or merge request's own title and description as the first document. */
   overview: boolean;
+  /** Keep what the library learns about a project's documents (titles, headings, links; never text) on this device, so the map opens at once next time. */
+  rememberOutlines: boolean;
 }
 
 export const TEXT_SIZES = [17, 18, 20, 22, 24];
@@ -92,6 +94,7 @@ export const DEFAULT_SETTINGS: Settings = {
   layout: 'balanced',
   density: 'comfortable',
   overview: false,
+  rememberOutlines: false,
 };
 
 export const SETTINGS_KEY = 'galley:settings';
@@ -161,6 +164,7 @@ async function readSettings(strict: boolean): Promise<Settings> {
     density,
     readButton: saved.readButton !== false,
     overview: saved.overview === true,
+    rememberOutlines: saved.rememberOutlines === true,
     topGlow: saved.topGlow !== false,
     signs: saved.signs !== false,
     fold: saved.fold !== false,

@@ -181,3 +181,12 @@ it('reports denied or malformed settings to controls that must preserve a saved 
   });
   await expect(loadSettings(true)).rejects.toThrow('Extension context invalidated');
 });
+
+it('remembering project outlines is off unless it was turned on', async () => {
+  expect(DEFAULT_SETTINGS.rememberOutlines).toBe(false);
+  expect((await loadSettings()).rememberOutlines).toBe(false);
+  localStorage.setItem('galley:settings', JSON.stringify({ rememberOutlines: 'yes' }));
+  expect((await loadSettings()).rememberOutlines).toBe(false);
+  expect(await updateSettings({ rememberOutlines: true })).toMatchObject({ rememberOutlines: true });
+  expect((await loadSettings()).rememberOutlines).toBe(true);
+});

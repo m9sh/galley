@@ -3,6 +3,9 @@ import { diffArrays, type ArrayChange } from 'diff';
 /** Documents longer than this (either version) are not rendered; the platform diff handles them. */
 export const MAX_DOCUMENT_CHARS = 2_000_000;
 
+/** Text the repository reader keeps for documents it has read, by content hash, while it is open: about 32 MB, the oldest read let go first. */
+export const BLOB_CACHE_CHARS = 16_000_000;
+
 /**
  * Myers diffs take time proportional to size × edits, so a hostile pull request could freeze the
  * page with two long, completely different inputs. Past these limits the differing middle is shown
