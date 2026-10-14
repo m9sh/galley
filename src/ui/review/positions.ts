@@ -1,15 +1,11 @@
 import { readStored, writeStored } from '../preferences/settings.ts';
+import { fingerprint } from './fingerprint.ts';
 
 const KEY = 'galley:positions';
 /** Only the most recent reviews are remembered. */
 const LIMIT = 50;
 
 /** Fingerprints, never the review's address or a file's path: nothing readable about what was reviewed is kept. */
-async function fingerprint(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
-}
-
 type Saved = Record<string, { file: string; offset: number; at: number }>;
 
 async function all(): Promise<Saved> {

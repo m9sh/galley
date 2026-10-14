@@ -2,6 +2,7 @@
 // The page itself imitates a merge request: the raw diff reviewers read today, and the Read button.
 //   ?closed  start closed   ?doc=N  start at file N   ?code-only / ?diagram-error  exercise fallbacks
 //   ?spec  a test file   ?comments  code comments   ?large  folded files and moved code   ?chapters  mixed review map
+//   ?updated  the review has new commits since the reader was last opened: Changes since you last looked
 //   ?repo  read a sample repository's docs, as from a repository page   ?repo=docs/adr/0003-queue-for-reviews.md  from one document
 //   (in a review, Project library opens the same sample repository at the merge request's base or head)
 import { structuredPatch } from 'diff';
@@ -11,6 +12,8 @@ import { openReader } from '../src/ui/review/reader.ts';
 import { openMapPrototype } from './project-map.ts';
 import { openRepository } from '../src/ui/library/repo-reader.ts';
 import { loadSettings, saveSettings } from '../src/ui/preferences/settings.ts';
+import { sinceChanges } from '../src/platforms/since.ts';
+import { rememberSeen, unmarkReviewed } from '../src/ui/review/revisions.ts';
 
 const params = new URLSearchParams(location.search);
 
@@ -37,6 +40,9 @@ const largeCode: DocRef[] = [
 ];
 /** Samples that would otherwise be type-checked, linted or run as tests are stored as text. */
 const asText = new Set<DocRef>([spec, notes, ...largeCode]);
+
+/** The heads of the sample review: where the reader was last opened (?updated), and where the review is now. */
+const HEADS = { earlier: 'a'.repeat(40), now: 'b'.repeat(40) };
 
 async function text(url: string): Promise<string> {
   const res = await fetch(url);
@@ -89,6 +95,19 @@ const source: ReviewSource = {
           : codeDocs,
   otherFiles: params.has('chapters') ? [{ path: 'assets/review.png', oldPath: 'assets/review.png', status: 'added' }] : [],
   load: contents,
+  history: params.has('updated')
+    ? {
+        head: HEADS.now,
+        // Since then the RFC was edited and the ADR was added; the README did not change.
+        async since(commit) {
+          const files = [
+            { path: docs[0].path, oldPath: docs[0].path, status: 'modified' as const },
+            { path: docs[2].path, oldPath: docs[2].path, status: 'added' as const },
+          ];
+          return sinceChanges(commit, files, (path) => text(`samples/earlier/${path}`));
+        },
+      }
+    : undefined,
   async prepareComment(target) {
     return {
       kind: 'inline',
@@ -323,13 +342,20 @@ const open = () => {
     openRepository(repository);
     return;
   }
-  const show = () => openReader(source, { start: Number(params.get('doc') ?? 0) });
+  const show = async () => {
+    // Each visit starts as the sample describes: last opened at the earlier head, nothing marked as reviewed.
+    if (params.has('updated')) {
+      await rememberSeen(source.diffUrl, HEADS.earlier);
+      await unmarkReviewed(source.diffUrl);
+    }
+    openReader(source, { start: Number(params.get('doc') ?? 0) });
+  };
   if (params.has('spec') || params.has('comments'))
     void loadSettings().then(async (settings) => {
       await saveSettings({ ...settings, codeFiles: true });
-      show();
+      await show();
     });
-  else show();
+  else void show();
 };
 new Launcher().show('demo', params.has('repo') || params.has('atlas') ? null : source.docs.length || source.codeDocs!.length, open);
 void drawDiff();

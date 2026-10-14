@@ -182,6 +182,50 @@ Any file folds the same way: choose **Fold** in its byline, and **Show changes**
 
 With a GitHub token, Galley reads and updates GitHub's native [Viewed status](https://docs.github.com/en/graphql/reference/pulls#markfileasviewed), including unmarking; these requests check that the review revision is still current, and a failure leaves the previous state and shows an error. Without a token, and on GitLab, progress stays in this browser, keyed to a fingerprint of the file's old and new contents: it resets when that file changes, and unrelated updates keep it. The button's tooltip says where progress is saved.
 
+## Changes since you last looked
+
+When a review has new commits since you were last in it, Galley says so above the first file and shows which files changed.
+
+### What it compares with
+
+Galley compares the review's head with an earlier one, in this order:
+
+1. The head you marked as reviewed with **Mark as reviewed**.
+2. Otherwise the last head you opened the reader at. This is only a suggestion.
+3. Otherwise there is nothing to compare with, and the card does not appear.
+
+The card names it: **New changes since you marked this reviewed**, or **since you last opened this**. It says how many files changed, such as **2 of 3 files changed since 4f2a9c1**. Each file that changed carries **Updated since 4f2a9c1** in its byline, and **Updated** in the document menu. In the Files layout a dot marks it in the list.
+
+### Reading only what changed
+
+Choose **Show only what changed** (<kbd>U</kbd>) to read each changed file from its earlier version to the review's head. Files that did not change step out of the way. The card now says **Showing what changed since 4f2a9c1** and names both versions, such as **4f2a9c1 → 9d3e7b2**. Choose **Show the whole review** (<kbd>U</kbd>) to come back.
+
+While you read only what changed:
+
+- Viewed, folds and your reading place are the review's own and stay as they were.
+- You can comment on text that is in the review. Old text in this view is from the earlier version, so Galley says so instead of posting a comment on the wrong line.
+- Comments already on old lines are listed on their file.
+- Comments you have not sent stay where you wrote them. Post or discard them before changing the view.
+
+### Marking a version reviewed
+
+**Mark as reviewed** is in the card and at the end of the review. It remembers this version on this device, so next time the card shows only what changes after it. **Unmark** takes it back.
+
+Marking never approves the review, never marks a file **Viewed** on GitHub or GitLab, and never posts anything. Opening the reader does not move the mark. You decide when it moves.
+
+### When Galley cannot compare
+
+The card says why, and the whole review stays in view. It never reads as "no new changes".
+
+- **The branch was rewritten.** A force push left the earlier version outside this review's history, so Galley cannot tell which parts are new.
+- **The earlier version is no longer available.** The platform no longer has it.
+- **Too many files changed to compare.** GitHub lists at most 300 files.
+- **Could not compare with the earlier version.** The request failed. Choose **Try again**.
+
+### What is kept
+
+Galley keeps commit ids, under a fingerprint of the review's address, for your 50 most recent reviews: the head you marked and the last two you opened. No address, path or text. [PRIVACY.md](../PRIVACY.md) has the detail.
+
 ## Project library and the project map
 
 Galley also reads a project's own documentation, outside any review: its README, specs, decision records and guides, with the same typography, diagrams and settings. Its **Reading settings** (the sliders icon, or <kbd>,</kbd>) share the review reader's **Reading** tab, plus **External images**, and add **Layout**; <kbd>?</kbd> lists its keys.
@@ -247,7 +291,7 @@ Nothing to configure: Galley reads the merge request with your signed-in session
 
 ## GitHub (github.com and Enterprise Server)
 
-Public repositories work without setup. GitHub allows 60 API requests an hour without a token. Galley uses three for a pull request with up to 100 files, one more per further page of files, and one comparison request when a patch is omitted. Posting a comment also checks that the reviewed version is still current.
+Public repositories work without setup. GitHub allows 60 API requests an hour without a token. Galley uses three for a pull request with up to 100 files, one more per further page of files, and one comparison request when a patch is omitted. Comparing with an earlier version costs one more request, and one more for each changed file you read from it. Posting a comment also checks that the reviewed version is still current.
 
 Reading a project costs one request to find the commit (a few more when the branch name has slashes) and one to list its files (more for a repository too large for GitHub to list at once). Its documents are read from github.com itself and cost none. Checking for a newer commit costs none when the branch has not moved.
 
@@ -260,5 +304,7 @@ The token is kept in Galley's own extension storage, which web pages (GitHub's i
 The [live demo](https://m9sh.github.io/galley/demo/) runs the real reader on a sample merge request. It saves comments in session storage and Viewed progress locally, and never sends anything to GitHub or GitLab. To run it from a checkout: `npm install && npm run demo`, then open http://localhost:4173.
 
 Add `?repo` to the demo URL to read a sample handbook as from a repository page: decision records, an RFC, an architecture note and a runbook that link to each other, with a missing document and a missing section for the map to find, and a Compose file, a workflow, Kubernetes manifests and Terraform for the architecture views. `?repo=docs/adr/0003-queue-for-reviews.md` starts at one document. In the sample review, **Project library** opens the same handbook at the merge request's base or head. Notes in the demo are kept in that browser's local storage.
+
+Add `?updated` to try **Changes since you last looked**: the sample review has new commits since the reader was last opened, and two of its three files changed. Each visit starts that way, with nothing marked as reviewed.
 
 Add `?spec` to the demo URL to try a test-file review with nested suites, renamed cases, added and removed behaviors, and a comment on a changed assertion.

@@ -1,0 +1,92 @@
+/* ------------------------------------------------------------------ changes since the reviewer last looked
+   A quiet card above the documents says what is new and offers the one thing to do about it; a line below them lets
+   the reviewer mark the version reviewed. Neither claims approval: the card is a card, the one filled button is the
+   comparison, and the rest are outlined. */
+.mr-since,
+.mr-reviewed {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px 14px 20px;
+  border-radius: 12px;
+  background: var(--card);
+}
+.mr-since {
+  margin: 0 0 48px;
+}
+.mr-since.is-active {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.mr-reviewed {
+  margin: 96px 0 24px;
+}
+.mr-since-text,
+.mr-reviewed-words {
+  flex: 1;
+  min-width: 0;
+}
+.mr-since-title,
+.mr-reviewed-text {
+  margin: 0;
+  color: var(--fg);
+  font: 600 calc(15px * var(--type)) / 1.4 var(--sans);
+}
+.mr-since-meta,
+.mr-reviewed-note {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font: 400 13px / 1.5 var(--sans);
+  overflow-wrap: anywhere;
+}
+.mr-reviewed-text {
+  font-weight: 500;
+}
+.mr-since-actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.mr-since .mr-btn,
+.mr-reviewed .mr-btn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font: 500 13px / 1 var(--sans);
+  white-space: nowrap;
+}
+.mr-since .mr-outline:hover,
+.mr-reviewed .mr-outline:hover {
+  border-color: var(--control-rule);
+}
+/* The files menu and the Files layout list say which files are new since, in the accent as the reader's own marks are. */
+.mr-menu-quiet.is-updated {
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg));
+  color: var(--fg);
+}
+.mr-file-updated {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--accent);
+}
+@media (max-width: 760px) {
+  .mr-since,
+  .mr-reviewed {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 16px;
+  }
+  .mr-since-actions {
+    justify-content: stretch;
+  }
+  .mr-since .mr-btn,
+  .mr-reviewed .mr-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 44px;
+  }
+}

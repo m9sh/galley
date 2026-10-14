@@ -38,6 +38,10 @@ The words Galley uses, what they mean, and what they are called in the code. Use
 | **Anchor** | The document section a note is about, with the commit and a fingerprint of the section, to say when it changes | `Anchor`, `anchorState()` |
 | **Project library** | A review's repository read at its base or head, over the review | `ReviewSource.project`, `ReviewProject` |
 | **Thread** | An existing platform conversation anchored to a line | `Thread` |
+| **Changes since you last looked** | What changed in a review since an earlier head: the card above the files, the marks on changed files and the view that reads only what changed | `ReviewSource.history`, `ReaderSince` (`src/ui/review/reader-since.ts`) |
+| **Mark as reviewed** | The reviewer's note, kept on the device, that this head is reviewed; the next comparison starts from it. It approves nothing and marks nothing Viewed | `markReviewed()` (`src/ui/review/revisions.ts`) |
+| **Baseline** | The earlier head a review is compared with: the one marked as reviewed, else the last one opened | `Baseline`, `baselineFor()` |
+| **Rewritten** | A branch whose earlier head is no longer part of its history, as after a force push; it cannot be compared | `ReviewSince` `state: 'rewritten'` |
 | **Draft** | An unsent comment or reply; kept while the reader is open | `Draft`, `Editor`, `ReplyEditor` in `reader.ts` |
 | **Comments column** | The right margin on wide screens where cards sit level with their text | `.mr-threads` ("the rail" in code comments) |
 | **Contents** | Headings of the current document in the left margin | `.mr-toc` |

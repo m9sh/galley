@@ -9,6 +9,7 @@ Everything Galley keeps, where, and for how long. [PRIVACY.md](../../PRIVACY.md)
 | Reader and opening settings | `chrome.storage.local` | `galley:settings` | The `Settings` object: page-button choice, palette, appearance, typeface, size, layout, density, review options | Until changed or uninstalled | `src/ui/preferences/settings.ts` |
 | Viewed progress (no token, or GitLab) | `chrome.storage.local` | `galley:viewed:<sha256>` | `true`; the key is a SHA-256 of the review address, file paths, status and both versions' contents | Until unmarked or uninstalled; a changed file gets a new key | `src/ui/review/viewed.ts` |
 | Reading positions | `chrome.storage.local` | `galley:positions` | Per review fingerprint: a fingerprint of the file path, a scroll offset, a time | The 50 most recent reviews | `src/ui/review/positions.ts` |
+| Review heads, for changes since the reviewer last looked | `chrome.storage.local` | `galley:revisions` | Per review fingerprint: the commit id marked as reviewed, the last two commit ids the reader was opened at, a time. Commit ids only, checked as 40- or 64-digit hexadecimal | The 50 most recent reviews | `src/ui/review/revisions.ts`, `fingerprint.ts` ([ADR 0034](../adr/0034-show-what-changed-since-the-reviewer-last-looked.md)) |
 | Repository notes | `chrome.storage.local` | `galley:project:<sha256>`; the key is a SHA-256 of the repository's address | The reader's saved notes, proposed components and connections, and the types they set, plus a draft of unsaved changes. Each anchored note keeps its document's path, title and heading as a label, the commit and a SHA-256 of the section | Until deleted with **Delete all notes…** or uninstalled; written only on Save, and as a draft for recovery | `src/ui/library/project-store.ts` ([ADR 0028](../adr/0028-private-project-notes.md)) |
 | Remembered project outlines (opt-in, off by default) | `chrome.storage.local` | `galley:outlines` and `galley:outlines:<sha256>`; the key is a SHA-256 of the repository's address | For each document the map read: path, content hash, title, kind, status, front matter fields, headings, links and anchors; never the text. The directory adds each project's last use, size and site origin | 7 days from last use; at most 1,000,000 characters for a project and 4,000,000 in all; cleared by **Forget remembered outlines**, turning the setting off, removing the site's token or uninstalling; nothing in a private window | `src/platforms/outline-store.ts`, `outline-cache.ts` ([ADR 0031](../adr/0031-read-each-document-once.md)) |
 | GitHub tokens | Extension IndexedDB | one record per site origin | The token, for https origins only | Until removed in the popup or uninstalled | `src/platforms/tokens.ts` |
@@ -30,7 +31,7 @@ Consented image fallbacks keep only their image address and dimensions in a sand
 
 ## In the demo
 
-The demo uses `localStorage` for settings, Viewed, positions and repository notes, and `sessionStorage` for its simulated comments. Nothing is sent anywhere.
+The demo uses `localStorage` for settings, Viewed, positions, review heads and repository notes, and `sessionStorage` for its simulated comments. Nothing is sent anywhere.
 
 ## What is never stored
 

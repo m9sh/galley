@@ -7,7 +7,17 @@ import type { GitHubApi } from './github-api.ts';
 import { githubRepositoryAt } from './github-repo.ts';
 import { explainGitHub, readRawFile, readWithRetry } from './github-read.ts';
 import { HttpError } from './http.ts';
-import { ReaderError, type DocRef, type DocStatus, type RepositorySource, type ReviewProject, type ReviewSource, type Thread } from './types.ts';
+import { sinceChanges } from './since.ts';
+import {
+  ReaderError,
+  type DocRef,
+  type DocStatus,
+  type RepositorySource,
+  type ReviewProject,
+  type ReviewSince,
+  type ReviewSource,
+  type Thread,
+} from './types.ts';
 
 interface GitHubFile {
   filename: string;
@@ -23,6 +33,8 @@ interface GitHubDoc extends DocRef {
 }
 
 const MAX_PAGES = 10;
+/** A comparison lists at most this many files, all on its first page; a list this long may be cut short. */
+const COMPARE_FILES = 300;
 function mapStatus(status: string): DocStatus {
   if (status === 'added' || status === 'copied') return 'added';
   if (status === 'removed') return 'removed';
@@ -121,6 +133,23 @@ export async function loadGitHub(ctx: GitHubContext, github: GitHubApi): Promise
       status: mapStatus(file.status),
     }));
 
+  /** The review as it stands against an earlier head: a three-dot comparison, which is only a "since" when that head is part of this one's history. */
+  const since = async (commit: string): Promise<ReviewSince> => {
+    let compared: { status: string; files?: GitHubFile[] };
+    try {
+      compared = (await readWithRetry(() => github.request<typeof compared>(`${repoApi}/compare/${commit}...${headSha}?per_page=1`))).data;
+    } catch (err) {
+      // The commit is gone, or shares no history with this one.
+      if (err instanceof HttpError && err.status === 404) return { state: 'unavailable', commit };
+      throw explain(err, hasToken);
+    }
+    if (compared.status !== 'ahead' && compared.status !== 'identical') return { state: 'rewritten', commit };
+    const changed = compared.files ?? [];
+    if (changed.length >= COMPARE_FILES) return { state: 'incomplete', commit };
+    const files = changed.map((file) => ({ path: file.filename, oldPath: file.previous_filename ?? file.filename, status: mapStatus(file.status) }));
+    return sinceChanges(commit, files, (path) => readRaw(commit, path));
+  };
+
   const replyFor = (id: number): Thread['reply'] =>
     !Number.isSafeInteger(id) || id < 1
       ? undefined
@@ -178,6 +207,7 @@ export async function loadGitHub(ctx: GitHubContext, github: GitHubApi): Promise
       url: `${repoUrl}/pull/${ctx.number}`,
     },
     diffUrl: `${repoUrl}/pull/${ctx.number}/files`,
+    history: { head: headSha, since },
     docs,
     codeDocs,
     otherFiles,

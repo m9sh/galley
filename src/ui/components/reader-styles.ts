@@ -24,6 +24,7 @@ import layouts_and_density from './styles/23-layouts-and-density.css';
 import code_file_views from './styles/24-code-file-views.css';
 import test_plan from './styles/25-test-plan.css';
 import source_changes from './styles/26-source-changes.css';
+import revisions from './styles/27-revisions.css';
 
 /**
  * The reader's stylesheet, in cascade order. The review reader (review/reader.ts) and the library reader
@@ -59,4 +60,5 @@ export default [
   code_file_views,
   test_plan,
   source_changes,
+  revisions,
 ].join('\n');

@@ -13,10 +13,10 @@ import { filterDocument } from '../rendering/reading.ts';
 import { DEFAULT_SETTINGS, TEXT_SIZES, updateSettings, type Settings } from '../preferences/settings.ts';
 import { applyReadingControls, selectTab } from '../components/settings-sheet.ts';
 import { STATUS_LABEL, type SettingsTab, type View, ZOOM_BAR, ZOOM_MARGIN, actionButton, baseName } from './reader-shared.ts';
-import { ReaderDocuments } from './reader-documents.ts';
+import { ReaderSince } from './reader-since.ts';
 
 /** The reader's chrome: menus, Viewed, settings and the diagram lightbox. */
-export abstract class ReaderChrome extends ReaderDocuments {
+export abstract class ReaderChrome extends ReaderSince {
   // ---------------------------------------------------------------- chrome
 
   protected updateFileButton(): void {
@@ -81,6 +81,7 @@ export abstract class ReaderChrome extends ReaderDocuments {
       item.append(dot, name);
       const { quiet, open, folded } = this.views[i];
       if ((quiet && !open) || folded) item.append(h('span', 'mr-menu-quiet', quiet?.label ?? 'Folded'));
+      if (this.updatedSince(d)) item.append(h('span', 'mr-menu-quiet is-updated', 'Updated'));
       item.append(h('span', 'mr-menu-status', STATUS_LABEL[d.status]));
       if (this.viewed.get(d)?.value) {
         const check = h('span', 'mr-file-check');
@@ -361,13 +362,15 @@ export abstract class ReaderChrome extends ReaderDocuments {
     let loadCode = false;
     for (const view of this.views)
       if (view.doc.kind === 'code') {
-        view.section.hidden = !s.codeFiles;
-        loadCode ||= s.codeFiles && !view.rendered;
+        view.section.hidden = !s.codeFiles || this.leftOut(view.doc);
+        loadCode ||= !view.section.hidden && !view.rendered;
       }
     if (this.source) {
       this.updateFileButton();
       this.buildToc(this.rendered);
     }
+    // The counts in the bar and the mark below count the files that are shown.
+    if (this.revisions) this.drawRevisions();
     if (loadCode) void this.loadAll(0);
     for (const b of this.shadow.querySelectorAll<HTMLElement>('[data-scope]')) b.setAttribute('aria-pressed', String(b.dataset.scope === s.scope));
     r.classList.toggle('mode-changes', s.mode === 'changes');

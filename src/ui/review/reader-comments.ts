@@ -317,6 +317,11 @@ export abstract class ReaderComments extends ReaderEvents {
   protected startComment(target: CommentTarget, elements: HTMLElement[], range?: Range): void {
     this.hideChip();
     this.el.toast.hidden = true;
+    // Old lines are counted in the review's own base, not in the earlier head drawn as "old" here.
+    if (target.side === 'base' && this.sinceActive()) {
+      this.toast('That text is from an earlier version. Show the whole review to comment on it.');
+      return;
+    }
     const view = this.views.find((v) => v.doc === target.doc)!;
     const anchor = elements.at(-1)!;
     const existing = this.drafts.find((draft) => sameTarget(draft.target, target));

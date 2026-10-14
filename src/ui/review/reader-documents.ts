@@ -58,6 +58,7 @@ export abstract class ReaderDocuments extends ReaderBase {
       if (!start) void this.offerResume();
     });
     void this.loadThreads();
+    if (source.history) void this.initRevisions();
   }
 
   close(): void {
@@ -134,12 +135,15 @@ export abstract class ReaderDocuments extends ReaderBase {
     if (this.loading.has(view.doc)) return;
     this.loading.add(view.doc);
     view.failed = false;
+    const since = this.sinceActive();
     try {
       const contents = await this.load(view.doc);
-      if (this.closed) return;
-      this.contentsOf.set(view.doc, contents);
+      const shown = await this.shown(view, contents);
+      // Switching between the whole review and what changed since, while this file was read, leaves it to be drawn again.
+      if (this.closed || since !== this.sinceActive()) return;
+      this.contentsOf.set(view.doc, shown.contents);
       // Files most reviewers skip start folded, one click away. A file with a discussion on it never does.
-      const quiet = view.open || !this.settings.fold || this.threads.some((thread) => thread.doc === view.doc) ? null : quietFile(view.doc, contents);
+      const quiet = view.open || !this.settings.fold || this.threads.some((thread) => thread.doc === view.doc) ? null : quietFile(shown.doc, shown.contents);
       if (quiet) {
         view.quiet = quiet;
         view.section.classList.add('is-quiet');
@@ -147,31 +151,32 @@ export abstract class ReaderDocuments extends ReaderBase {
         this.schedule(true);
         this.search.refresh();
         // Release the loading slot before progress storage resolves: a newly arrived discussion
-        // may need to open this folded file immediately.
+        // may need to open this folded file immediately. Viewed is kept for the review's own contents, whichever is drawn.
         if (!this.source!.viewed) void this.initLocalViewed(view.doc, contents);
         else this.updateViewed();
         return;
       }
       const r =
         view.doc.kind === 'code'
-          ? renderCodeFile(document, view.doc, contents)
+          ? renderCodeFile(document, shown.doc, shown.contents)
           : renderDocument(document, {
-              path: view.doc.status === 'removed' ? view.doc.oldPath : view.doc.path,
-              status: view.doc.status,
-              ...contents,
+              path: shown.doc.status === 'removed' ? shown.doc.oldPath : shown.doc.path,
+              status: shown.doc.status,
+              ...shown.contents,
               links: this.source!.links(view.doc),
               origin: location.origin,
               images: this.settings.images,
             });
       view.rendered = r;
-      view.section.replaceChildren(this.buildArticle(view.doc, r));
+      view.section.replaceChildren(this.buildArticle(shown.doc, r));
+      this.markUpdated(view);
       for (const block of r.blocks) this.blockOf.set(block.el, { view, block });
-      if (r.isCode) await enhanceSpecs(r, view.doc, contents);
+      if (r.isCode) await enhanceSpecs(r, shown.doc, shown.contents);
       if (this.closed) return;
       if (r.isCode) {
         this.applyCodeView(view);
         this.showMoves(view);
-        void enhanceSymbols(r, view.doc, contents).then(() => this.schedule(true));
+        void enhanceSymbols(r, shown.doc, shown.contents).then(() => this.schedule(true));
       }
       for (const img of r.content.querySelectorAll('img')) img.addEventListener('load', () => this.schedule(true), { once: true });
       this.attachThreads(view);
@@ -183,9 +188,9 @@ export abstract class ReaderDocuments extends ReaderBase {
           r.isCode &&
           !this.closed &&
           renderSourceComments(r, {
-            path: view.doc.status === 'removed' ? view.doc.oldPath : view.doc.path,
-            status: view.doc.status,
-            ...contents,
+            path: shown.doc.status === 'removed' ? shown.doc.oldPath : shown.doc.path,
+            status: shown.doc.status,
+            ...shown.contents,
             links: this.source!.links(view.doc),
             origin: location.origin,
             images: this.settings.images,
@@ -228,6 +233,7 @@ export abstract class ReaderDocuments extends ReaderBase {
       this.schedule(true);
     } finally {
       this.loading.delete(view.doc);
+      if (!this.closed && since !== this.sinceActive()) void this.loadView(this.views.indexOf(view));
     }
   }
 
@@ -490,6 +496,12 @@ export abstract class ReaderDocuments extends ReaderBase {
       const dot = h('span', `mr-status-dot is-${view.doc.status}`);
       dot.setAttribute('aria-hidden', 'true');
       link.append(dot, h('span', 'mr-file-link-name', baseName(view.doc.path)));
+      if (this.updatedSince(view.doc)) {
+        const mark = h('span', 'mr-file-updated');
+        mark.setAttribute('role', 'img');
+        mark.setAttribute('aria-label', 'Updated since you last looked');
+        link.append(mark);
+      }
       if (this.viewed.get(view.doc)!.value) {
         const check = h('span', 'mr-file-check');
         check.replaceChildren(glyph(icons.check));

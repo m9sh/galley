@@ -3,7 +3,17 @@ import { encodePath, isMarkdownPath, isCodePath } from '../core/paths.ts';
 import type { GitLabContext } from './detect.ts';
 import { getJson, getText, HttpError } from './http.ts';
 import { gitlabRepositoryAt } from './gitlab-repo.ts';
-import { ReaderError, type DocRef, type DocStatus, type RepositorySource, type ReviewProject, type ReviewSource, type Thread } from './types.ts';
+import { sinceChanges } from './since.ts';
+import {
+  ReaderError,
+  type DocRef,
+  type DocStatus,
+  type RepositorySource,
+  type ReviewProject,
+  type ReviewSince,
+  type ReviewSource,
+  type Thread,
+} from './types.ts';
 
 interface MergeRequest {
   title: string;
@@ -95,6 +105,24 @@ export async function loadGitLab(ctx: GitLabContext): Promise<ReviewSource> {
       status: status(diff),
     }));
 
+  /** The review as it stands against an earlier head: a "since" only when that head is part of this one's history. */
+  const since = async (commit: string): Promise<ReviewSince> => {
+    const refsQuery = `refs[]=${commit}&refs[]=${refs.head_sha}`;
+    let compared: { diffs: GitLabDiff[]; compare_timeout?: boolean };
+    try {
+      const { data: shared } = await getJson<{ id: string }>(`${api}/repository/merge_base?${refsQuery}`, { cache: 'no-store' });
+      if (shared.id !== commit) return { state: 'rewritten', commit };
+      compared = (await getJson<typeof compared>(`${api}/repository/compare?from=${commit}&to=${refs.head_sha}&straight=true`, { cache: 'no-store' })).data;
+    } catch (err) {
+      // The commit is gone, or shares no history with this one.
+      if (err instanceof HttpError && err.status === 404) return { state: 'unavailable', commit };
+      throw explain(err);
+    }
+    if (compared.compare_timeout) return { state: 'incomplete', commit };
+    const files = compared.diffs.map((d) => ({ path: d.new_path, oldPath: d.old_path, status: status(d) }));
+    return sinceChanges(commit, files, (path) => raw(path, commit));
+  };
+
   const replyFor = (id: string | undefined): Thread['reply'] =>
     !id
       ? undefined
@@ -148,6 +176,7 @@ export async function loadGitLab(ctx: GitLabContext): Promise<ReviewSource> {
       url: `${webBase}/-/merge_requests/${ctx.iid}`,
     },
     diffUrl: `${webBase}/-/merge_requests/${ctx.iid}/diffs`,
+    history: { head: refs.head_sha, since },
     docs,
     codeDocs,
     otherFiles,

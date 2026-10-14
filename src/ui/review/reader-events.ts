@@ -109,6 +109,9 @@ export abstract class ReaderEvents extends ReaderSearch {
         if (button && !button.hidden && this.views.some((view) => !view.section.hidden)) this.toggleMenu(this.el.files, button);
         break;
       }
+      case 'u':
+        this.toggleSince();
+        break;
       case 'a':
         this.update({ scope: this.settings.scope === 'changed' ? 'all' : 'changed' });
         this.toast(this.settings.scope === 'all' ? 'Whole files' : 'Changed parts');
@@ -298,6 +301,18 @@ export abstract class ReaderEvents extends ReaderSearch {
         return;
       case 'fold':
         this.update({ fold: !this.settings.fold });
+        return;
+      case 'since':
+        this.toggleSince();
+        return;
+      case 'mark-reviewed':
+        void this.markReviewedNow();
+        return;
+      case 'unmark-reviewed':
+        void this.unmarkReviewedNow();
+        return;
+      case 'retry-since':
+        void this.compare();
         return;
       case 'resume':
         this.continueReading();

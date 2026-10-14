@@ -1,4 +1,14 @@
-import { ReaderError, type DocRef, type DocStatus, type CommentTarget, type CommentPlan, type Thread } from '../../platforms/types.ts';
+import {
+  ReaderError,
+  type DocContents,
+  type DocRef,
+  type DocStatus,
+  type CommentTarget,
+  type CommentPlan,
+  type ReviewSince,
+  type Thread,
+} from '../../platforms/types.ts';
+import type { Baseline, Revisions } from './revisions.ts';
 import type { QuietFile } from '../../core/quiet.ts';
 import { h } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
@@ -51,6 +61,7 @@ export const SHORTCUTS: Shortcuts = [
     [
       [['C'], 'Change marks on / off'],
       [['A'], 'Changed parts / whole files'],
+      [['U'], 'Only what changed since you looked / the whole review'],
       [['L'], 'Next layout'],
       [['D'], 'Comfortable / compact'],
       [['+', '−'], 'Larger / smaller text'],
@@ -245,6 +256,35 @@ export interface View {
   open?: boolean;
   /** Folded by the reviewer: its content stays, hidden behind the same one-line card. */
   folded?: boolean;
+}
+
+/** A document as the reader draws it now: the review's own, or against an earlier head while only what changed since is shown. */
+export interface Shown {
+  doc: DocRef;
+  contents: DocContents;
+}
+
+/** What the reader knows about the review's earlier heads (RFC 0039): what is remembered, what it is compared with, and what the platform said. */
+export interface RevisionState {
+  /** The commit the review is at now. */
+  head: string;
+  /** What is remembered for this review on this device. */
+  stored: Revisions;
+  /** The earlier head to compare with, or none when the reviewer has seen nothing earlier or has marked this head reviewed. */
+  baseline: Baseline | null;
+  /** The platform's answer for the baseline; null until it comes. */
+  outcome: ReviewSince | { state: 'failed'; message: string } | null;
+  /** Only what changed since the baseline is shown, each document against its earlier version. */
+  active: boolean;
+  /** Above the documents: what is new, and how to read only that. */
+  bar: HTMLElement;
+  /** Below them: the reviewer's mark that this version is reviewed. */
+  foot: HTMLElement;
+}
+
+/** The short form of a commit id, as the platforms show it. */
+export function shortCommit(commit: string): string {
+  return commit.slice(0, 7);
 }
 
 export interface Hit {

@@ -179,7 +179,8 @@ class Reader extends ReaderComments {
       if (thread.doc !== view.doc) continue;
       const card = this.threadCard(thread);
       const line = thread.line;
-      const block = line === null ? undefined : blockAt(r, thread.side, line);
+      // Old lines are the review's own; while only what changed since is shown, "old" is an earlier head, so they cannot be placed.
+      const block = line === null || (thread.side === 'base' && this.sinceActive()) ? undefined : blockAt(r, thread.side, line);
       if (!block) {
         fileLevel.push(card);
         continue;
