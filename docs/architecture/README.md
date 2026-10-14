@@ -149,10 +149,10 @@ A failure keeps the draft; writes are never retried ([ADR 0008](../adr/0008-comm
 | Folder | Responsibility | Key files | Environment |
 | --- | --- | --- | --- |
 | `src/content/` | Page detection, launcher, single-page navigation, token-change signal | `main.ts` | Page (jsdom in tests) |
-| `src/platforms/` | GitHub and GitLab adapters behind `ReviewSource` and `RepositorySource`; detection of reviews and repository pages; HTTP with retries; comments and threads; Viewed sync; tokens and enabled sites | `types.ts`, `index.ts`, `detect.ts`, `github.ts`, `github-api.ts`, `github-read.ts`, `github-repo.ts`, `github-queries.ts`, `github-viewed.ts`, `gitlab.ts`, `gitlab-repo.ts`, `comments.ts`, `http.ts`, `tokens.ts`, `sites.ts` | Node in tests |
+| `src/platforms/` | GitHub and GitLab adapters behind `ReviewSource` and `RepositorySource`; detection of reviews and repository pages; HTTP with retries; comments and threads; Viewed sync; tokens, enabled sites and the storage of remembered outlines | `types.ts`, `index.ts`, `detect.ts`, `github.ts`, `github-api.ts`, `github-read.ts`, `github-repo.ts`, `github-queries.ts`, `github-viewed.ts`, `gitlab.ts`, `gitlab-repo.ts`, `comments.ts`, `http.ts`, `tokens.ts`, `sites.ts`, `outline-store.ts` | Node in tests |
 | `src/core/` | Pure logic, no DOM: Markdown units, block and word diffs, limits, DOM highlighting of ops, patch reversal, paths and links, reading order, folded-file rules, chapters and session project context, review search matching; repository listing budgets, the document index, architecture and decision views, notes and their export | `markdown.ts`, `blockdiff.ts`, `worddiff.ts`, `limits.ts`, `highlight.ts`, `patch.ts`, `paths.ts`, `order.ts`, `quiet.ts`, `chapters.ts`, `review-context.ts`, `search.ts`, `discovery.ts`, `docindex.ts`, `blob-cache.ts`, `architecture.ts`, `notes.ts` | Node in tests |
 | `src/ui/review/` | Review shell, chapters, review search, moved lines, Viewed and reading positions | `reader.ts`, `chapters.ts`, `search.ts`, `moves.ts`, `viewed.ts`, `positions.ts` | jsdom in tests |
-| `src/ui/library/` | Project library shell, map and notes views, saved notes, configuration client | `repo-reader.ts`, `repo-views.ts`, `reading-sequence.ts`, `repo.css`, `project-store.ts`, `outline-store.ts`, `outline-cache.ts`, `configs.ts` | jsdom in tests |
+| `src/ui/library/` | Project library shell, map and notes views, saved notes, configuration client | `repo-reader.ts`, `repo-views.ts`, `reading-sequence.ts`, `repo.css`, `project-store.ts`, `outline-cache.ts`, `configs.ts` | jsdom in tests |
 | `src/ui/rendering/` | Sanitised Markdown, code, diagrams, images, source comments and reading behavior | `render.ts`, `reading.ts`, `code*.ts`, `diagrams.ts`, `image.ts`, `specs.ts`, `symbols.ts`, `source-comments.ts` | jsdom in tests |
 | `src/ui/sandbox/` | Opaque frame transport and bundled engines; isolated image fallback | `sandbox.ts`, `sandbox-frame.ts`, `*-frame.ts`, `*-frame.html`, `elk-shim.ts` | jsdom and Chrome |
 | `src/ui/components/` | Shared DOM controls, the side sheet and its stack, the slide that goes with it, layout picker, chapter context and attachment form, settings sheet, icons, fonts and common reader styles | `dom.ts`, `sheet.ts`, `motion.ts`, `layout-controls.ts`, `chapter-context.ts`, `chapter-attachment.ts`, `settings-sheet.ts`, `icons.ts`, `fonts.ts`, `fonts/`, `reader-styles.ts`, `styles/` | jsdom in tests |
@@ -169,6 +169,30 @@ A failure keeps the draft; writes are never retried ([ADR 0008](../adr/0008-comm
 | `e2e/` | Browser checks in Chrome with Puppeteer | `reader.mjs`, `specs.mjs`, `large.mjs`, `search.mjs`, `files.mjs`, `chapters.mjs`, `chapter-context.mjs`, `repo.mjs`, `site.mjs` | Chrome |
 
 Dependencies point inwards: `core` imports only types from `platforms/types.ts`; `platforms` imports `core`; `ui` imports `core` and `platforms/types.ts`; `content` wires `platforms` and `ui` together. Nothing outside `src/background/` and `src/popup/` imports token storage, and the build enforces it.
+
+## Structure rules
+
+The source is organised by rules that `npm run lint` enforces ([ADR 0032](../adr/0032-enforce-how-the-source-is-organised.md)). The ones that shape where code lives:
+
+- **Layers.** A folder imports only from the folders its layer allows. From the bottom: `core` imports nothing, `platforms` imports `core`, and the interface folders import both. The entry points (`content`, `popup`, `options`, `background`) assemble them, and `background` stays free of the interface.
+- **Size.** A source or stylesheet file stays under 800 lines. The few files above that are listed in `scripts/structure-baseline.json`, may not grow, and have their limits lowered as they are split.
+- **Exports.** Something is exported only when another file uses it.
+- **Folders.** A folder holds at most 30 source files.
+- **Root.** The repository root holds only the files and folders named in `scripts/structure.mjs`.
+
+The interface folders may import from each other in one direction only:
+
+| Folder | May import from |
+| --- | --- |
+| `ui/preferences` | `core` |
+| `ui/components` | `core`, `ui/preferences` |
+| `ui/sandbox` | `core`, `ui/rendering` |
+| `ui/rendering` | `core`, `platforms`, `ui/components`, `ui/sandbox` |
+| `ui/opening` | `core`, `platforms`, `ui/components` |
+| `ui/library` | `core`, `platforms`, `ui/components`, `ui/preferences`, `ui/rendering`, `ui/sandbox` |
+| `ui/review` | `core`, `platforms`, `ui/components`, `ui/library`, `ui/preferences`, `ui/rendering` |
+
+Biome adds three more: no import cycles, kebab-case file names, and no barrel files. Run `npm run structure` to check the rest on its own.
 
 ## The `ReviewSource` contract
 

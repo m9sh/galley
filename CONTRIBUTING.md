@@ -14,6 +14,18 @@ npm run demo       # or: try the reader on a sample merge request, no extension 
 
 Node 22.12 or newer is required (22.12+, 24 or 26+); `.nvmrc` names the version CI tests first, so `nvm use` picks it. See [Develop in your own Chrome](#develop-in-your-own-chrome) for the dev loop.
 
+## Keeping the source organised
+
+`npm run lint` (part of `npm run check`) also runs `npm run structure`. It fails when code is placed where it does not belong, and says what to do:
+
+- a folder imports from a layer above it, such as `core` importing from `ui` (the layers are in the [architecture notes](docs/architecture/README.md#structure-rules));
+- a source or stylesheet file passes 800 lines, or one of the few files already over that limit grows;
+- something is exported that no other file uses;
+- a folder passes 30 source files, or a new folder has tests but no Vitest project;
+- a new file appears at the repository root.
+
+When you split a large file, run `npm run structure -- --update` to lower its limit. Do not raise a limit or add a layer edge to get past a failure: move the code instead. A deliberate exception is a decision, so it needs a line in `scripts/structure.mjs` and an explanation in the pull request.
+
 ## Keeping the working copy clean
 
 Builds, tests and screenshot scripts write into folders that git ignores: `dist/`, `coverage/`, `reports/` and `demo/build/`. Two commands put the working copy back to what git tracks:

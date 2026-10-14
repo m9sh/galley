@@ -94,6 +94,7 @@ Generated from the ADR files by `npm run docs:index`; do not edit by hand.
 | [0029](0029-consented-images-in-an-isolated-frame.md) | Recover consented images in an isolated image-only frame | Proposed | 2026-10-10 | — |
 | [0030](0030-spatial-project-map-with-an-equivalent-list.md) | A spatial project map and an equivalent list share one evidence model | Accepted | 2026-10-11 | [0049](../rfcs/0049-repository-docs-and-project-maps.md) |
 | [0031](0031-read-each-document-once.md) | Read each document once, by its content hash, and remember document outlines on the device only when the reader allows it | Accepted | 2026-10-13 | [0074](../rfcs/0074-read-each-document-once.md) |
+| [0032](0032-enforce-how-the-source-is-organised.md) | Enforce how the source is organised, with Biome rules and a structure check | Accepted | 2026-10-14 | — |
 <!-- adr-index:end -->
 
 ## By area
@@ -106,4 +107,4 @@ Generated from the ADR files by `npm run docs:index`; do not edit by hand.
 | Reader UI | [0004](0004-reader-as-a-shadow-dom-overlay.md), [0005](0005-plain-typescript-and-dom.md), [0013](0013-reading-palettes-as-token-sets.md), [0018](0018-centre-the-text-on-wide-screens.md) |
 | Review workflow | [0008](0008-comment-through-platform-review-apis.md), [0019](0019-review-progress-as-fingerprints.md), [0021](0021-suggested-order-and-folded-files.md), [0022](0022-review-chapters-from-evidence.md) |
 | Repository reading and project maps | [0024](0024-read-a-repository-at-one-commit.md) one commit, [0025](0025-repository-reads-in-the-token-allowlist.md) token allowlist, [0026](0026-an-evidence-only-project-map.md) evidence-only map, [0027](0027-read-configuration-statically.md) configuration, [0028](0028-private-project-notes.md) private notes, [0030](0030-spatial-project-map-with-an-equivalent-list.md) proposed spatial map, [0031](0031-read-each-document-once.md) documents read once and outlines remembered |
-| Engineering process | [0001](0001-record-decisions-and-proposals.md), [0014](0014-release-from-conventional-commits.md), [0015](0015-vitest-biome-and-pre-push-checks.md), [0017](0017-full-coverage-of-every-file.md), [0023](0023-pull-request-demos-on-github-pages.md) |
+| Engineering process | [0001](0001-record-decisions-and-proposals.md), [0032](0032-enforce-how-the-source-is-organised.md) structure rules, [0014](0014-release-from-conventional-commits.md), [0015](0015-vitest-biome-and-pre-push-checks.md), [0017](0017-full-coverage-of-every-file.md), [0023](0023-pull-request-demos-on-github-pages.md) |

@@ -22,7 +22,23 @@
         // Intentional fire-and-forget calls say so with `void`.
         "noFloatingPromises": "error"
       },
+      "suspicious": {
+        // A module that imports itself back through others cannot be read, tested or moved on its own.
+        "noImportCycles": "error"
+      },
+      "performance": {
+        // Import from the module that defines a thing, not from one that passes it along.
+        "noBarrelFile": "error",
+        "noReExportAll": "error"
+      },
+      "correctness": {
+        // What the code imports is declared in package.json, not left to whatever the install hoists.
+        "noUndeclaredDependencies": "error"
+      },
       "style": {
+        // Files are named in kebab-case, like the folders around them.
+        "useFilenamingConvention": { "level": "error", "options": { "strictCase": true, "requireAscii": true, "filenameCases": ["kebab-case"] } },
+        "noExportedImports": "error",
         // Strict null checks are on. DOM code often looks up an element it has just rendered, and tests
         // assert on what they have just built, so `!` is clearer than a guard that cannot fail.
         "noNonNullAssertion": "off",

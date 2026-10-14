@@ -10,7 +10,7 @@ import {
   OUTLINE_PROJECT_CHARS,
   RECORD_PREFIX,
   type Directory,
-} from './outline-store.ts';
+} from '../../platforms/outline-store.ts';
 import { digestText } from './project-store.ts';
 
 /**

@@ -1,5 +1,3 @@
-import { button } from '../components/dom.ts';
-export { button } from '../components/dom.ts';
 import {
   ORIGIN_NAMES,
   PROPOSED_KINDS,
@@ -11,7 +9,7 @@ import {
   type Relation,
 } from '../../core/architecture.ts';
 import { ANCHOR_STATES, MAX_LINKS, MAX_NOTE_CHARS, NOTE_HEADINGS, NOTE_KINDS, NOTE_NAMES, type AnchorState, type Note } from '../../core/notes.ts';
-import { chip, h, option, selectField, setRow, switchButton, textField, type ChipKind } from '../components/dom.ts';
+import { button, chip, h, option, selectField, setRow, switchButton, textField, type ChipKind } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
 
 /**
@@ -21,8 +19,6 @@ import { icons } from '../components/icons.ts';
  * 0049's Phase 3; notes and their export Phase 4; a review's project context Phase 5. Interaction goes
  * through data-act on the reader (repo-reader.ts).
  */
-
-export { h };
 
 export function external(label: string, href: string, className = ''): HTMLAnchorElement {
   const a = h('a', className, label);
