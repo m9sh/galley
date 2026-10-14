@@ -27,7 +27,7 @@ import source_changes from './styles/26-source-changes.css';
 
 /**
  * The reader's stylesheet, in cascade order. The review reader (review/reader.ts) and the library reader
- * (library/repo-reader.ts) share it; the library adds library/repo.css after it. Each file in styles/ is one
+ * (library/repo-reader.ts) share it; the library adds library/repo-styles.ts after it. Each file in styles/ is one
  * section of what used to be a single file, and the order here is the order of the cascade, so a rule that
  * overrides an earlier one has to come after it.
  */

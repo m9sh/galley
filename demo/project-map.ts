@@ -18,7 +18,7 @@ import { applyReadingControls, keyGroups, nextTab, PaletteCarousel, READING_SECT
 import readerCss from '../src/ui/components/reader-styles.ts';
 import { DEFAULT_SETTINGS, loadSettings, TEXT_SIZES, type Settings } from '../src/ui/preferences/settings.ts';
 import { renderDocument } from '../src/ui/rendering/render.ts';
-import css from './project-map.css';
+import css from './project-map-styles.ts';
 
 const SETTINGS_TABS = ['reading', 'layout', 'keys'];
 const SHEET_TABS = ['preview', 'links'] as const;

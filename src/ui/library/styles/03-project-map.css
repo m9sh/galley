@@ -1,0 +1,127 @@
+/* ------------------------------------------------------------------ project map */
+
+.mr-repo-map {
+  box-sizing: border-box;
+  max-width: 1160px;
+  margin: 0 auto;
+  font-family: var(--sans);
+}
+
+.mr-repo-map[hidden],
+.mr-repo-read[hidden] {
+  display: none;
+}
+
+.mr-map-head .mr-title {
+  font-size: calc(40px * var(--type));
+}
+
+.mr-map-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 12px 0 28px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.mr-map-status > p {
+  margin: 0;
+}
+
+.mr-map-status > .mr-repo-limit {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+/* The declared-system and decision lenses: what is in the view on the left, the focus in the middle, its
+   connections on the right. Each column is an ordinary list, so it reads the same with a keyboard or a screen reader. */
+.mr-map-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px) minmax(0, 1fr);
+  align-items: start;
+  gap: 40px;
+}
+
+.mr-map-center {
+  position: sticky;
+  top: 72px;
+  padding: 22px;
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: var(--card-shadow);
+}
+
+.mr-map-title {
+  margin: 0 0 4px;
+  font: 400 calc(26px * var(--type)) / 1.15 var(--heading-font, var(--body-font));
+  letter-spacing: -0.015em;
+}
+
+.mr-map-title:focus {
+  outline: none;
+}
+
+.mr-map-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0 0 14px;
+  font-size: 13px;
+}
+
+.mr-map-facts .mr-repo-limit {
+  margin: 0;
+}
+
+.mr-map-kind {
+  margin: 0 0 12px;
+}
+
+.mr-map-col h3,
+.mr-map-problems h3 {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* A short line from each neighbour towards the middle: the map's branches. */
+.mr-map-col .mr-repo-edge {
+  position: relative;
+}
+
+.mr-map-col:first-child .mr-repo-edge::after,
+.mr-map-col:last-child .mr-repo-edge::before {
+  content: "";
+  position: absolute;
+  top: 21px;
+  width: 28px;
+  border-top: 1.5px solid var(--rule);
+}
+
+.mr-map-col:first-child .mr-repo-edge::after {
+  right: -36px;
+}
+
+.mr-map-col:last-child .mr-repo-edge::before {
+  left: -36px;
+}
+
+.mr-map-problems {
+  margin-top: 40px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+}
+
+.mr-map-problems ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.6;
+}

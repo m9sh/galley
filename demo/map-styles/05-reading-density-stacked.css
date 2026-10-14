@@ -1,0 +1,259 @@
+/* ---- reading a whole document */
+.mr-atlas-article {
+  max-width: 728px;
+  margin: 32px auto;
+  padding: 0 24px 100px;
+}
+.mr-atlas-article .mr-content {
+  width: 100%;
+  margin: 32px 0;
+}
+.mr-atlas-article .mr-unit {
+  max-width: 100%;
+}
+.mr-atlas-article .mr-block {
+  margin-top: var(--block-gap);
+}
+.mr-atlas button.mr-atlas-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  border: 0;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  font-size: 0;
+}
+
+/* ---- density */
+.mr-atlas[data-density="compact"] .mr-atlas-place {
+  gap: calc(3px * var(--type));
+  padding: calc(9px * var(--type)) calc(12px * var(--type));
+}
+.mr-atlas[data-density="compact"] .mr-atlas-place.is-focus {
+  padding: calc(12px * var(--type)) calc(14px * var(--type));
+}
+.mr-atlas[data-density="compact"] .mr-atlas-stack {
+  gap: calc(8px * var(--type));
+}
+.mr-atlas[data-density="compact"] .mr-atlas-list .mr-atlas-place {
+  padding: 8px 14px;
+}
+
+/* ---- stacked: phones, and a canvas narrowed by the sheet, read top to bottom */
+.mr-atlas.is-stacked .mr-atlas-canvas {
+  cursor: default;
+  touch-action: auto;
+}
+.mr-atlas.is-stacked .mr-atlas-world {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: auto;
+  max-width: 560px;
+  min-width: 0;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 24px 20px 32px;
+}
+.mr-atlas.is-stacked .mr-atlas-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+.mr-atlas.is-stacked .mr-atlas-place.is-focus {
+  margin-top: 6px;
+}
+.mr-atlas.is-stacked .mr-atlas-zoom {
+  display: none;
+}
+
+@media (min-width: 761px) {
+  /* The top bar stays put; the Map, List, article and sheet each scroll in their own region. */
+  .mr-atlas.mr-root {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .mr-atlas-chrome {
+    flex: none;
+  }
+  /* Opening details adds a column, so the Map narrows instead of being covered. */
+  .mr-atlas-shell {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 0px;
+    grid-template-rows: minmax(0, 1fr);
+    overflow: hidden;
+    transition: grid-template-columns 0.24s ease-out;
+  }
+  .mr-atlas-shell.has-sheet {
+    grid-template-columns: minmax(0, 1fr) var(--sheet-width);
+  }
+  .mr-atlas-map-view,
+  .mr-atlas-article {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 0;
+  }
+  .mr-atlas-canvas,
+  .mr-atlas-list {
+    position: absolute;
+    inset: 0;
+  }
+  .mr-atlas.is-stacked .mr-atlas-canvas {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* The sheet keeps its full width while its column grows, so it slides in from the edge without reflowing. */
+  .mr-atlas-detail {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    width: var(--sheet-width);
+    min-height: 0;
+    border-left: 1px solid var(--rule);
+    visibility: hidden;
+    transition: visibility 0s 0.24s;
+  }
+  .mr-atlas-detail.is-open {
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  .mr-atlas-article {
+    width: 100%;
+    overflow: auto;
+    overscroll-behavior: contain;
+    margin: 0 auto;
+    padding-top: 32px;
+  }
+}
+@media (max-width: 760px) {
+  .mr-atlas-chrome {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "left right"
+      "find find";
+    row-gap: 6px;
+    height: auto;
+    padding: 6px 8px 10px;
+  }
+  .mr-atlas-chrome .mr-tb-left {
+    grid-area: left;
+  }
+  .mr-atlas-chrome .mr-tb-center {
+    grid-area: find;
+    padding: 0 6px;
+  }
+  .mr-atlas-chrome .mr-tb-right {
+    grid-area: right;
+  }
+  .mr-atlas-chrome .mr-brand,
+  .mr-atlas-crumb,
+  .mr-atlas-chrome [data-act="details"],
+  .mr-atlas.is-reading .mr-atlas-title,
+  .mr-atlas.is-reading .mr-atlas-reading {
+    display: none;
+  }
+  .mr-atlas-results {
+    max-height: 60dvh;
+  }
+  .mr-atlas-search input {
+    height: 44px;
+  }
+  .mr-atlas-choices button > span:not(.mr-atlas-choice-icon) {
+    display: none;
+  }
+  .mr-atlas-controls {
+    position: static;
+    padding: 0 16px;
+  }
+  .mr-atlas .mr-atlas-home {
+    height: 44px;
+  }
+  .mr-atlas-info {
+    position: static;
+    max-width: none;
+    padding: 12px 16px 32px;
+    text-align: left;
+  }
+  .mr-atlas-list-inner {
+    padding: 16px 16px 48px;
+  }
+  .mr-atlas-list .mr-atlas-place > .mr-atlas-counts {
+    display: none;
+  }
+  .mr-atlas-detail {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 40;
+    max-height: 85dvh;
+    border: 1px solid var(--rule);
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
+    box-shadow: var(--shadow);
+  }
+  .mr-atlas-sheet-header {
+    padding: 20px 8px 12px 16px;
+  }
+  /* A grab bar marks the bottom sheet; it is drawn, not a control. */
+  .mr-atlas-sheet-header::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 36px;
+    height: 4px;
+    margin-left: -18px;
+    border-radius: 2px;
+    background: var(--rule);
+  }
+  .mr-atlas-sheet-body {
+    padding: 12px 16px 16px;
+  }
+  .mr-atlas-sheet-body {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+  .mr-atlas-article {
+    margin-top: 24px;
+    padding: 0 16px 100px;
+  }
+}
+@media (max-width: 760px), (hover: none) {
+  .mr-atlas .mr-icon-btn {
+    min-width: 44px;
+  }
+  .mr-atlas button,
+  .mr-atlas summary,
+  .mr-atlas input,
+  .mr-atlas select {
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mr-atlas-results {
+    animation: mr-pop 0.16s ease-out;
+  }
+}
+@media (prefers-reduced-motion: no-preference) and (max-width: 760px) {
+  .mr-atlas-detail.is-open {
+    animation: mr-atlas-rise 0.24s ease-out;
+  }
+}
+@keyframes mr-atlas-rise {
+  from {
+    transform: translateY(32px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mr-atlas-shell,
+  .mr-atlas-detail,
+  .mr-atlas-place,
+  .mr-atlas-edge {
+    transition: none;
+  }
+}

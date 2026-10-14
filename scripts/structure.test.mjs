@@ -136,9 +136,10 @@ test('every folder with tests is a Vitest project, or its tests never run', () =
 
 test('a stylesheet that code imports has to exist', () => {
   const sources = {
-    'src/ui/components/reader-styles.ts': "import a from './styles/01-a.css';\nimport b from './styles/02-b.css';\nimport c from '../library/repo.css';",
+    'src/ui/components/reader-styles.ts':
+      "import a from './styles/01-a.css';\nimport b from './styles/02-b.css';\nimport c from '../library/styles/01-frame.css';",
   };
-  assert.deepEqual(checkStyleImports(sources, ['src/ui/components/styles/01-a.css', 'src/ui/library/repo.css']), [
+  assert.deepEqual(checkStyleImports(sources, ['src/ui/components/styles/01-a.css', 'src/ui/library/styles/01-frame.css']), [
     'src/ui/components/reader-styles.ts imports ./styles/02-b.css, which does not exist',
   ]);
 });

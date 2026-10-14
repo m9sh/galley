@@ -40,7 +40,7 @@ flowchart TB
       SF["spec-frame<br/>(Babel parser)"]
     end
     subgraph RepoShadow["#galley-repo-reader shadow root"]
-      RR["Repository reader<br/>src/ui/library/repo-reader.ts + repo.css"]
+      RR["Repository reader<br/>src/ui/library/repo-reader.ts + styles/"]
       CF["config-frame<br/>(YAML reader)"]
     end
   end
@@ -152,7 +152,7 @@ A failure keeps the draft; writes are never retried ([ADR 0008](../adr/0008-comm
 | `src/platforms/` | GitHub and GitLab adapters behind `ReviewSource` and `RepositorySource`; detection of reviews and repository pages; HTTP with retries; comments and threads; Viewed sync; tokens, enabled sites and the storage of remembered outlines | `types.ts`, `index.ts`, `detect.ts`, `github.ts`, `github-api.ts`, `github-read.ts`, `github-repo.ts`, `github-queries.ts`, `github-viewed.ts`, `gitlab.ts`, `gitlab-repo.ts`, `comments.ts`, `http.ts`, `tokens.ts`, `sites.ts`, `outline-store.ts` | Node in tests |
 | `src/core/` | Pure logic, no DOM: Markdown units, block and word diffs, limits, DOM highlighting of ops, patch reversal, paths and links, reading order, folded-file rules, chapters and session project context, review search matching; repository listing budgets, the document index, architecture and decision views, notes and their export | `markdown.ts`, `blockdiff.ts`, `worddiff.ts`, `limits.ts`, `highlight.ts`, `patch.ts`, `paths.ts`, `order.ts`, `quiet.ts`, `chapters.ts`, `review-context.ts`, `search.ts`, `discovery.ts`, `docindex.ts`, `blob-cache.ts`, `architecture.ts`, `notes.ts` | Node in tests |
 | `src/ui/review/` | Review shell, chapters, review search, moved lines, Viewed and reading positions | `reader.ts`, `chapters.ts`, `search.ts`, `moves.ts`, `viewed.ts`, `positions.ts` | jsdom in tests |
-| `src/ui/library/` | Project library shell, map and notes views, saved notes, configuration client | `repo-reader.ts`, `repo-views.ts`, `reading-sequence.ts`, `repo.css`, `project-store.ts`, `outline-cache.ts`, `configs.ts` | jsdom in tests |
+| `src/ui/library/` | Project library shell, map and notes views, saved notes, configuration client | `repo-reader.ts`, `repo-views.ts`, `reading-sequence.ts`, `repo-styles.ts`, `styles/`, `project-store.ts`, `outline-cache.ts`, `configs.ts` | jsdom in tests |
 | `src/ui/rendering/` | Sanitised Markdown, code, diagrams, images, source comments and reading behavior | `render.ts`, `reading.ts`, `code*.ts`, `diagrams.ts`, `image.ts`, `specs.ts`, `symbols.ts`, `source-comments.ts` | jsdom in tests |
 | `src/ui/sandbox/` | Opaque frame transport and bundled engines; isolated image fallback | `sandbox.ts`, `sandbox-frame.ts`, `*-frame.ts`, `*-frame.html`, `elk-shim.ts` | jsdom and Chrome |
 | `src/ui/components/` | Shared DOM controls, the side sheet and its stack, the slide that goes with it, layout picker, chapter context and attachment form, settings sheet, icons, fonts and common reader styles | `dom.ts`, `sheet.ts`, `motion.ts`, `layout-controls.ts`, `chapter-context.ts`, `chapter-attachment.ts`, `settings-sheet.ts`, `icons.ts`, `fonts.ts`, `fonts/`, `reader-styles.ts`, `styles/` | jsdom in tests |
@@ -245,7 +245,7 @@ Both readers compose their layout picker from `src/ui/components/layout-controls
 | `demo/build/` | The demo bundle and copies of the frames |
 | `dist/dev/` | The development build (`npm run dev`): orange icon, DEV badges, source maps, live reload, its own storage |
 
-The demo-only project map proposal (`demo/project-map.ts`, `demo/project-map.css`) uses a pure document adapter and deterministic placement in `src/core/project-map.ts`. Its article preview uses the existing safe renderer, its settings/camera stay in memory, reading writes the document's path into the demo page's own address (never a GitHub or GitLab page's), and its extra fixtures are bundled demo data. A build guard rejects those modules from shipped extension bundles until ADR 0030 is accepted.
+The demo-only project map proposal (`demo/project-map.ts`, and the styles in `demo/map-styles/`, joined by `demo/project-map-styles.ts`) uses a pure document adapter and deterministic placement in `src/core/project-map.ts`. Its article preview uses the existing safe renderer, its settings/camera stay in memory, reading writes the document's path into the demo page's own address (never a GitHub or GitLab page's), and its extra fixtures are bundled demo data. A build guard rejects those modules from shipped extension bundles until ADR 0030 is accepted.
 
 The build fails if token storage reaches `content.js` or a frame. Our own bundles stay readable; only Mermaid and its layout engine are minified ([ADR 0005](../adr/0005-plain-typescript-and-dom.md)).
 

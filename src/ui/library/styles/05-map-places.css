@@ -1,0 +1,257 @@
+/* The neighbourhood: linked from, in focus, links to. */
+.mr-pm-world {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(200px, calc(264px * var(--type))) minmax(220px, calc(300px * var(--type))) minmax(200px, calc(264px * var(--type)));
+  justify-content: center;
+  align-items: center;
+  column-gap: clamp(48px, 5vw, 96px);
+  width: 100%;
+  min-width: min-content;
+  min-height: 100%;
+  padding: 56px 40px 96px;
+  transform-origin: 0 0;
+}
+
+.mr-pm-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.mr-pm-lane-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 0 2px;
+  color: var(--muted);
+  font: 600 calc(11px * var(--type)) / 1.4 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mr-pm-lane-head span {
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.mr-pm-stack {
+  display: flex;
+  flex-direction: column;
+  gap: calc(12px * var(--type));
+}
+
+.mr-pm-empty {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--control-rule);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+  line-height: 1.45;
+}
+
+.mr-pm .mr-pm-more,
+.mr-map-sheet .mr-pm-more {
+  justify-content: center;
+}
+
+.mr-pm-flow {
+  display: none;
+}
+
+/* Places: a card per document; type by shape and label, selection by the accent ring. */
+.mr-pm-place {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(4px * var(--type));
+  width: 100%;
+  min-width: 0;
+  padding: calc(12px * var(--type)) calc(14px * var(--type));
+  border: 1px solid var(--control-rule);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--fg) 6%, transparent);
+  transition:
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+.mr-pm-place:hover {
+  border-color: var(--fg);
+}
+
+.mr-pm-place[aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.mr-pm-place.is-focus {
+  padding: calc(16px * var(--type)) calc(18px * var(--type));
+  border-color: var(--fg);
+  box-shadow: var(--shadow);
+}
+
+.mr-pm-place strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font: 400 calc(18px * var(--type)) / 1.25 var(--heading-font, var(--body-font));
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.mr-pm-place.is-focus strong {
+  font-size: calc(22px * var(--type));
+}
+
+.mr-pm-place small {
+  max-width: 100%;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+
+.mr-pm-caption {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mr-pm small.mr-pm-type,
+.mr-map-sheet small.mr-pm-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font: 500 calc(11px * var(--type)) / 1.3 var(--sans);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.mr-pm-type .mr-icon {
+  flex: none;
+}
+
+.mr-pm-here {
+  position: absolute;
+  top: 0;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font: 500 calc(11px * var(--type)) / 1.5 var(--sans);
+  white-space: nowrap;
+  transform: translateY(-50%);
+}
+
+.mr-pm-here::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Lines are neutral until a place is pointed at or selected. */
+.mr-pm-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.mr-pm-line,
+.mr-pm-arrow {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mr-pm-edge {
+  transition: opacity 0.14s ease;
+}
+
+/* Links between two neighbours are context: they appear only while one of them is pointed at or selected. */
+.mr-pm-edge.is-context:not(.is-lit) {
+  opacity: 0;
+}
+
+.mr-pm-edge.is-context:not(.is-lit) .mr-pm-hit {
+  pointer-events: none;
+}
+
+.mr-pm-edge.is-context .mr-pm-line {
+  stroke-dasharray: 4 5;
+}
+
+.mr-pm-edge.is-lit,
+.mr-pm-edge.is-focus:hover {
+  opacity: 1;
+}
+
+.mr-pm-edge.is-lit :is(.mr-pm-line, .mr-pm-arrow),
+.mr-pm-edge:hover :is(.mr-pm-line, .mr-pm-arrow) {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.mr-pm-edge.is-dim {
+  opacity: 0.18;
+}
+
+.mr-pm-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+/* Floating controls: zoom, fit, and the way back to the document being read. */
+.mr-pm-controls {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mr-pm-zoom {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.mr-pm .mr-pm-home {
+  gap: 6px;
+  height: 42px;
+  padding: 0 14px 0 12px;
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.mr-pm button:disabled,
+.mr-map-sheet button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}

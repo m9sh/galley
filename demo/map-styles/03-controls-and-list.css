@@ -1,0 +1,146 @@
+/* ---- floating controls and the source line */
+.mr-atlas-controls {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mr-atlas-zoom {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 8%, transparent);
+}
+.mr-atlas .mr-atlas-home {
+  height: 42px;
+  padding: 0 14px 0 12px;
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 8%, transparent);
+}
+.mr-atlas-info {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  max-width: min(520px, 52%);
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  text-align: right;
+  pointer-events: none;
+}
+.mr-atlas-status,
+.mr-atlas-footer {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+  line-height: 1.5;
+}
+.mr-atlas.is-waiting .mr-atlas-info {
+  inset: 0;
+  max-width: none;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+/* ---- List: every document by folder, as rows */
+.mr-atlas-list {
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.mr-atlas-list-inner {
+  display: grid;
+  gap: 28px;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 24px 64px;
+}
+.mr-atlas-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 2px 2px 2px 14px;
+  border: 1px solid var(--control-rule);
+  border-radius: 999px;
+  font-size: calc(13px * var(--type));
+}
+.mr-atlas-folder {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 8px;
+  font: 600 calc(13px * var(--type)) / 1.5 var(--sans);
+  overflow-wrap: anywhere;
+}
+.mr-atlas-folder span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+  font-weight: 400;
+  white-space: nowrap;
+}
+.mr-atlas-list-rows {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--card);
+}
+.mr-atlas-list .mr-atlas-place {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 16px;
+  row-gap: 2px;
+  min-height: 44px;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+}
+.mr-atlas-list .mr-atlas-place:last-child {
+  border-bottom: 0;
+}
+.mr-atlas-list .mr-atlas-place:hover {
+  background: var(--soft);
+}
+.mr-atlas-list .mr-atlas-place[aria-pressed="true"] {
+  outline-offset: -2px;
+}
+.mr-atlas-list .mr-atlas-place > * {
+  grid-column: 1;
+}
+.mr-atlas-list .mr-atlas-place strong {
+  font-size: calc(17px * var(--type));
+}
+.mr-atlas-list .mr-atlas-path {
+  overflow-wrap: anywhere;
+}
+.mr-atlas-list .mr-atlas-place > .mr-atlas-counts {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+  align-self: center;
+  white-space: nowrap;
+}
+.mr-atlas-list .mr-atlas-place > .mr-atlas-here {
+  position: static;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  transform: none;
+}
+.mr-atlas-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+  line-height: 1.5;
+}

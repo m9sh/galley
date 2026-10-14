@@ -45,7 +45,7 @@ import css from '../components/reader-styles.ts';
 import { digestText, ProjectNotes, when } from './project-store.ts';
 import { loadImage, renderDocument, type RenderedDoc } from '../rendering/render.ts';
 import { configStatus, exportSheet, external, lensSwitch, lensView, notesView, type ConfigState } from './repo-views.ts';
-import repoCss from './repo.css';
+import repoCss from './repo-styles.ts';
 import { recallOutlines, rememberOutlines, touchOutlines, type Remembered } from './outline-cache.ts';
 import { ReadingSequence, sequenceRoute, sequenceView, type ReadingStop } from './reading-sequence.ts';
 import { documentMap, reviewMap } from '../../core/project-map.ts';
