@@ -1,7 +1,5 @@
 import { button } from '../components/dom.ts';
 export { button } from '../components/dom.ts';
-import type { ChapterAttachment, ReviewRelated } from '../../core/review-context.ts';
-export type { ReviewRelated } from '../../core/review-context.ts';
 import {
   ORIGIN_NAMES,
   PROPOSED_KINDS,
@@ -654,84 +652,4 @@ export function exportSheet(options: ExportOptions): HTMLElement[] {
     h('p', 'mr-settings-note', 'Only the notes you include leave this browser, and only when you copy, download or open an issue.'),
   );
   return [heading, body];
-}
-
-// ---------------------------------------------------------------- a review's project context
-
-export interface ReviewOptions {
-  title: string;
-  revision: string;
-  /** How much of the repository has been read: related documents come only from those. */
-  status: HTMLElement;
-  chapters: Array<{
-    title: string;
-    attachments?: ChapterAttachment[];
-    files: Array<{ path: string; changedDoc: boolean; related: ReviewRelated[]; declares: string[] }>;
-  }>;
-}
-
-/** A flag says what is true, never that a document is wrong: changed is a change, worth checking is a plain fact. */
-function flagChip(flag: ReviewRelated['flag']): HTMLElement {
-  return flag === 'changed' ? chip('modified', 'Changed in this review') : chip(null, 'Worth checking: it links to a file this review changes');
-}
-
-export function reviewView(options: ReviewOptions): HTMLElement {
-  const view = h('section', 'mr-review-context');
-  view.setAttribute('aria-label', 'This review');
-  view.append(
-    h('h1', 'mr-title', 'This review'),
-    h(
-      'p',
-      'mr-subtitle',
-      `Reading the repository at ${options.revision} for “${options.title}”. Documents that link to the files this review changes are listed with the link that connects them. Galley says what is worth checking; it never says a document is wrong.`,
-    ),
-    options.status,
-  );
-  for (const chapter of options.chapters) {
-    const section = h('section', 'mr-review-chapter');
-    section.append(h('h2', '', chapter.title));
-    for (const attachment of chapter.attachments ?? []) {
-      const row = h('p', 'mr-review-attachment');
-      const open = button(attachment.title, 'open', 'mr-repo-edge-doc');
-      open.dataset.path = attachment.path;
-      open.dataset.anchor = attachment.heading;
-      row.append(open, h('small', '', `Added by you · ${attachment.commit.slice(0, 7)}`));
-      section.append(row);
-    }
-    for (const file of chapter.files) {
-      const box = h('div', 'mr-review-file');
-      const head = h('p', 'mr-review-path');
-      if (file.changedDoc) {
-        const open = button(file.path, 'open', 'mr-repo-edge-doc');
-        open.dataset.path = file.path;
-        head.append(open, facts(chip('modified', 'Changed document')));
-      } else head.append(h('code', '', file.path));
-      box.append(head);
-      if (file.declares.length) box.append(h('p', 'mr-repo-quiet', `Declares ${file.declares.join(', ')}.`));
-      if (!file.related.length) box.append(h('p', 'mr-repo-quiet', 'No document read so far links here.'));
-      const list = h('ul', 'mr-repo-edges');
-      for (const related of file.related) {
-        const li = h('li', 'mr-repo-edge');
-        const open = button(related.title, 'open', 'mr-repo-edge-doc');
-        open.dataset.path = related.path;
-        li.append(open, facts(...(related.kind ? [chip(null, related.kind)] : []), flagChip(related.flag)));
-        const proofs = h('ul', 'mr-repo-evidence');
-        for (const proof of related.evidence) {
-          const item = h('li');
-          const at = button('', 'evidence', 'mr-repo-proof');
-          at.dataset.path = related.path;
-          at.dataset.line = String(proof.line);
-          at.append(h('q', '', proof.text), ` line ${proof.line}`);
-          item.append(at);
-          proofs.append(item);
-        }
-        li.append(proofs);
-        list.append(li);
-      }
-      if (file.related.length) box.append(list);
-      section.append(box);
-    }
-    view.append(section);
-  }
-  return view;
 }

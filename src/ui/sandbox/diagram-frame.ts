@@ -168,9 +168,34 @@ export function diagramTheme(p: DiagramPalette, dark: boolean): { themeVariables
     .legend text { fill: ${p.fg}; font-size: 13px; }
     .grid .tick line { stroke: ${p.rule}; }
     .tick text { fill: ${p.muted}; }
+    ${changeCSS(p, canvas)}
   `;
   return { themeVariables, themeCSS };
 }
+
+/**
+ * What a change did, in the page's change colours and never by colour alone: added shapes and links are drawn
+ * heavier, edited ones heavier with words in italics, removed ones dashed with their words struck through.
+ */
+export function changeCSS(colours: { add: string; mod: string; del: string }, canvas: string): string {
+  const shapes = ':is(rect, polygon, circle, ellipse, path)';
+  return `
+    .node.galleyAdded ${shapes} { stroke: ${colours.add}; stroke-width: 2.5px; }
+    .node.galleyEdited ${shapes} { stroke: ${colours.mod}; stroke-width: 2.5px; }
+    .node.galleyEdited :is(text, tspan) { font-style: italic; }
+    .node.galleyRemoved ${shapes} { stroke: ${colours.del}; stroke-width: 1.5px; stroke-dasharray: 5 4; fill: ${canvas}; }
+    .node.galleyRemoved :is(text, tspan) { fill: ${colours.del}; text-decoration: line-through; }
+    path[id*="-galleyAddedEdge"] { stroke: ${colours.add}; stroke-width: 2.5px; }
+    path[id*="-galleyEditedEdge"] { stroke: ${colours.mod}; stroke-width: 2.5px; stroke-dasharray: 10 3; }
+    path[id*="-galleyRemovedEdge"] { stroke: ${colours.del}; stroke-width: 1.5px; stroke-dasharray: 5 4; }
+  `;
+}
+
+/** Change colours for a diagram drawn without the reader's palette, in Mermaid's own light or dark theme. */
+const PLAIN_CHANGES = {
+  light: { add: '#3b6a2b', mod: '#8f5d00', del: '#9c3a35' },
+  dark: { add: '#8fd18a', mod: '#f4cc79', del: '#ff9b93' },
+};
 
 let serial = 0;
 
@@ -181,7 +206,7 @@ export async function renderRequest(engine: Engine, { code, dark, palette }: Dia
     htmlLabels: false,
     look: 'classic' as const,
     theme: palette ? ('base' as const) : dark ? ('dark' as const) : ('default' as const),
-    ...(palette ? diagramTheme(palette, dark) : {}),
+    ...(palette ? diagramTheme(palette, dark) : { themeCSS: changeCSS(PLAIN_CHANGES[dark ? 'dark' : 'light'], dark ? '#1f2020' : '#ffffff') }),
     fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
     suppressErrorRendering: true,
     maxTextSize: MAX_SOURCE,

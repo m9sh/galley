@@ -217,7 +217,7 @@ it('GitLab loads diff discussions as threads with links to their notes, leaving 
   expect(threads[0].comments[0]).toMatchObject({ author: 'dana', body: 'On the diff' });
 });
 
-it('a merge request opens its project’s docs at its base or head commit, pinned there', async () => {
+it('a merge request opens its project’s docs as its change leaves them, pinned at the head commit', async () => {
   const requests: string[] = [];
   mockFetch(async (url) => {
     requests.push(String(url));
@@ -233,19 +233,16 @@ it('a merge request opens its project’s docs at its base or head commit, pinne
   });
   const ctx = { platform: 'gitlab' as const, key: '', origin: 'https://gitlab.com', prefix: '', projectPath: 'a/b', projectId: '10', iid: 7 };
   const source = await loadGitLab(ctx);
-  expect(source.project!.base).toStrictEqual({ ref: 'main', commit: 'base-sha' });
   expect(source.project!.head).toStrictEqual({ ref: 'feature/x', commit: 'head-sha' });
-  const head = source.project!.open('head');
+  const head = source.project!.open();
   expect(head).toMatchObject({ ref: 'feature/x', commit: 'head-sha', pinned: true, start: { path: '', folder: true }, id: 'gitlab:https://gitlab.com/a/b' });
   expect(await head.refresh()).toBe(head);
   expect((await head.discover()).docs).toStrictEqual([{ path: 'README.md' }]);
   expect(requests.at(-1)).toBe('https://gitlab.com/api/v4/projects/10/repository/tree?recursive=true&per_page=100&ref=head-sha&page=1');
-  expect(source.project!.open('base').commit).toBe('base-sha');
-  // Without branch names, revisions are named by their commit.
+  // Without a branch name, the head is named by its commit.
   mockFetch(async (url) =>
     String(url).includes('/diffs?') ? response([]) : response({ title: 'Docs', diff_refs: { base_sha: 'abcdef123', head_sha: '0123456789', start_sha: 's' } }),
   );
   const unnamed = await loadGitLab(ctx);
-  expect(unnamed.project!.base.ref).toBe('abcdef1');
   expect(unnamed.project!.head.ref).toBe('0123456');
 });

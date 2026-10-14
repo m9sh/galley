@@ -135,11 +135,10 @@ export interface ReviewRevision {
   commit: string;
 }
 
-/** The repository behind a pull or merge request, to read its docs at the review's base or head (RFC 0049). */
+/** The repository behind a pull or merge request, to read its docs as the review's change leaves them (RFC 0049). */
 export interface ReviewProject {
-  base: ReviewRevision;
   head: ReviewRevision;
-  open(revision: 'base' | 'head'): RepositorySource;
+  open(): RepositorySource;
 }
 
 /** An error with a human explanation of what to do about it. */

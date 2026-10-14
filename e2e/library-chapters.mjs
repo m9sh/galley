@@ -32,7 +32,7 @@ export async function checkLibraryChapters(browser, demoUrl, screenshots) {
       return { titles: [...s.querySelectorAll('.mr-sequence-title')].map((el) => el.textContent), proof: s.querySelector('.mr-sequence-links').textContent };
     });
     assert.deepEqual(selections.titles, ['Architecture overview', 'ADR 0003']);
-    assert.match(selections.proof, /Source link · line 14/);
+    assert.match(selections.proof, /docs\/adr\/0003-queue-for-reviews.md · line 14/);
     await click('.mr-repo-chapters [data-act="docs"]');
     await page.waitForFunction(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelectorAll('.mr-repo-outline .mr-menu-item').length === 9);
     await click('.mr-repo-outline [data-act="sequence-add"][data-path="README.md"]');

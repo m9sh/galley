@@ -27,7 +27,8 @@ export function readerHarness() {
     localStorage.clear();
     frames.clear();
     Object.defineProperty(media, 'matches', { value: false });
-    vi.stubGlobal('matchMedia', (query: string) => (query.includes('color-scheme') ? media : { matches: false }));
+    // Media queries never match unless a test says so; they can still be listened to, as a page's can.
+    vi.stubGlobal('matchMedia', (query: string) => (query.includes('color-scheme') ? media : Object.assign(new EventTarget(), { matches: false })));
     vi.stubGlobal('CSS', { highlights: new Map() });
     vi.stubGlobal(
       'ResizeObserver',

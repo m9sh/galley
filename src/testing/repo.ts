@@ -67,11 +67,31 @@ export function repoHarness() {
   const media = new EventTarget() as MediaQueryList;
   const scroll = vi.fn();
   const bounds = new WeakMap<Element, DOMRect>();
+  /** What a ResizeObserver would be told when the map's canvas changes size. */
+  const resized: Array<() => void> = [];
+  const observing = vi.fn();
 
   beforeEach(() => {
     localStorage.clear();
     Object.defineProperty(media, 'matches', { value: false, configurable: true });
     vi.stubGlobal('matchMedia', () => media);
+    resized.length = 0;
+    observing.mockClear();
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          resized.push(callback);
+        }
+        observe() {
+          observing(true);
+        }
+        disconnect() {
+          observing(false);
+        }
+      },
+    );
+    Object.defineProperty(Element.prototype, 'setPointerCapture', { configurable: true, value: () => {} });
     scroll.mockClear();
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', { configurable: true, value: scroll });
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
@@ -127,6 +147,11 @@ export function repoHarness() {
     media,
     scroll,
     bounds: (el: Element, top: number, height = 40) => bounds.set(el, new DOMRect(0, top, 600, height)),
+    /** The map's canvas changed size, as a ResizeObserver reports it. */
+    resize: () => {
+      for (const callback of resized) callback();
+    },
+    observing,
     close: () => handle?.close(),
   };
 }

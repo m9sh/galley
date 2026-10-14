@@ -1,8 +1,9 @@
 ---
-status: Proposed
+status: Accepted
 date: 2026-10-11
 deciders: [m9sh]
 rfcs: [49]
+supersedes: [26]
 tags: [repository, ui, accessibility]
 ---
 
@@ -12,11 +13,11 @@ tags: [repository, ui, accessibility]
 
 [Issue #68](https://github.com/m9sh/galley/issues/68) proposes a Project map that helps a reader recognise their place, inspect connections and follow their sources. [ADR 0026](0026-an-evidence-only-project-map.md) requires a list presentation. Its provenance and evidence rules remain necessary, but its presentation gives little spatial orientation.
 
-**This record proposes to supersede ADR 0026 after maintainer acceptance.** ADR 0026 remains Accepted, and the extension's Map remains unchanged during this proposal. On acceptance, set this record to Accepted with `supersedes: 26`, and the old record to Superseded with `superseded-by: 30`, then regenerate the indexes. Reciprocal supersession fields record an actual decision, not one still being discussed.
+**This record supersedes ADR 0026** (accepted by the maintainer on 2026-10-11). ADR 0026's evidence, origin, conflict, classification and suggestion rules carry over unchanged; only its list-only presentation is replaced. The extension's Map adopts it view by view: **Documents** first, then the declared-system views (issue #68, stages 2 and 3).
 
 ## Decision
 
-The proposed replacement preserves all of ADR 0026's evidence, origin, conflict, classification and bounded-suggestion rules, and replaces its presentation requirement:
+The replacement preserves all of ADR 0026's evidence, origin, conflict, classification and bounded-suggestion rules, and replaces its presentation requirement:
 
 - Project map offers a bounded spatial neighbourhood and a complete navigable **List** over the same filtered evidence model. Both expose the same places, relationships, evidence and actions. Native buttons and a non-interactive SVG layer provide spatial rendering; the equivalent list works without interpreting geometry.
 - A document line comes only from an explicit Markdown link. Missing documents and missing anchors are inspectable problems, never verified lines. Every relationship names its direction, source verb, origin, file, section, line and commit. Configuration-derived relationships keep their declarations and caveats; neither presentation implies live infrastructure.
@@ -27,27 +28,25 @@ The proposed replacement preserves all of ADR 0026's evidence, origin, conflict,
 - Search finds indexed names and paths and lists ranked matches in a popup under the field; it never replaces the map. Choosing a match selects it where it is, or makes it the new centre when it is not on the map.
 - Partial indexing, read failures, source conflicts, unresolved links and presentation omissions stay visible. A zero count is not a claim about unindexed source. Reader corrections keep the original classification beside them. Reading chapters remain explicitly assembled **Added by you** routes, separate from source relationships and progress.
 
-Source-choice labels, initial counts and both sheet treatments are proposals for reader validation, not settled findings. No new dependency, permission, storage key, network host or source inference is introduced. The demo puts the document being read in its own page address (`doc=`), so Back, Forward and links work there; in the extension the page belongs to GitHub or GitLab, and changing its address would need a separate decision.
+Source-choice labels and initial counts stay open to reader validation. No new dependency, permission, storage key, network host or source inference is introduced. The demo puts the document being read in its own page address (`doc=`), so Back, Forward and links work there; in the extension the page belongs to GitHub or GitLab, and changing its address would need a separate decision.
 
 ## Consequences
 
 - **Good:** the reader can retain a recognisable neighbourhood while checking another place, and trace a line back to source.
 - **Costs:** two presentations must preserve selection, evidence and action parity. Dense relationships need bounds, disclosed counts and deliberate expansion.
-- **Follow-up:** voluntary reader sessions and acceptance of this ADR precede replacing production Map. Declared systems, chapters, review context, refresh changes and full interaction parity follow in separate slices; diagram extraction remains separate.
+- **Follow-up:** the extension's **Documents** map follows this record (`src/ui/library/map-view.ts`), and so does **This review**, the same map around the files a review changes. Search in a popup on the map, declared systems, chapters and refresh changes follow in separate slices; diagram extraction remains separate. Voluntary reader sessions still inform the labels and counts.
 
 ## Alternatives considered
 
-- **Keep only the current lists:** strong for evidence auditing, weak for spatial orientation. They remain available during the proposal.
+- **Keep only the current lists:** strong for evidence auditing, weak for spatial orientation. List keeps that strength beside the map.
 - **Whole-repository force graph:** unstable placement and small labels; no demonstrated need for a layout dependency.
 - **Infer dependencies from prose, folder proximity or a model:** breaks the evidence contract and can manufacture authority.
 
 ## Enforcement
 
-The first slice is a demo-only spike, not enforcement of a shipped replacement:
-
-- `src/core/project-map.test.ts` checks exact evidence, anchor failures, conflicts, correction provenance, deterministic incremental placement, cycles, isolation, containment and presentation budgets (2,000 places, 6,000 inspected connections, 12 evidence previews, 8 expanded neighbours per side).
-- `e2e/project-map.mjs` checks the demo's map/list selection, the push sheet's geometry, lit lines, the search popup, evidence/article return through the address and the browser's Back, phone sheet, focus, camera controls, incomplete indexing and dense fixtures. Build checks keep the prototype out of extension bundles.
-- Production adoption must retain ADR 0026's tests and add equivalent map/list action checks, commit refresh and article/review state preservation. [The design proposal](../design/project-map-reimagining.md) specifies the remaining acceptance and research gates.
+- `src/core/project-map.test.ts` checks exact evidence, anchor failures, conflicts, correction provenance, deterministic incremental placement with per-lane totals, cycles, isolation, containment and presentation budgets (2,000 places, 6,000 inspected connections, 12 evidence previews, 8 neighbours per side).
+- `src/ui/library/map-view.test.ts` and `src/ui/library/repo-map.test.ts` check the extension's map and List over the same model: lanes, lines and arrowheads, lit lines, the camera by buttons, keys, trackpad and drag, stacking, the details sheet (Preview, Links, evidence, problems, the type editor), the phone's modal sheet, List paging and its neighbourhood filter, the map's own place across reading, Back to my place, and corrections.
+- `e2e/repo.mjs` checks the map in Chrome: the sheet narrowing the map, evidence opening its paragraph, problems listed and never drawn, the phone's stacked map and bottom sheet with full touch targets, and no sideways scrolling. `e2e/project-map.mjs` keeps checking the demo prototype, and the build keeps the prototype out of the extension.
 
 ## References
 

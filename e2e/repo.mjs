@@ -210,21 +210,38 @@ export async function checkRepository(browser, demoUrl, screenshots) {
   await page.waitForFunction(() =>
     /^Built from all 9/.test(document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-map-status')?.textContent ?? ''),
   );
-  await click('.mr-repo-map .mr-repo-edge-doc', 'Architecture overview');
+  // Choosing a place opens its preview beside the map; Show its connections makes it the middle.
+  await click('.mr-pm-place[data-id="docs/architecture/overview.md"]');
+  await page.waitForFunction(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-pm-preview'));
+  await click('.mr-pm-sheet [data-act="pm-focus"]');
+  await new Promise((resolve) => setTimeout(resolve, 400));
   const map = await inspect(() => {
     const s = document.querySelector('#galley-repo-reader').shadowRoot;
-    const [from, to] = [...s.querySelectorAll('.mr-map-col')].map((col) => col.getBoundingClientRect());
-    const center = s.querySelector('.mr-map-center').getBoundingClientRect();
+    const lane = (name) => s.querySelector(`.mr-pm-lane[data-lane="${name}"]`).getBoundingClientRect();
+    const sheet = s.querySelector('.mr-pm-sheet').getBoundingClientRect();
+    const canvas = s.querySelector('.mr-pm-canvas').getBoundingClientRect();
     return {
-      title: s.querySelector('.mr-map-title').textContent,
-      folder: s.querySelector('.mr-map-crumbs').textContent,
-      counts: [...s.querySelectorAll('.mr-map-col h3')].map((h) => h.textContent),
-      columns: from.right <= center.left && center.right <= to.left,
+      title: s.querySelector('.mr-pm-place[data-lane="here"] strong').textContent,
+      heads: [...s.querySelectorAll('.mr-pm-lane-head')].map((head) => head.textContent),
+      lanes: lane('incoming').right <= lane('here').left && lane('here').right <= lane('outgoing').left,
+      lines: s.querySelectorAll('.mr-pm-edge').length,
+      squeezed: Math.round(canvas.right) <= Math.round(sheet.left),
+      space: s.querySelector('.mr-root').classList.contains('is-map-space'),
+      overflow: s.querySelector('.mr-root').scrollWidth > innerWidth,
     };
   });
-  assert.deepEqual(map, { title: 'Architecture overview', folder: 'In docs/architecture/', counts: ['Linked from (5)', 'Links to (4)'], columns: true });
+  assert.equal(map.title, 'Architecture overview');
+  // RFC 0042 links here only to a section that does not exist: a problem in its sheet, never a line.
+  assert.equal(map.heads[0], 'Linked from4');
+  assert.equal(map.lanes, true, 'Linked from, in focus and links to read left to right');
+  assert.ok(map.lines >= 5, `Each neighbour has a line: ${map.lines}`);
+  assert.equal(map.squeezed, true, 'The details sheet narrows the map instead of covering it');
+  assert.deepEqual([map.space, map.overflow], [true, false]);
   await page.screenshot({ path: join(screenshots, 'repo-map-desktop.png') });
-  await click('.mr-map-col .mr-repo-proof', 'deploy runbook');
+  // Evidence opens the paragraph that holds the link.
+  await click('.mr-pm-place[data-id="docs/runbooks/deploy.md"]');
+  await click('.mr-pm-tab[data-tab="links"]');
+  await click('.mr-pm-why [data-act="evidence"]');
   await settled();
   assert.equal(await title(), 'Architecture overview');
   const flashed = await inspect(() =>
@@ -234,37 +251,61 @@ export async function checkRepository(browser, demoUrl, screenshots) {
   );
   assert.ok(flashed, 'Evidence opens the paragraph that holds the link');
 
-  // A link to a document or section that does not exist is named in the map, never drawn.
+  // A link to a document or section that does not exist is named in the sheet, never drawn.
   await click('.mr-repo-backlinks .mr-repo-edge-doc', 'RFC 0042');
   await settled();
   await page.keyboard.press('m');
+  // The map kept its place while the reader read; Back to my place puts the document being read in the middle.
+  assert.equal(
+    await inspect(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-pm-place[data-lane="here"] strong').textContent),
+    'Architecture overview',
+  );
+  await click('[data-act="pm-home"]');
+  await click('.mr-pm-sheet .mr-pm-tab[data-tab="links"]');
   const problems = await inspect(() =>
-    [...document.querySelector('#galley-repo-reader').shadowRoot.querySelectorAll('.mr-map-problems li')].map((li) => li.textContent),
+    [...document.querySelector('#galley-repo-reader').shadowRoot.querySelectorAll('.mr-pm-sheet .mr-map-problems li')].map((li) => li.textContent),
   );
   assert.deepEqual(problems, [
     'RFC 0041 line 15: docs/rfcs/0041-diff-annotations.md is not among the listed documents.',
     'architecture overview line 19: “rendering-pipeline” is not a section of docs/architecture/overview.md.',
   ]);
+  await click('.mr-pm-sheet .mr-sheet-close');
 
-  // Phones: one column, the document in the middle comes first, and nothing scrolls sideways.
+  // Phones: one column read top to bottom, details in a bottom sheet, and nothing scrolls sideways.
   await page.setViewport({ width: 390, height: 844 });
+  await new Promise((resolve) => setTimeout(resolve, 300));
   const phone = await inspect(() => {
     const s = document.querySelector('#galley-repo-reader').shadowRoot;
     const root = s.querySelector('.mr-root');
-    const center = s.querySelector('.mr-map-center').getBoundingClientRect();
-    const first = s.querySelector('.mr-map-col').getBoundingClientRect();
+    const lane = (name) => s.querySelector(`.mr-pm-lane[data-lane="${name}"]`).getBoundingClientRect();
     return {
       overflow: root.scrollWidth > innerWidth,
-      centerFirst: center.bottom <= first.top,
+      stacked: s.querySelector('.mr-pm').classList.contains('is-stacked'),
+      order: lane('incoming').bottom <= lane('here').top && lane('here').bottom <= lane('outgoing').top,
       name: s.querySelector('.mr-file-name').getBoundingClientRect().width,
       forward: getComputedStyle(s.querySelector('[data-act="forward"]')).display,
     };
   });
   assert.equal(phone.overflow, false);
-  assert.equal(phone.centerFirst, true);
+  assert.equal(phone.stacked, true);
+  assert.equal(phone.order, true);
   assert.ok(phone.name > 60, `The document name needs room on a phone, had ${phone.name}px`);
   assert.equal(phone.forward, 'none');
   await page.screenshot({ path: join(screenshots, 'repo-map-mobile.png') });
+  await click('.mr-pm-place[data-lane="here"]');
+  const sheet = await inspect(() => {
+    const s = document.querySelector('#galley-repo-reader').shadowRoot;
+    const panel = s.querySelector('.mr-pm-sheet');
+    const box = panel.getBoundingClientRect();
+    return {
+      modal: panel.getAttribute('aria-modal'),
+      fits: box.left >= 0 && box.right <= innerWidth && box.bottom <= innerHeight + 1,
+      targets: [...panel.querySelectorAll('button')].filter((b) => b.getClientRects().length).every((b) => b.getBoundingClientRect().height >= 44),
+    };
+  });
+  assert.deepEqual(sheet, { modal: 'true', fits: true, targets: true });
+  await page.screenshot({ path: join(screenshots, 'repo-map-mobile-sheet.png') });
+  await page.keyboard.press('Escape');
   await page.keyboard.press('m');
   await settled();
   assert.equal(await inspect(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-root').scrollWidth > innerWidth), false);

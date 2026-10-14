@@ -34,9 +34,12 @@ it('shows the chapter with its chosen order, an ordinary outline, current step a
   expect(view.querySelectorAll<HTMLButtonElement>('[data-act="sequence-later"]')[1].disabled).toBe(true);
   expect(view.querySelector('[data-act="docs"]')!.textContent).toBe('Browse all documents');
   expect(view.querySelector('[data-act="sequence-remove"]')!.getAttribute('aria-label')).toBe('Remove <img src=x> from this chapter');
+  expect(view.querySelector('.is-current .mr-seq-here')!.textContent).toBe('You are here');
+  // Read chapter starts at the first stop, and is offered only when there is one.
+  expect(view.querySelector<HTMLElement>('.mr-seq-start')!.dataset.at).toBe('0');
   const empty = sequenceView([], -1, 'c0ffee1');
   expect(empty.textContent).toContain('No documents yet');
-  expect(empty.querySelector<HTMLButtonElement>('[data-act="sequence-open"]')!.disabled).toBe(true);
+  expect(empty.querySelector('[data-act="sequence-open"]')).toBeNull();
   expect(sequenceRoute(items, -1).hidden).toBe(true);
   const first = sequenceRoute(items, 0);
   expect(first.hidden).toBe(false);

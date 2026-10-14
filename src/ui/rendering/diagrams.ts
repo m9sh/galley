@@ -1,5 +1,7 @@
 import DOMPurify from 'dompurify';
+import { flowchartChanges } from '../../core/diagram-changes.ts';
 import type { Unit } from '../../core/markdown.ts';
+import { chip } from '../components/dom.ts';
 import type { DiagramPalette } from './diagram-palette.ts';
 import type { RenderedBlock } from './render.ts';
 import { hostFor, sandbox } from '../sandbox/sandbox.ts';
@@ -9,6 +11,8 @@ export interface DiagramVersion {
   source: string;
   view: HTMLElement;
   sourceDetails: HTMLDetailsElement;
+  /** What the drawing shows, for its text alternative and its enlarge control. */
+  name: string;
 }
 export interface Diagram {
   el: HTMLElement;
@@ -22,17 +26,22 @@ export function mermaidSource(unit?: Unit): string | null {
   return match?.[2] ?? null;
 }
 
-/** Diagrams show whole versions; line-diff markup cannot be parsed as Mermaid. */
+const plural = (n: number, word: string) => `${n} ${word}`;
+
+/**
+ * An edited flowchart is one drawing of its changes (core/diagram-changes.ts), with its two whole versions a
+ * click away; other edited diagrams show both versions. Line-diff markup cannot be parsed as Mermaid.
+ */
 export function prepareDiagram(doc: Document, block: RenderedBlock): Diagram | null {
   if (mermaidSource(block.base) === null && mermaidSource(block.head) === null) return null;
   const el = doc.createElement('figure');
   el.className = `${block.el.className} mr-diagram`.trim();
   if (block.el.dataset.mrChange) el.dataset.mrChange = block.el.dataset.mrChange;
   const versions: DiagramVersion[] = [];
-  const add = (unit: Unit, side: 'base' | 'head', label: string) => {
+  const add = (unit: Unit, side: 'base' | 'head', label: string, name = side === 'base' ? 'old version' : 'new version', marked?: string) => {
     const source = mermaidSource(unit);
     const version = doc.createElement('div');
-    version.className = 'mr-diagram-version';
+    version.className = marked ? 'mr-diagram-version mr-diagram-changes' : 'mr-diagram-version';
     version.dataset.mrSide = side;
     const caption = doc.createElement('p');
     caption.className = 'mr-diagram-caption';
@@ -54,13 +63,42 @@ export function prepareDiagram(doc: Document, block: RenderedBlock): Diagram | n
     sourceDetails.append(pre);
     if (source !== null) {
       version.append(view, sourceDetails);
-      versions.push({ side, source, view, sourceDetails });
+      versions.push({ side, source: marked ?? source, view, sourceDetails, name });
     } else {
       version.append(pre);
     }
     el.append(version);
   };
-  if (block.kind === 'modified' && block.base && block.head) {
+  const changes = block.kind === 'modified' ? flowchartChanges(mermaidSource(block.base) ?? '', mermaidSource(block.head) ?? '') : null;
+  if (changes) {
+    // Comments on the drawing of the changes are about the new lines, like comments on the new version.
+    const counts = [
+      changes.added ? plural(changes.added, 'added') : '',
+      changes.edited ? plural(changes.edited, 'edited') : '',
+      changes.removed ? plural(changes.removed, 'removed') : '',
+    ].filter(Boolean);
+    el.classList.add('has-changes');
+    add(block.head!, 'head', `Changes: ${counts.join(', ')}.`, `changes marked: ${counts.join(', ')}`, changes.code);
+    // The counts carry the page's change colours as dots beside their words, as in a document's byline.
+    const kinds = [
+      ['added', changes.added],
+      ['modified', changes.edited],
+      ['removed', changes.removed],
+    ] as const;
+    el.querySelector('.mr-diagram-caption')!.replaceChildren(
+      'Changes',
+      ...kinds.filter(([, n]) => n).map(([kind, n]) => chip(kind, plural(n, kind === 'modified' ? 'edited' : kind))),
+    );
+    const sides = doc.createElement('button');
+    sides.type = 'button';
+    sides.className = 'mr-diagram-sides';
+    sides.dataset.act = 'diagram-sides';
+    sides.setAttribute('aria-expanded', 'false');
+    sides.textContent = 'Show before and after';
+    el.append(sides);
+    add(block.base!, 'base', 'Before');
+    add(block.head!, 'head', 'After');
+  } else if (block.kind === 'modified' && block.base && block.head) {
     add(block.base, 'base', 'Before');
     add(block.head, 'head', 'After');
   } else if (block.head) add(block.head, 'head', block.kind === 'added' ? 'New diagram' : 'Diagram');
@@ -138,7 +176,7 @@ export function renderDiagrams(diagrams: Diagram[], dark: boolean, changed: () =
             const svg = await requestSvg(diagram.el, diagramCode(version.source), dark, palette);
             if (rendered.get(diagram) !== state || !diagram.el.isConnected) return;
             const image = doc.createElement('img');
-            image.alt = `${version.side === 'base' ? 'Old' : 'New'} version of Mermaid diagram. View source below.`;
+            image.alt = `Mermaid diagram, ${version.name}. View source below.`;
             image.src = diagramImage(doc, svg);
             const size = diagramSize(svg);
             if (size) {
@@ -151,7 +189,7 @@ export function renderDiagrams(diagrams: Diagram[], dark: boolean, changed: () =
             zoom.className = 'mr-diagram-zoom';
             zoom.dataset.act = 'zoom-diagram';
             zoom.title = 'Enlarge diagram';
-            zoom.setAttribute('aria-label', `Enlarge the ${version.side === 'base' ? 'old' : 'new'} version of the diagram`);
+            zoom.setAttribute('aria-label', `Enlarge the diagram, ${version.name}`);
             zoom.append(image);
             version.view.replaceChildren(zoom);
             version.view.dataset.state = 'ready';

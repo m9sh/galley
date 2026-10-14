@@ -8,13 +8,13 @@ Implementation plan for [task #60](https://github.com/m9sh/galley/issues/60). Th
 | --- | --- | --- |
 | Chapters | Explainable groups and a reading order through changed files | `core/chapters.ts`, `ui/review/chapters.ts`, `Reader` |
 | Review article | Changed file, its contents, folds, Viewed and discussion | `Reader` |
-| Project library opening | Choose the review's head or base and leave the review open behind it | `Reader.openProject()` |
-| This review | Changed files by chapter, with linked documents and their evidence | `repo-views.ts`, `RepoReader` |
+| Project library in the review | **Library** in the review's sheet, beside **Chapters**: search, the docs linked to the review, every document; each opens on top of the list, a document it links to taking its place, with **Back** and <kbd>Esc</kbd>; the expand button (**Open the full library**) opens the repository reader over the review | `ReviewLibrary` (`review/review-library.ts`), `Reader.openProject()` |
+| This review | The Documents map around the review: its changed files in the middle by chapter, what links to them and what they link to, with each link's evidence | `map-view.ts` (`DocumentMap` with `review` state), `reviewMap()` and `MapPlacement.around()` in `core/project-map.ts`, `RepoReader` |
 | Library browser | Find a document at the selected commit | `RepoReader` and its `ProjectIndex` |
 | Contents | Headings of the current article; visible beside Balanced / Wide text on desktop | Each reader's `buildToc()` |
 | Project map | Connections backed by explicit document links, plus their evidence | `ProjectIndex`, `repo-views.ts` |
 
-The review sends chapter IDs, titles and changed paths into This review. Each chapter distinguishes **Changed files** from **Project context**. **Find project context** opens the library at the chosen base or head; merely opening Chapters requests no repository content. The existing bounded index supplies the same explicit Markdown-link evidence to This review, Project map and chapter context. Its read count, listing limits, failed reads and oversized documents remain visible. No connection is inferred from folder proximity.
+The review sends chapter IDs, titles and changed paths into This review. Each chapter shows **Changed files**, then **Docs that link here**, each opening on top of the chapter in the review's sheet. **Find linked docs**, in a chapter's **Docs that link here**, reads the repository at the review's head for them (`ReviewDocs` in `core/review-context.ts`); merely opening Chapters requests no repository content. The existing bounded index supplies the same explicit Markdown-link evidence to This review, Project map and chapter context. Its read count, listing limits, failed reads and oversized documents remain visible. No connection is inferred from folder proximity.
 
 ## Foundation components
 

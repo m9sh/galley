@@ -76,18 +76,81 @@
   display: none;
 }
 
-.mr-repo-views {
+/* One control names the view and opens the others in a small menu; phones list them in the document menu. */
+.mr-views-pick {
+  position: relative;
   margin-right: 4px;
 }
-.mr-repo-menu-views {
-  display: none;
+
+.mr-repo .mr-views-btn {
+  gap: 6px;
+  padding: 0 8px 0 10px;
+  font: 500 13px / 1 var(--sans);
+  white-space: nowrap;
 }
 
-/* Wide screens keep view names in the top bar; phones use the document menu. */
+.mr-repo .mr-views-btn[aria-expanded="true"],
+.mr-repo .mr-views-btn:hover {
+  background: var(--soft);
+}
+
+.mr-views-btn .mr-icon,
 .mr-repo-views .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.mr-views-icon {
+  display: inline-flex;
+}
+
+.mr-views-pick > .mr-repo-views {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  min-width: 210px;
+  padding: 6px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+.mr-views-pick > .mr-repo-views > button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--fg);
+  font: 400 14px / 1 var(--sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.mr-views-pick > .mr-repo-views > button:hover {
+  background: var(--soft);
+}
+
+.mr-views-pick > .mr-repo-views > button[aria-pressed="true"] {
+  background: var(--selected-bg);
+}
+
+.mr-views-pick > .mr-repo-views > button[data-key]::after {
+  content: attr(data-key);
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mr-repo-menu-views {
   display: none;
-  width: 17px;
-  height: 17px;
 }
 
 /* ------------------------------------------------------------------ documents menu */
@@ -283,12 +346,6 @@
   color: var(--fg);
 }
 
-.mr-repo-more {
-  margin-top: 6px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
 /* ------------------------------------------------------------------ project map */
 
 .mr-repo-map {
@@ -326,15 +383,8 @@
   margin: 0;
 }
 
-.mr-map-crumbs {
-  margin: 0 0 16px;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 12.5px;
-}
-
-/* One document in the middle; documents that link to it on the left, the ones it links to on the right.
-   Each column is an ordinary list, so the map reads the same with a keyboard or a screen reader. */
+/* The declared-system and decision lenses: what is in the view on the left, the focus in the middle, its
+   connections on the right. Each column is an ordinary list, so it reads the same with a keyboard or a screen reader. */
 .mr-map-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 340px) minmax(0, 1fr);
@@ -359,13 +409,6 @@
 
 .mr-map-title:focus {
   outline: none;
-}
-
-.mr-map-center .mr-path-dir {
-  margin: 0 0 12px;
-  color: var(--muted);
-  font: 12px / 1.4 var(--mono);
-  overflow-wrap: anywhere;
 }
 
 .mr-map-facts {
@@ -429,6 +472,830 @@
   color: var(--muted);
   font-size: 13.5px;
   line-height: 1.6;
+}
+
+/* ------------------------------------------------------------------ the Documents map (map-view.ts)
+   A workspace under the top bar: the map pans and zooms inside it, and List scrolls inside it. Details open in
+   the reader's sheet (components/sheet.ts), which narrows the map rather than covers it; on phones it is a bottom
+   sheet (ADR 0030). */
+
+.mr-root.is-map-space {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mr-root.is-map-space > .mr-main {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+}
+
+.mr-root.is-map-space .mr-repo-map,
+.mr-root.is-map-space .mr-repo-review {
+  display: flex;
+  flex-direction: column;
+  max-width: none;
+  height: 100%;
+}
+
+/* On a map there is no reading column for the document menu to line up with: it follows the way back, at the left. */
+.mr-root.is-map-space .mr-topbar {
+  grid-template-columns: auto auto minmax(0, 1fr);
+}
+
+.mr-root.is-map-space .mr-tb-center {
+  justify-content: flex-start;
+}
+
+.mr-root.is-map-space .mr-file-btn {
+  margin-left: 0;
+}
+
+.is-map-space .mr-map-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.is-map-space .mr-map-head .mr-title {
+  margin: 0 4px 0 0;
+  font: 600 calc(15px * var(--type)) / 1.3 var(--sans);
+  letter-spacing: 0;
+}
+
+.is-map-space .mr-lens-switch {
+  margin: 0;
+}
+
+.is-map-space .mr-map-head .mr-map-status {
+  flex: 1 1 260px;
+  justify-content: flex-end;
+  margin: 0;
+  font-size: calc(13px * var(--type));
+  text-align: right;
+}
+
+.is-map-space .mr-map-status > .mr-repo-limit {
+  text-align: right;
+}
+
+.is-map-space .mr-map-since {
+  flex-basis: 100%;
+  margin: 4px 0;
+}
+
+/* This review's top row: its name and commit beside the title, what was read at the right, and the chapter the
+   reader came from on a line of its own. */
+.is-map-space .mr-review-at {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.is-map-space .mr-map-head .mr-review-status {
+  display: flex;
+  flex: 1 1 260px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 12px;
+}
+
+.is-map-space .mr-review-status .mr-map-status {
+  flex: none;
+}
+
+.mr-map-head .mr-review-route {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+}
+
+/* Around a review, its files share the middle, under the chapter each is in. */
+.mr-pm-group-head {
+  margin: 8px 2px -2px;
+  color: var(--muted);
+  font: 500 calc(12px * var(--type)) / 1.4 var(--sans);
+  overflow-wrap: anywhere;
+}
+
+.mr-pm-stack > .mr-pm-group-head:first-child {
+  margin-top: 0;
+}
+
+.mr-pm-place.is-centre {
+  border-color: var(--fg);
+}
+
+/* Around a review the lanes start level, their headings in one row. */
+.mr-pm.is-review .mr-pm-world {
+  align-items: start;
+}
+
+/* A changed file that nothing read so far links to or from: a small chip under its chapter, with no line. */
+.mr-pm-quiet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mr-pm-place.is-chip {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  max-width: 100%;
+  padding: calc(5px * var(--type)) calc(10px * var(--type));
+  border-style: dashed;
+  border-color: var(--control-rule);
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+}
+
+.mr-pm-place.is-chip.is-centre {
+  border-color: var(--control-rule);
+}
+
+.mr-pm-place.is-chip:hover {
+  border-color: var(--fg);
+  color: var(--fg);
+}
+
+.mr-pm-place.is-chip .mr-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+.mr-pm-place.is-chip strong {
+  overflow: hidden;
+  font: 500 calc(12.5px * var(--type)) / 1.3 var(--sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mr-pm-choices button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mr-pm-choices .mr-icon,
+.mr-pm .mr-icon,
+.mr-map-sheet .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.mr-pm,
+.mr-pm *,
+.mr-map-sheet * {
+  box-sizing: border-box;
+}
+
+.mr-pm {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.mr-pm button,
+.mr-map-sheet button {
+  font-family: var(--sans);
+}
+
+.mr-pm button:focus-visible,
+.mr-map-sheet button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.mr-pm-pane {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.mr-pm-canvas,
+.mr-pm-list {
+  position: absolute;
+  inset: 0;
+}
+
+.mr-pm-canvas {
+  overflow: hidden;
+  background-image: radial-gradient(color-mix(in srgb, var(--rule) 80%, transparent) 1px, transparent 1px);
+  background-size: 20px 20px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.mr-pm-canvas:active {
+  cursor: grabbing;
+}
+
+.mr-pm-canvas:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* The neighbourhood: linked from, in focus, links to. */
+.mr-pm-world {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(200px, calc(264px * var(--type))) minmax(220px, calc(300px * var(--type))) minmax(200px, calc(264px * var(--type)));
+  justify-content: center;
+  align-items: center;
+  column-gap: clamp(48px, 5vw, 96px);
+  width: 100%;
+  min-width: min-content;
+  min-height: 100%;
+  padding: 56px 40px 96px;
+  transform-origin: 0 0;
+}
+
+.mr-pm-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.mr-pm-lane-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 0 2px;
+  color: var(--muted);
+  font: 600 calc(11px * var(--type)) / 1.4 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mr-pm-lane-head span {
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.mr-pm-stack {
+  display: flex;
+  flex-direction: column;
+  gap: calc(12px * var(--type));
+}
+
+.mr-pm-empty {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--control-rule);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+  line-height: 1.45;
+}
+
+.mr-pm .mr-pm-more,
+.mr-map-sheet .mr-pm-more {
+  justify-content: center;
+}
+
+.mr-pm-flow {
+  display: none;
+}
+
+/* Places: a card per document; type by shape and label, selection by the accent ring. */
+.mr-pm-place {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(4px * var(--type));
+  width: 100%;
+  min-width: 0;
+  padding: calc(12px * var(--type)) calc(14px * var(--type));
+  border: 1px solid var(--control-rule);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--fg) 6%, transparent);
+  transition:
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+.mr-pm-place:hover {
+  border-color: var(--fg);
+}
+
+.mr-pm-place[aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.mr-pm-place.is-focus {
+  padding: calc(16px * var(--type)) calc(18px * var(--type));
+  border-color: var(--fg);
+  box-shadow: var(--shadow);
+}
+
+.mr-pm-place strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font: 400 calc(18px * var(--type)) / 1.25 var(--heading-font, var(--body-font));
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.mr-pm-place.is-focus strong {
+  font-size: calc(22px * var(--type));
+}
+
+.mr-pm-place small {
+  max-width: 100%;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+
+.mr-pm-caption {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mr-pm small.mr-pm-type,
+.mr-map-sheet small.mr-pm-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font: 500 calc(11px * var(--type)) / 1.3 var(--sans);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.mr-pm-type .mr-icon {
+  flex: none;
+}
+
+.mr-pm-here {
+  position: absolute;
+  top: 0;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font: 500 calc(11px * var(--type)) / 1.5 var(--sans);
+  white-space: nowrap;
+  transform: translateY(-50%);
+}
+
+.mr-pm-here::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Lines are neutral until a place is pointed at or selected. */
+.mr-pm-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.mr-pm-line,
+.mr-pm-arrow {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mr-pm-edge {
+  transition: opacity 0.14s ease;
+}
+
+/* Links between two neighbours are context: they appear only while one of them is pointed at or selected. */
+.mr-pm-edge.is-context:not(.is-lit) {
+  opacity: 0;
+}
+
+.mr-pm-edge.is-context:not(.is-lit) .mr-pm-hit {
+  pointer-events: none;
+}
+
+.mr-pm-edge.is-context .mr-pm-line {
+  stroke-dasharray: 4 5;
+}
+
+.mr-pm-edge.is-lit,
+.mr-pm-edge.is-focus:hover {
+  opacity: 1;
+}
+
+.mr-pm-edge.is-lit :is(.mr-pm-line, .mr-pm-arrow),
+.mr-pm-edge:hover :is(.mr-pm-line, .mr-pm-arrow) {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.mr-pm-edge.is-dim {
+  opacity: 0.18;
+}
+
+.mr-pm-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+/* Floating controls: zoom, fit, and the way back to the document being read. */
+.mr-pm-controls {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mr-pm-zoom {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.mr-pm .mr-pm-home {
+  gap: 6px;
+  height: 42px;
+  padding: 0 14px 0 12px;
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.mr-pm button:disabled,
+.mr-map-sheet button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+/* List: every document by folder, as rows. */
+.mr-pm-list {
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.mr-pm-list-inner {
+  display: grid;
+  gap: 28px;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 24px 64px;
+}
+
+.mr-pm-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 2px 2px 2px 14px;
+  border: 1px solid var(--control-rule);
+  border-radius: 999px;
+  font-size: calc(13px * var(--type));
+}
+
+.mr-pm-folder {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 8px;
+  font: 600 calc(13px * var(--type)) / 1.5 var(--sans);
+  overflow-wrap: anywhere;
+}
+
+.mr-pm-folder span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.mr-pm-rows {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.mr-pm-list .mr-pm-place {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 16px;
+  row-gap: 2px;
+  min-height: 44px;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.mr-pm-list .mr-pm-place:last-child {
+  border-bottom: 0;
+}
+
+.mr-pm-list .mr-pm-place:hover {
+  background: var(--soft);
+}
+
+.mr-pm-list .mr-pm-place[aria-pressed="true"] {
+  outline-offset: -2px;
+}
+
+.mr-pm-list .mr-pm-place > * {
+  grid-column: 1;
+}
+
+.mr-pm-list .mr-pm-place strong {
+  font-size: calc(17px * var(--type));
+}
+
+.mr-pm-list .mr-pm-place > .mr-pm-counts {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+  align-self: center;
+  white-space: nowrap;
+}
+
+.mr-pm-list .mr-pm-place > .mr-pm-here {
+  position: static;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  transform: none;
+}
+
+/* The details sheet's own controls; the sheet itself, and its Read, are the reader's (components/sheet.ts). */
+.mr-map-sheet .mr-pm-sheet-back {
+  gap: 2px;
+  margin-left: -10px;
+  padding: 0 10px 0 4px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+}
+
+.mr-map-sheet .mr-pm-sheet-back:hover {
+  color: var(--fg);
+}
+
+.mr-sheet-lead .mr-pm-here {
+  position: static;
+  transform: none;
+}
+
+.mr-pm-tabs {
+  display: flex;
+  gap: 2px;
+  justify-self: stretch;
+  margin-top: 10px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--code-bg);
+}
+
+.mr-map-sheet .mr-pm-tab {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: calc(13px * var(--type));
+  cursor: pointer;
+}
+
+.mr-pm-tab[aria-selected="true"] {
+  background: var(--selected-bg);
+  color: var(--fg);
+}
+
+.mr-pm-tab span {
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+
+.mr-map-sheet h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0 4px;
+  font-size: calc(14px * var(--type));
+  font-weight: 500;
+}
+
+.mr-map-sheet h3 span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+
+.mr-pm-connection {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 20px 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  background: transparent;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.mr-pm-connection::after {
+  content: "›";
+  position: absolute;
+  top: 10px;
+  right: 2px;
+  color: var(--muted);
+}
+
+.mr-pm-connection:hover strong {
+  text-decoration: underline;
+}
+
+.mr-pm-connection strong {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.mr-pm-connection small {
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+
+.mr-map-sheet .mr-pm-more {
+  margin-top: 16px;
+}
+
+.mr-map-sheet .mr-map-problems {
+  margin-top: 24px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.mr-pm-about .mr-map-facts {
+  margin: 8px 0 12px;
+}
+
+.mr-root[data-density="compact"] .mr-pm-place {
+  gap: calc(3px * var(--type));
+  padding: calc(9px * var(--type)) calc(12px * var(--type));
+}
+
+.mr-root[data-density="compact"] .mr-pm-place.is-focus {
+  padding: calc(12px * var(--type)) calc(14px * var(--type));
+}
+
+.mr-root[data-density="compact"] .mr-pm-stack {
+  gap: calc(8px * var(--type));
+}
+
+.mr-root[data-density="compact"] .mr-pm-list .mr-pm-place {
+  padding: 8px 14px;
+}
+
+/* Stacked: phones, and a canvas narrowed by the sheet, read top to bottom. */
+.mr-pm.is-stacked .mr-pm-canvas {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  cursor: default;
+  touch-action: auto;
+}
+
+.mr-pm.is-stacked .mr-pm-world {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: auto;
+  max-width: 560px;
+  min-width: 0;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 24px 20px 96px;
+}
+
+.mr-pm.is-stacked .mr-pm-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--type));
+}
+
+.mr-pm.is-stacked .mr-pm-place.is-focus {
+  margin-top: 6px;
+}
+
+.mr-pm.is-stacked .mr-pm-zoom {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .is-map-space .mr-map-head {
+    padding: 8px 12px;
+  }
+
+  .is-map-space .mr-map-head .mr-map-status {
+    flex-basis: 100%;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .is-map-space .mr-map-status > .mr-repo-limit {
+    text-align: left;
+  }
+
+  .mr-pm-choices button > span {
+    display: none;
+  }
+
+  .mr-pm-list-inner {
+    padding: 16px 16px 48px;
+  }
+
+  .mr-pm-list .mr-pm-place > .mr-pm-counts {
+    display: none;
+  }
+}
+
+@media (max-width: 760px), (hover: none) {
+  .mr-pm .mr-icon-btn {
+    min-width: 44px;
+  }
+
+  .mr-pm button,
+  .mr-map-sheet button,
+  .mr-pm-choices button,
+  .is-map-space .mr-map-head button {
+    min-height: 44px;
+  }
+
+  .mr-pm .mr-pm-home {
+    height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mr-pm-place,
+  .mr-pm-edge {
+    transition: none;
+  }
 }
 
 /* ------------------------------------------------------------------ map lenses */
@@ -582,28 +1449,225 @@
   display: none;
 }
 
-/* The chapter is the same disclosure and route used in reviews, with a reader-chosen order. */
-.mr-library-chapters {
-  max-width: 680px;
+/* Library chapters: the reader's own path through the project, set in the reading column. Stops are numbered
+   rows in one card; each row opens its stop, and its order controls stay quiet beside it. */
+.mr-library-chapters,
+.mr-sequence-links {
+  max-width: var(--measure);
   margin: 0 auto;
 }
-.mr-library-chapters > .mr-chapter {
-  margin-top: 28px;
+
+.mr-seq-head .mr-subtitle {
+  margin-bottom: 0;
 }
-.mr-library-chapters .mr-chapter-edit-order {
-  padding: 0 10px 10px;
+
+.mr-seq-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
 }
-.mr-library-chapters .mr-chapter-button,
-.mr-library-chapters > .mr-btn,
-.mr-repo .mr-chapter-route .mr-chapter-button,
-.mr-sequence-add,
-.mr-sequence-link .mr-chapter-button {
-  min-height: 44px;
-  white-space: normal;
+
+.mr-seq-actions .mr-btn,
+.mr-seq-add,
+.mr-chapter-route .mr-chapter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mr-seq-actions .mr-icon,
+.mr-seq-add .mr-icon,
+.mr-chapter-route .mr-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.mr-seq-card,
+.mr-seq-links {
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--card);
+}
+
+.mr-seq-card {
+  margin-top: 36px;
+}
+
+.mr-seq-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px 12px 20px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.mr-seq-card-head h2 {
+  margin: 0;
+  font: 600 calc(14px * var(--type)) / 1.4 var(--sans);
+}
+
+.mr-seq-stops,
+.mr-seq-links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mr-seq-stop {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 10px;
+  border-bottom: 1px solid var(--rule);
+  transition: background-color 0.14s ease;
+}
+
+.mr-seq-stop:last-child,
+.mr-sequence-link:last-child {
+  border-bottom: 0;
+}
+
+.mr-seq-stop:hover {
+  background: var(--soft);
+}
+
+.mr-seq-open {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  min-height: 64px;
+  padding: 12px 8px 12px 18px;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mr-seq-open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.mr-seq-number {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--control-rule);
+  border-radius: 50%;
+  color: var(--muted);
+  font: 500 calc(12px * var(--type)) / 1 var(--sans);
+  font-variant-numeric: tabular-nums;
+}
+
+.mr-seq-stop.is-current .mr-seq-number {
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.mr-seq-text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mr-sequence-title,
+.mr-seq-link-title {
+  font: 400 calc(18px * var(--type)) / 1.3 var(--heading-font, var(--body-font));
   overflow-wrap: anywhere;
 }
-.mr-sequence-title {
-  font: 500 calc(15px * var(--type)) / 1.3 var(--sans);
+
+.mr-seq-text small {
+  color: var(--muted);
+  font: 400 calc(12px * var(--type)) / 1.5 var(--sans);
+  overflow-wrap: anywhere;
+}
+
+.mr-seq-here {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font: 500 calc(11px * var(--type)) / 1.5 var(--sans);
+  white-space: nowrap;
+}
+
+.mr-seq-here::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.mr-seq-controls {
+  display: flex;
+  flex: none;
+  gap: 2px;
+}
+
+/* Every control here is a full touch target at any width, as in the review's chapters. */
+.mr-seq-actions .mr-btn,
+.mr-repo .mr-seq-add,
+.mr-seq-controls .mr-icon-btn {
+  min-height: 44px;
+}
+
+.mr-seq-controls .mr-icon-btn {
+  min-width: 44px;
+  color: var(--muted);
+}
+
+.mr-seq-controls .mr-icon-btn:hover:not(:disabled) {
+  color: var(--fg);
+}
+
+.mr-seq-controls .mr-icon-btn:disabled {
+  opacity: 0.35;
+}
+
+.mr-seq-empty {
+  padding: 30px 24px 32px;
+  color: var(--muted);
+  font: 400 calc(14px * var(--type)) / 1.5 var(--sans);
+  text-align: center;
+}
+
+.mr-seq-empty p {
+  margin: 0;
+}
+
+.mr-seq-empty .mr-seq-empty-title {
+  margin-bottom: 4px;
+  color: var(--fg);
+  font: 400 calc(20px * var(--type)) / 1.3 var(--heading-font, var(--body-font));
+}
+
+.mr-seq-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font: 400 calc(13px * var(--type)) / 1.5 var(--sans);
+  overflow-wrap: anywhere;
+}
+
+.mr-sequence-add {
+  min-height: 44px;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 .mr-repo-document-row {
@@ -625,37 +1689,128 @@
   flex: none;
   margin-right: 10px;
 }
+/* Links from this document: what it links to, in its own words, each one Add away from the sequence. */
 .mr-sequence-links {
-  margin-top: 32px;
-  padding-top: 16px;
-  border-top: 1px solid var(--rule);
+  margin-top: 64px;
 }
+
 .mr-sequence-links h2 {
-  font: 500 calc(24px * var(--type)) / 1.3 var(--heading-font, var(--body-font));
+  margin: 0;
+  font: 400 calc(24px * var(--type)) / 1.3 var(--heading-font, var(--body-font));
 }
-.mr-sequence-links .mr-repo-quiet {
-  margin-left: 0;
-  overflow-wrap: anywhere;
+
+.mr-sequence-links > .mr-seq-note {
+  margin: 4px 0 16px;
 }
+
 .mr-sequence-link {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  margin: 0 0 20px;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 14px 14px 20px;
+  border-bottom: 1px solid var(--rule);
 }
-.mr-sequence-link small {
+
+/* The source line stays a word in a sentence; its target grows to a fingertip around it. */
+.mr-seq-line {
+  margin: -15px -4px;
+  padding: 15px 4px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--control-rule);
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.mr-seq-line:hover {
+  color: var(--fg);
+}
+
+.mr-repo .mr-seq-add {
+  flex: none;
+  padding: 0 14px 0 10px;
+}
+
+.mr-repo .mr-seq-add.is-added {
+  border-color: transparent;
+  background: var(--selected-bg);
+  color: var(--fg);
+}
+
+/* While reading a stop: one quiet bar with the way back to Chapters and the stops either side. */
+.mr-repo .mr-chapter-route {
+  gap: 4px;
+  margin: 0 0 40px;
+  padding: 4px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--card);
+}
+
+.mr-repo .mr-chapter-route-text {
+  padding: 0 8px;
+}
+
+.mr-repo .mr-chapter-route .mr-chapter-button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+}
+
+.mr-repo .mr-chapter-route .mr-chapter-button:hover:not(:disabled),
+.mr-repo .mr-chapter-route [data-act="sequence"] {
+  background: var(--soft);
+}
+
+.mr-repo .mr-chapter-route .mr-chapter-button:disabled {
   color: var(--muted);
-  font: 400 12px / 1.35 var(--sans);
-  overflow-wrap: anywhere;
+  opacity: 0.5;
+}
+
+@media (max-width: 760px) {
+  .mr-repo .mr-chapter-route {
+    border-radius: 16px;
+  }
+
+  .mr-seq-open {
+    gap: 12px;
+    padding-left: 14px;
+  }
+
+  .mr-seq-stop {
+    flex-wrap: wrap;
+    padding: 0 6px 6px 0;
+  }
+
+  /* On a phone the order controls sit under the stop, so its title keeps the width. */
+  .mr-seq-controls {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: -10px;
+  }
+
+  .mr-sequence-link {
+    padding-left: 16px;
+  }
+}
+
+@media (max-width: 760px), (hover: none) {
+  .mr-repo .mr-chapter-route .mr-chapter-button {
+    min-height: 44px;
+  }
 }
 .mr-repo-folder > summary {
   min-height: 44px;
   box-sizing: border-box;
   padding-top: 14px;
 }
-.mr-repo-outline .mr-menu-item,
-.mr-sequence-link .mr-repo-proof {
+.mr-repo-outline .mr-menu-item {
   min-height: 44px;
 }
 .mr-repo-edge-doc {
@@ -774,49 +1929,6 @@
   text-decoration: none;
 }
 
-/* ------------------------------------------------------------------ a review's project context */
-
-.mr-review-status .mr-map-status {
-  margin-bottom: 8px;
-}
-
-.mr-review-chapter {
-  margin: 32px 0 0;
-}
-
-.mr-review-chapter > h2 {
-  margin: 0 0 8px;
-  font: 400 calc(24px * var(--type)) / 1.2 var(--heading-font, var(--body-font));
-}
-
-.mr-review-file {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--rule);
-}
-
-.mr-review-path {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 4px;
-  font: 13px / 1.45 var(--mono);
-  overflow-wrap: anywhere;
-}
-
-/* The path is code; the facts beside it are words. */
-.mr-review-path .mr-repo-facts {
-  font-family: var(--sans);
-}
-
-.mr-review-file .mr-repo-quiet {
-  margin: 4px 0;
-}
-
-.mr-review-file .mr-repo-edges {
-  padding-left: 12px;
-}
-
 /* ------------------------------------------------------------------ enlarged diagram */
 
 .mr-repo-zoom {
@@ -877,7 +1989,7 @@
     justify-content: center;
   }
 
-  .mr-repo-views {
+  .mr-views-pick {
     display: none;
   }
   .mr-repo-menu-views {
@@ -904,28 +2016,105 @@
 }
 
 /* A quiet return path belongs beside the article, without crowding the top bar. */
-.mr-repo-return {
+/* Opened over a review, the one way back leads the top bar, in place of Close and the wordmark. */
+.is-over-review .mr-brand {
+  display: none;
+}
+
+.mr-repo .mr-repo-return {
+  gap: 2px;
+  margin-right: 4px;
+  padding: 0 12px 0 6px;
+  border: 1px solid var(--rule);
+  font: 500 13px / 1 var(--sans);
+  white-space: nowrap;
+}
+
+.mr-repo .mr-repo-return:hover {
+  background: var(--soft);
+}
+
+.mr-repo-return .mr-icon,
+.mr-review-continue .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.mr-repo-return .mr-label-short {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .mr-repo-return .mr-label-long {
+    display: none;
+  }
+
+  .mr-repo-return .mr-label-short {
+    display: inline;
+  }
+}
+
+/* The review chapter the reader came from, and the way on with it: a quiet bar above the document, and the
+   same line under the title of This review. */
+.mr-review-route {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
   align-items: center;
-  max-width: 680px;
-  margin: 24px auto 0;
-  padding: 0 24px;
+  gap: 4px 12px;
+  margin: 0 0 40px;
+  padding: 4px 4px 4px 18px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--card);
   color: var(--muted);
   font: 400 13px / 1.4 var(--sans);
 }
-.mr-repo-return > span {
-  flex: 1 1 100%;
+
+.mr-repo-read > .mr-review-route {
+  max-width: var(--measure);
+  margin: 0 auto 40px;
+}
+
+.mr-review-route-text {
+  flex: 1;
+  min-width: 0;
   overflow-wrap: anywhere;
 }
-.mr-repo-return .mr-btn {
-  min-height: 44px;
-  white-space: normal;
+
+.mr-review-route strong {
+  color: var(--fg);
+  font-weight: 500;
 }
-.mr-repo-return ~ .mr-main {
-  padding-top: 32px;
+
+.mr-repo .mr-review-continue {
+  gap: 2px;
+  padding: 0 8px 0 14px;
+  background: var(--fg);
+  color: var(--bg);
+  font: 500 13px / 1 var(--sans);
 }
+
+.mr-repo .mr-review-continue:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 85%, var(--bg));
+}
+
+.mr-repo .mr-review-continue:disabled {
+  background: var(--soft);
+  color: var(--muted);
+  cursor: default;
+}
+
+@media (max-width: 760px) {
+  .mr-repo .mr-repo-return,
+  .mr-repo .mr-review-continue {
+    min-height: 44px;
+  }
+
+  .mr-review-route {
+    border-radius: 16px;
+  }
+}
+
 .mr-chapter-attachment {
   margin: 20px 0;
   font: 400 14px / 1.4 var(--sans);
@@ -962,15 +2151,6 @@
   min-height: 44px;
   justify-self: start;
 }
-.mr-review-attachment {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.mr-review-attachment small {
-  color: var(--muted);
-}
-
 .mr-repo .mr-file-actions {
   display: flex;
   flex-wrap: wrap;

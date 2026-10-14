@@ -31,6 +31,7 @@ Colour is a set of CSS custom properties on `.mr-root`. A **palette** (`data-the
 | `--accent` | Focus rings, selection, links, the selected choice; never decoration | 3:1 on `--bg` and `--card` |
 | `--selected-bg` | The pressed segment of a segmented control | its text 4.5:1 |
 | `--shadow`, `--card-shadow`, `--raised-shadow` | Sheets; cards at rest; cards on hover or focus | — |
+| `--recede` | The shade on a side sheet waiting beneath another, whose edge is the way back to it | — |
 
 ### Change tokens
 
@@ -151,8 +152,9 @@ Inside the reader's root, in order:
 | 20 | Document menu; search popup |
 | 25 | Selection **Comment** chip |
 | 30 | Progress bar, toast, resume offer, search results bar |
+| 34 | The side sheet's scrim on phones |
+| 35 | The side sheet: Review chapters and the Library, and every sheet stacked in it |
 | 40 | Settings sheet; enlarged diagram |
-| 45 | Chapter map |
 
 The reader itself sits at 2147483600, above the platform page; the launcher at 2147483000. Shadows grow with elevation: `--card-shadow` at rest, `--raised-shadow` on hover or focus, `--shadow` for sheets and the toast.
 
@@ -160,21 +162,21 @@ The reader itself sits at 2147483600, above the platform page; the launcher at 2
 
 - **Pills** (999px radius): buttons, segmented controls, the toast, chips, the launcher.
 - **Cards:** 14px radius (10px in Compact) for threads and editors; 12px for folded-file cards and palette cards.
-- **Sheets:** 20px radius for the settings panel.
+- **Sheets:** 20px radius for the settings panel and the top of a bottom sheet on phones; a side sheet beside the page is square, and one beneath another shows only its edge.
 - **Small marks:** 6px for previews and inputs, 2 to 4px for bars and keys, 50% for dots.
 
 ## Motion
 
 Motion explains a change of place; it never decorates.
 
-- Durations are short: 140 to 280ms for transforms (cards moving aside, the top bar, the pill), 180ms for the toast's entrance, 750ms for the top glow's fade.
+- Durations are short: 140 to 280ms for transforms (cards moving aside, the top bar, the pill, a side sheet sliding in, 220ms as it slides away), 180ms for the toast's entrance, 750ms for the top glow's fade.
 - Easing is `ease` or `ease-out`.
 - Under `prefers-reduced-motion: reduce`, transitions are removed and the top glow stays still. Browser checks run with reduced motion on.
 - Navigation scrolls the target to 30% of the viewport height (`FOCUS_LINE`) and flashes it briefly.
 
 ## Icons
 
-Icons are inline SVG strings in `src/ui/components/icons.ts`: `settings`, `close`, `plus`, `minus`, `check`, `layout`, `keyboard`, `comment`, `reply`, `viewed`, `chevronDown`, `chevronLeft`, `chevronRight`, `up`, `down`, `book` and `search`. They draw at 18 pixels (`.mr-icon`) in `currentColor`. An icon-only button always has an `aria-label` and a `title` that names its shortcut ("Close reader (Esc)").
+Icons are inline SVG strings in `src/ui/components/icons.ts`: `settings`, `close`, `plus`, `minus`, `check`, `layout`, `keyboard`, `comment`, `reply`, `viewed`, `chevronDown`, `chevronLeft`, `chevronRight`, `up`, `down`, `map`, `refresh`, `note`, `review`, `book`, `search`, `expand` and `link`. They draw at 18 pixels (`.mr-icon`) in `currentColor`. An icon-only button always has an `aria-label` and a `title` that names its shortcut ("Close reader (Esc)").
 
 ## Other surfaces
 

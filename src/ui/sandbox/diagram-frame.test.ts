@@ -72,7 +72,18 @@ it('serves any port the reader transfers when the frame loads', async () => {
   await vi.waitFor(() => expect(replies).toEqual([{ id: 7, svg: '<svg/>' }]));
 });
 
-const palette = { bg: '#fffefa', fg: '#202d25', muted: '#505c52', soft: '#f1f4e9', rule: '#d9dfd2', code: '#f6f7ef', accent: '#506b38' };
+const palette = {
+  bg: '#fffefa',
+  fg: '#202d25',
+  muted: '#505c52',
+  soft: '#f1f4e9',
+  rule: '#d9dfd2',
+  code: '#f6f7ef',
+  accent: '#506b38',
+  add: '#3b6a2b',
+  mod: '#8f5d00',
+  del: '#9c3a35',
+};
 
 it('gives a neutral accent a deterministic chart palette even though it has no hue', async () => {
   const { chartColours } = await import('./diagram-frame.ts');
@@ -117,6 +128,15 @@ it('draws diagrams in the reader’s palette: cards on a soft canvas, quiet line
   await renderRequest(engine, { id: 3, code: 'flowchart LR', dark: true });
   expect(engine.initialize.mock.lastCall![0]).toMatchObject({ theme: 'dark', look: 'classic' });
   expect(engine.initialize.mock.lastCall![0].themeVariables).toBeUndefined();
+  // What a change added, edited and removed is drawn in the page's change colours, and never by colour alone.
+  expect(light.themeCSS).toContain(`.node.galleyAdded :is(rect, polygon, circle, ellipse, path) { stroke: ${palette.add}; stroke-width: 2.5px; }`);
+  expect(light.themeCSS).toContain(`path[id*="-galleyRemovedEdge"] { stroke: ${palette.del}; stroke-width: 1.5px; stroke-dasharray: 5 4; }`);
+  expect(light.themeCSS).toContain('.node.galleyRemoved :is(text, tspan) { fill: #9c3a35; text-decoration: line-through; }');
+  expect(light.themeCSS).toContain('.node.galleyEdited :is(text, tspan) { font-style: italic; }');
+  // Without the reader's palette, Mermaid's own theme still gets change colours that suit it.
+  expect(engine.initialize.mock.lastCall![0].themeCSS).toContain('stroke: #8fd18a');
+  await renderRequest(engine, { id: 4, code: 'flowchart LR', dark: false });
+  expect(engine.initialize.mock.lastCall![0].themeCSS).toContain('stroke: #3b6a2b');
   expect(mix('#000000', '#ffffff', 0.5)).toBe('#808080');
   expect(mix('#fff', '#000', 0)).toBe('#ffffff');
   const colours = chartColours('#506b38', false);

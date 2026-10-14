@@ -1,6 +1,7 @@
 ---
-status: Accepted
+status: Superseded
 date: 2026-10-10
+superseded-by: [30]
 deciders: [m9sh]
 rfcs: [49]
 tags: [repository, ui]

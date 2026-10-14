@@ -288,7 +288,7 @@ it('loads the review threads of the pull request, replies included', async () =>
   expect(threads[0].comments.map((c) => c.body)).toStrictEqual(['comment 1', 'comment 2']);
 });
 
-it('a pull request opens its repository’s docs at its base or head commit, pinned there', async () => {
+it('a pull request opens its repository’s docs as its change leaves them, pinned at the head commit', async () => {
   const requests: string[] = [];
   mockFetch(async (url) => {
     requests.push(String(url));
@@ -307,17 +307,21 @@ it('a pull request opens its repository’s docs at its base or head commit, pin
     title: 'Docs',
   };
   const source = await loadGitHub(ctx, directApi('https://github.com', getToken));
-  expect(source.project!.base).toStrictEqual({ ref: 'main', commit: 'base-sha' });
   expect(source.project!.head).toStrictEqual({ ref: 'feature/x', commit: 'head-sha' });
-  const base = source.project!.open('base');
-  expect(base).toMatchObject({ ref: 'main', commit: 'base-sha', pinned: true, start: { path: '', folder: true }, id: 'github:https://github.com/acme/docs' });
-  expect(await base.refresh()).toBe(base);
-  expect((await base.discover()).docs).toStrictEqual([{ path: 'docs/guide.md' }]);
-  expect(requests.at(-1)).toBe('https://api.github.com/repos/acme/docs/git/trees/base-sha?recursive=1');
-  expect(source.project!.open('head').links.blob('a.md')).toBe('https://github.com/acme/docs/blob/head-sha/a.md');
-  // Without branch names, revisions are named by their commit.
+  const head = source.project!.open();
+  expect(head).toMatchObject({
+    ref: 'feature/x',
+    commit: 'head-sha',
+    pinned: true,
+    start: { path: '', folder: true },
+    id: 'github:https://github.com/acme/docs',
+  });
+  expect(await head.refresh()).toBe(head);
+  expect((await head.discover()).docs).toStrictEqual([{ path: 'docs/guide.md' }]);
+  expect(requests.at(-1)).toBe('https://api.github.com/repos/acme/docs/git/trees/head-sha?recursive=1');
+  expect(head.links.blob('a.md')).toBe('https://github.com/acme/docs/blob/head-sha/a.md');
+  // Without a branch name, the head is named by its commit.
   mockFetch(async (url) => (String(url).includes('/files?') ? response([]) : response({ head: { sha: '0123456789' }, base: { sha: 'abcdef123' } })));
   const unnamed = await loadGitHub(ctx, directApi('https://github.com', getToken));
-  expect(unnamed.project!.base.ref).toBe('abcdef1');
   expect(unnamed.project!.head.ref).toBe('0123456');
 });

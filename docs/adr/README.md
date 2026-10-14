@@ -88,11 +88,11 @@ Generated from the ADR files by `npm run docs:index`; do not edit by hand.
 | [0023](0023-pull-request-demos-on-github-pages.md) | Publish temporary pull request demos on GitHub Pages from a default-branch publisher | Accepted | 2026-10-09 | — |
 | [0024](0024-read-a-repository-at-one-commit.md) | Read a repository at one resolved commit, as a snapshot that refreshes only when asked | Accepted | 2026-10-10 | [0049](../rfcs/0049-repository-docs-and-project-maps.md) |
 | [0025](0025-repository-reads-in-the-token-allowlist.md) | Let the token worker resolve a ref and list the tree of the repository in the tab, and nothing more | Accepted | 2026-10-10 | [0049](../rfcs/0049-repository-docs-and-project-maps.md) |
-| [0026](0026-an-evidence-only-project-map.md) | Draw the project map only from evidence, say where each part comes from, and keep the reader's corrections beside the source | Accepted | 2026-10-10 | [0049](../rfcs/0049-repository-docs-and-project-maps.md) |
+| [0026](0026-an-evidence-only-project-map.md) | Draw the project map only from evidence, say where each part comes from, and keep the reader's corrections beside the source | Superseded by [0030](0030-spatial-project-map-with-an-equivalent-list.md) | 2026-10-10 | [0049](../rfcs/0049-repository-docs-and-project-maps.md) |
 | [0027](0027-read-configuration-statically.md) | Read configuration files statically, on request, in a sandboxed frame, and never call it running infrastructure | Accepted | 2026-10-10 | [0049](../rfcs/0049-repository-docs-and-project-maps.md) |
 | [0028](0028-private-project-notes.md) | Keep the reader's project notes on the device only when they save, recover drafts, and share only through an export they preview | Accepted | 2026-10-10 | [0049](../rfcs/0049-repository-docs-and-project-maps.md) |
 | [0029](0029-consented-images-in-an-isolated-frame.md) | Recover consented images in an isolated image-only frame | Proposed | 2026-10-10 | — |
-| [0030](0030-spatial-project-map-with-an-equivalent-list.md) | A spatial project map and an equivalent list share one evidence model | Proposed | 2026-10-11 | [0049](../rfcs/0049-repository-docs-and-project-maps.md) |
+| [0030](0030-spatial-project-map-with-an-equivalent-list.md) | A spatial project map and an equivalent list share one evidence model | Accepted | 2026-10-11 | [0049](../rfcs/0049-repository-docs-and-project-maps.md) |
 <!-- adr-index:end -->
 
 ## By area

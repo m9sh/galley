@@ -336,6 +336,8 @@ it('types the reader sets, and the components they propose, are kept with their 
   await ui.open(repository(handbook, { start: { path: 'docs/adr/0001-use-markdown.md', folder: false } }));
   ui.click('[data-view="map"]');
   await vi.waitFor(() => expect(ui.q('.mr-map-status').textContent).toMatch(/^Built from all/));
+  ui.click('.mr-pm-place[data-lane="here"]');
+  ui.click('.mr-pm-tab[data-tab="links"]');
   const select = ui.q<HTMLSelectElement>('[data-act="kind"]');
   select.value = 'runbook';
   select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -351,7 +353,10 @@ it('types the reader sets, and the components they propose, are kept with their 
 
   await ui.open(repository(handbook, { start: { path: 'docs/adr/0001-use-markdown.md', folder: false } }));
   ui.click('[data-view="map"]');
-  await vi.waitFor(() => expect(ui.q('.mr-map-facts .mr-chip')?.textContent).toBe('Runbook'));
+  await vi.waitFor(() => expect(ui.q('.mr-pm-place[data-lane="here"]')?.getAttribute('aria-label')).toContain(', Runbook,'));
+  ui.click('.mr-pm-place[data-lane="here"]');
+  ui.click('.mr-pm-tab[data-tab="links"]');
+  expect(ui.text('.mr-map-facts .mr-chip')).toBe('Runbook');
   expect(ui.q('.mr-map-facts .mr-chip').classList).toContain('is-own');
   // A note can be connected to the reader's own component, by name.
   showNotes();

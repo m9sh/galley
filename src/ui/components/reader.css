@@ -37,6 +37,8 @@
   /* Comment cards: a tone of their own and a soft shadow instead of an outline. */
   --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 6px 20px -10px rgba(0, 0, 0, 0.22);
   --raised-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 18px 40px -16px rgba(0, 0, 0, 0.3);
+  /* A sheet waiting beneath another, in shade. */
+  --recede: rgba(0, 0, 0, 0.05);
 }
 
 .mr-root {
@@ -67,6 +69,8 @@
   --shift: 0px;
   --fit: 1;
   --text-scale: 1;
+  /* The width the layout shares out: the window, less a side sheet that has narrowed the reader. */
+  --vw: 100vw;
   /* Titles, standfirsts, bylines, contents and comments follow the text size (reader.ts sets the parts). */
   --type: calc(var(--text-scale) * var(--fit));
   --comment-size: calc(13.5px * var(--type));
@@ -495,6 +499,7 @@
   --control-rule: color-mix(in srgb, var(--fg) 52%, var(--bg));
   --card-shadow: 0 4px 14px -8px rgba(0, 0, 0, 0.5);
   --raised-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+  --recede: rgba(0, 0, 0, 0.32);
   color-scheme: dark;
 }
 
@@ -1565,9 +1570,8 @@
     opacity 0.2s ease,
     visibility 0s 0.2s;
 }
-
 @media (min-width: 1280px) {
-  .mr-toc:not(:empty) {
+  :where(.mr-root:not(.is-narrowed)) .mr-toc:not(:empty) {
     display: block;
   }
 }
@@ -2110,6 +2114,52 @@
 }
 .mode-clean .mr-diagram[data-mr-change="modified"] > [data-mr-side="base"] {
   display: none;
+}
+/* An edited flowchart is one drawing of its changes; its two whole versions are a click away. */
+.mr-diagram.has-changes > .mr-diagram-version:not(.mr-diagram-changes) {
+  display: none;
+}
+.mr-diagram.has-changes.is-sides > .mr-diagram-version:not(.mr-diagram-changes) {
+  display: block;
+}
+.mr-content .mr-diagram-changes .mr-diagram-caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px 14px;
+}
+.mr-diagram-caption .mr-chip {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.mr-content .mr-diagram-sides {
+  appearance: none;
+  margin: 2px 0 0;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: 12px / 1.4 var(--sans);
+  text-decoration: underline;
+  text-decoration-color: var(--control-rule);
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.mr-content .mr-diagram-sides:hover {
+  color: var(--fg);
+}
+.mr-diagram.is-sides > .mr-diagram-sides {
+  margin-bottom: 16px;
+}
+/* Clean mode reads the new version as it is, without marks. */
+.mode-clean .mr-diagram.has-changes > .mr-diagram-changes,
+.mode-clean .mr-diagram-sides {
+  display: none;
+}
+.mode-clean .mr-diagram.has-changes > [data-mr-side="head"]:not(.mr-diagram-changes) {
+  display: block;
 }
 .mr-diagram-view[data-state="error"] {
   border: 1px dashed var(--rule);
@@ -2705,34 +2755,7 @@
   width: min(460px, calc(100vw - 24px));
 }
 
-/* Project library: the repository's docs at one side of the review, opened over it. Phones keep the icon. */
-.mr-project-btn .mr-icon {
-  width: 17px;
-  height: 17px;
-}
-
-.mr-project {
-  right: 12px;
-  width: min(360px, calc(100vw - 24px));
-}
-
-.mr-project-intro {
-  margin: 6px 10px 8px;
-  color: var(--muted);
-  font: 13px / 1.45 var(--sans);
-}
-
-.mr-files-project {
-  margin: 6px 0 2px;
-  padding: 10px 12px 4px;
-  border-top: 1px solid var(--rule);
-  color: var(--muted);
-  font: 600 12px / 1.4 var(--sans);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-/* Narrow phones keep the file name in the bar; search and Project library open from the files menu instead. */
+/* Narrow phones keep the file name in the bar; search opens from the files menu instead. */
 .mr-files-search {
   display: none;
 }
@@ -2741,7 +2764,6 @@
   color: var(--muted);
 }
 @media (max-width: 480px) {
-  .mr-project-btn,
   .mr-search-btn {
     display: none;
   }
@@ -2867,214 +2889,1052 @@
   min-width: 100px;
   overflow-wrap: anywhere;
 }
-.mr-chapters {
+/* ------------------------------------------------------------------ sheet */
+/* The sheet (components/sheet.ts), the same on every page: on wide screens it sits on the right edge and the page
+   narrows beside it, everything in reach; on phones it rises from the bottom over the page, which waits behind it.
+   It is a stack: what a list opens slides in on top, leaving the edges of the sheets beneath as a way back. Each
+   sheet has a header that stays put, one scrolling body of sections and rows, and the keys that work there. */
+@media (min-width: 761px) {
+  .mr-root {
+    /* One width for every sheet, the chapters and a document alike, so going deeper never resizes the page. */
+    --sheet-width: clamp(380px, 42vw, 620px);
+  }
+  .mr-root.has-sheet {
+    right: var(--sheet-width);
+    --vw: calc(100vw - var(--sheet-width));
+    /* The page behind the reader never shows while the sheet slides into the room the review just made. */
+    box-shadow: var(--sheet-width) 0 0 var(--bg);
+  }
+}
+.mr-sheet {
+  --sheet-peek: 14px;
   position: fixed;
-  inset: 0;
-  z-index: 45;
-  font: 400 14px / 1.5 var(--sans);
-}
-.mr-root.chapters-open {
-  overflow: hidden;
-}
-.mr-chapters-backdrop {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  border: 0;
-  background: color-mix(in srgb, var(--fg) 14%, transparent);
-}
-.mr-chapters-panel {
-  position: absolute;
-  top: 64px;
-  right: 16px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 35;
   box-sizing: border-box;
-  width: min(520px, calc(100vw - 32px));
-  max-height: calc(100% - 80px);
-  overflow: auto;
-  overscroll-behavior: contain;
-  padding: 24px;
-  border-radius: 20px;
-  background: var(--bg);
+  width: var(--sheet-width);
   color: var(--fg);
-  box-shadow: var(--shadow);
+  font: 400 calc(14px * var(--type, 1)) / 1.5 var(--sans);
 }
-.mr-chapters-header,
-.mr-chapters-tools,
-.mr-chapter-edit-order {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.mr-chapters-header {
-  justify-content: space-between;
-}
-.mr-chapters-header h2 {
-  margin: 0;
-  font: 500 28px / 1.2 var(--serif);
-}
-.mr-chapters-intro,
-.mr-chapters-progress,
-.mr-chapter-reason,
-.mr-chapters-footer p {
-  color: var(--muted);
-  font-size: 13px;
-}
-.mr-chapters-progress {
-  margin: 20px 0 10px;
-}
-.mr-chapter-button {
-  padding: 8px 12px;
-  min-height: 36px;
-  border: 0;
-  border-radius: 8px;
-  color: var(--accent);
-  background: var(--soft);
-  font: 500 13px / 1.4 var(--sans);
-  cursor: pointer;
-}
-.mr-chapter-button:hover,
-.mr-chapter-button[aria-pressed="true"] {
-  background: var(--selected-bg);
-}
-.mr-chapter-button:disabled {
-  color: var(--muted);
-  background: transparent;
-  cursor: default;
-}
-.mr-chapters-content {
-  margin-top: 24px;
-}
-.mr-chapter {
-  margin: 0 0 12px;
-}
-.mr-chapter summary {
-  padding: 12px 0;
-  cursor: pointer;
-  overflow-wrap: anywhere;
-}
-.mr-chapter-title {
-  font-weight: 600;
-  line-height: 1.3;
-}
-.mr-chapter-progress {
-  display: block;
-  margin-left: 18px;
-  color: var(--muted);
-  font-size: 12px;
-}
-.mr-chapter-body {
-  padding: 0 0 16px 18px;
-}
-.mr-chapter-reason {
-  margin: 0 0 12px;
-}
-.mr-chapter-introduction {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.mr-chapter-files {
-  margin: 0 0 12px;
-  padding: 0;
-  list-style: none;
-}
-.mr-chapter-file {
-  margin: 0 0 10px;
-  border-radius: 8px;
-}
-.mr-chapter-file.is-current {
-  background: var(--selected-bg);
-}
-.mr-chapter-file-link {
-  box-sizing: border-box;
+/* A stack, from the right: each sheet opened on top slides in from the edge and stops a step further in than the one
+   beneath, lifted by its shadow. A sheet beneath another is only its edge, in shade: its contents step out of view, so
+   nothing of them shows through, and the edge is the way back to it. */
+.mr-sheet-layer {
+  position: absolute;
+  inset: 0 0 0 calc(var(--sheet-peek) * var(--at, 0));
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  width: 100%;
-  padding: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-left: 1px solid var(--rule);
+  background: var(--bg);
+}
+.mr-sheet-layer:focus {
+  outline: none;
+}
+.mr-sheet-layer + .mr-sheet-layer {
+  box-shadow: var(--shadow);
+}
+.mr-sheet-layer.is-under > * {
+  visibility: hidden;
+}
+.mr-sheet-layer.is-under::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--recede);
+  pointer-events: none;
+}
+.mr-sheet-edges {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.mr-root .mr-sheet-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--sheet-peek) * var(--at, 0));
+  width: var(--sheet-peek);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.mr-root .mr-sheet-edge:hover {
+  background: var(--recede);
+}
+/* The header: the way back or the switch, then its actions and Close; under them its name and what it is for. */
+.mr-sheet-header {
+  position: relative;
+  flex: none;
+  display: grid;
+  justify-items: start;
+  padding: 10px 10px 18px 20px;
+  border-bottom: 1px solid var(--rule);
+}
+/* Everything under the top row starts flush; each part sets its own space above. */
+.mr-sheet-header > :where(:not(.mr-sheet-top)) {
+  margin: 0 10px 0 0;
+}
+.mr-sheet-header > .mr-sheet-kicker {
+  margin-top: 14px;
+}
+.mr-sheet-header > .mr-sheet-title {
+  margin-top: 3px;
+}
+.mr-sheet-header > .mr-sheet-description {
+  margin-top: 4px;
+}
+.mr-sheet-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  justify-self: stretch;
+  min-height: 36px;
+}
+.mr-sheet-lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--type, 1));
+}
+.mr-sheet-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+.mr-sheet-actions .mr-icon,
+.mr-sheet-close .mr-icon {
+  width: 18px;
+  height: 18px;
+}
+.mr-sheet-actions .mr-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.mr-root .mr-sheet-back {
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: -10px;
+  padding: 0 10px 0 4px;
+  color: var(--muted);
+  font: 500 calc(13.5px * var(--type, 1)) / 1 var(--sans);
+}
+.mr-root .mr-sheet-back:hover {
+  color: var(--fg);
+}
+.mr-sheet-back-label {
+  flex: none;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The first sheet's switch is its title: the view shown in full ink, the other in quiet ink beside it. */
+.mr-sheet-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: -8px;
+}
+.mr-root .mr-sheet-tab {
+  min-height: 36px;
+  padding: 0 8px;
   border: 0;
   border-radius: 8px;
   background: transparent;
+  color: var(--muted);
+  font: 600 calc(17px * var(--type, 1)) / 1.2 var(--sans);
+  letter-spacing: -0.01em;
+  cursor: pointer;
+}
+.mr-root .mr-sheet-tab:hover,
+.mr-root .mr-sheet-tab[aria-pressed="true"] {
   color: var(--fg);
+}
+.mr-root .mr-sheet-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+.mr-sheet-heading {
+  margin: 0;
+  color: var(--fg);
+  font: 600 calc(17px * var(--type, 1)) / 1.2 var(--sans);
+  letter-spacing: -0.01em;
+}
+.mr-sheet-kicker {
+  color: var(--muted);
+  font: 600 calc(11px * var(--type, 1)) / 1.4 var(--sans);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.mr-sheet-title {
+  font: 600 calc(19px * var(--type, 1)) / 1.25 var(--sans);
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+/* A document's title is set as the document is. */
+.mr-sheet-layer[data-kind="document"] .mr-sheet-title {
+  font: 400 calc(23px * var(--type, 1)) / 1.2 var(--heading-font, var(--serif));
+  letter-spacing: 0;
+}
+.mr-sheet-description {
+  color: var(--muted);
+  font-size: calc(13px * var(--type, 1));
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.mr-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 18px 12px 40px;
+}
+.mr-sheet-body:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+/* Keys, where they work: at the foot of each sheet with a keyboard, Esc always among them; never on touch screens. */
+.mr-sheet-keys {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  padding: 10px 20px;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: calc(12px * var(--type, 1));
+}
+.mr-sheet-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.mr-sheet-key kbd + kbd {
+  margin-left: -1px;
+}
+/* Keys in a sheet are quiet: a soft cap, no rim. */
+.mr-sheet kbd {
+  box-sizing: border-box;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--soft);
+  color: var(--fg);
+  font: 500 12px / 20px var(--sans);
+  text-align: center;
+}
+.mr-root button.mr-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 34;
+  border: 0;
+  background: color-mix(in srgb, var(--fg) 12%, transparent);
+  font-size: 0;
+}
+/* Quiet actions in a header or beside a section: words, no outline. */
+.mr-root .mr-sheet-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: 500 calc(13px * var(--type, 1)) / 1 var(--sans);
+  cursor: pointer;
+}
+.mr-root .mr-sheet-link:hover {
+  background: var(--soft);
+  color: var(--fg);
+}
+.mr-root .mr-sheet-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+/* A search field: a soft well that takes the page's ground when it is in use. */
+.mr-root .mr-sheet-search {
+  justify-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  margin-top: 14px;
+  padding: 0 8px 0 12px;
+  border-radius: 10px;
+  background: var(--soft);
+  color: var(--muted);
+}
+.mr-root .mr-sheet-search:focus-within {
+  background: var(--bg);
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+.mr-root .mr-sheet-search input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--fg);
+  font: 400 calc(14px * var(--type, 1)) / 1.4 var(--sans);
+}
+.mr-root .mr-sheet-search input::placeholder {
+  color: var(--muted);
+}
+.mr-root .mr-sheet-search kbd {
+  background: var(--bg);
+}
+.mr-sheet-icon {
+  display: grid;
+  place-items: center;
+}
+.mr-sheet-icon .mr-icon,
+.mr-sheet-search .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+/* Sections: a small heading with how many and its own quiet actions, then rows; each well apart from the next. */
+.mr-sheet-section + .mr-sheet-section,
+.mr-docs-results > .mr-sheet-section + .mr-sheet-section {
+  margin-top: 28px;
+}
+.mr-sheet-section-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 0 4px 10px;
+}
+.mr-sheet-section-title {
+  margin: 0;
+  color: var(--muted);
+  font: 600 calc(11px * var(--type, 1)) / 1.4 var(--sans);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.mr-sheet-count {
+  color: var(--muted);
+  font: 500 calc(11px * var(--type, 1)) / 1.4 var(--sans);
+  font-variant-numeric: tabular-nums;
+}
+.mr-sheet-section-head > button:first-of-type {
+  margin-left: auto;
+}
+.mr-sheet-subhead {
+  margin: 18px 10px 4px;
+  color: var(--muted);
+  font: 500 calc(12px * var(--type, 1)) / 1.4 var(--sans);
+  overflow-wrap: anywhere;
+}
+.mr-sheet-section-head + .mr-sheet-subhead {
+  margin-top: 4px;
+}
+.mr-sheet-note {
+  margin: 4px 10px 8px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type, 1));
+}
+/* Rows: one shape for every list, a mark, the title over one quiet line, a value, and a chevron when it opens a sheet. */
+.mr-root .mr-sheet-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 46px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
   text-align: left;
   text-decoration: none;
   cursor: pointer;
 }
-.mr-chapter-file-link:hover {
+.mr-root .mr-sheet-row.is-push {
+  grid-template-columns: 22px minmax(0, 1fr) auto 14px;
+}
+.mr-root .mr-sheet-row:hover {
   background: var(--soft);
 }
-.mr-chapter-path {
-  font: 400 13px / 1.5 var(--mono);
+.mr-root .mr-sheet-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.mr-root .mr-sheet-row:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+/* Where the reader is: the accent on its mark, a firmer title, and aria-current. */
+.mr-sheet-row.is-current .mr-sheet-row-title {
+  font-weight: 600;
+}
+.mr-sheet-row.is-current .mr-sheet-row-lead {
+  color: var(--accent);
+}
+.mr-root .mr-sheet-row.is-current:not(:has(.mr-sheet-num)) {
+  background: var(--selected-bg);
+}
+.mr-sheet-row-lead .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+.mr-sheet-row-lead,
+.mr-sheet-row-go {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.mr-sheet-row-go {
+  color: color-mix(in srgb, var(--muted) 55%, var(--bg));
+}
+.mr-root .mr-sheet-row:hover .mr-sheet-row-go,
+.mr-root .mr-sheet-row:focus-visible .mr-sheet-row-go {
+  color: var(--muted);
+}
+.mr-sheet-row-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.mr-sheet-row-title {
+  font-weight: 500;
+  line-height: 1.35;
   overflow-wrap: anywhere;
 }
-.mr-chapter-file-state,
-.mr-chapter-file-link small {
+.mr-sheet-row-meta {
+  overflow: hidden;
   color: var(--muted);
-  font: 400 12px / 1.4 var(--sans);
-  overflow-wrap: anywhere;
+  font-size: calc(12.5px * var(--type, 1));
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.mr-chapter-body label,
-.mr-chapter-assignment label {
-  display: block;
-  margin: 12px 0;
+.mr-sheet-row-end {
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12.5px * var(--type, 1));
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
-.mr-chapters input,
-.mr-chapters textarea,
-.mr-chapters select {
+.mr-sheet-row-go .mr-icon {
+  width: 14px;
+  height: 14px;
+}
+/* The chevron keeps the last column even when there is no value beside it. */
+.mr-sheet-row-go {
+  grid-column: -2 / -1;
+}
+.mr-sheet-row-with {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mr-sheet-row-with > .mr-sheet-row {
+  flex: 1;
+  min-width: 0;
+}
+/* A chapter's place in the path: a ring with its number, filled with a check once all its files are viewed, in the
+   accent where the reader is. */
+.mr-sheet-num {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
   box-sizing: border-box;
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  margin-top: 4px;
-  padding: 10px;
-  border: 1px solid var(--control-rule);
-  border-radius: 8px;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--rule);
+  border-radius: 50%;
   background: var(--bg);
-  color: var(--fg);
-  font: 400 14px / 1.5 var(--sans);
+  color: var(--muted);
+  font: 600 calc(11px * var(--type, 1)) / 1 var(--sans);
+  font-variant-numeric: tabular-nums;
 }
-.mr-chapters textarea {
-  min-height: 80px;
-  resize: vertical;
+.mr-sheet-row.is-current .mr-sheet-num {
+  border: 2px solid var(--accent);
+  color: var(--accent);
 }
-.mr-chapter-assignment {
-  margin: 24px 0;
-  padding: 16px;
-  border-radius: 12px;
+.mr-sheet-row.is-done .mr-sheet-num {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+}
+.mr-root .mr-sheet-row-lead .mr-sheet-num .mr-icon {
+  width: 13px;
+  height: 13px;
+}
+/* The chapters as a path: their rings joined by a line that fills in as chapters are viewed. */
+.mr-path {
+  --path-pad: 10px;
+}
+.mr-root .mr-path > .mr-sheet-row {
+  align-items: start;
+  padding-block: var(--path-pad);
+}
+.mr-path > .mr-sheet-row > .mr-sheet-row-end,
+.mr-path > .mr-sheet-row > .mr-sheet-row-go {
+  align-self: center;
+}
+.mr-path .mr-sheet-row-lead {
+  position: relative;
+  align-self: stretch;
+  place-items: start center;
+}
+.mr-path .mr-sheet-num {
+  margin-top: -1px;
+}
+.mr-path > .mr-sheet-row:not(:last-child) > .mr-sheet-row-lead::after {
+  content: "";
+  position: absolute;
+  top: 25px;
+  bottom: calc(4px - 2 * var(--path-pad));
+  left: calc(50% - 0.75px);
+  width: 1.5px;
+  border-radius: 1px;
+  background: var(--rule);
+}
+.mr-path > .mr-sheet-row.is-done:not(:last-child) > .mr-sheet-row-lead::after {
+  background: var(--accent);
+}
+/* Review chapters: how far the review is, the way in, then the path. */
+.mr-chapters-status {
+  justify-self: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-top: 12px;
+}
+.mr-chapters-progress {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--type, 1));
+  font-variant-numeric: tabular-nums;
+}
+/* Progress along the path: a segment for each chapter, as long as its files. */
+.mr-chapters-bar {
+  justify-self: stretch;
+  display: flex;
+  gap: 3px;
+  height: 4px;
+  margin-top: 12px;
+}
+.mr-chapters-bar > span {
+  flex: 1 1 0;
+  min-width: 3px;
+  overflow: hidden;
+  border-radius: 2px;
   background: var(--soft);
 }
-.mr-chapters-footer {
-  margin-top: 24px;
+.mr-chapters-bar > span > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
 }
-.mr-chapters-footer > button {
-  margin: 0 8px 8px 0;
+.mr-chapters-tools {
+  justify-self: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 4px;
+  margin-top: 16px;
+}
+.mr-chapters-count {
+  margin-left: 10px;
+  color: var(--muted);
+  font-size: calc(13px * var(--type, 1));
+}
+.mr-chapter-introduction {
+  justify-self: stretch;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--soft);
+  color: var(--fg);
+  font-size: calc(13.5px * var(--type, 1));
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .mr-chapters-feedback {
+  margin: 12px 10px 0;
   color: var(--accent);
-  font-size: 13px;
+  font-size: calc(13px * var(--type, 1));
+}
+.mr-chapters-feedback:empty {
+  display: none;
+}
+/* Chapter controls are quiet outlined pills; the way in (Start here, Read chapter) is the one filled control. */
+.mr-chapter-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--fg);
+  background: transparent;
+  font: 500 calc(13px * var(--type, 1)) / 1.3 var(--sans);
+  cursor: pointer;
+}
+.mr-chapter-button:hover {
+  background: var(--soft);
+}
+.mr-chapter-button[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--selected-bg);
+}
+.mr-chapter-button.mr-chapters-start:not(:disabled) {
+  padding: 0 16px;
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+  font-weight: 600;
+}
+.mr-chapter-button.mr-chapters-start:not(:disabled):hover {
+  background: color-mix(in srgb, var(--fg) 85%, var(--bg));
+}
+.mr-chapter-button:disabled {
+  color: var(--muted);
+  background: transparent;
+  opacity: 0.6;
+  cursor: default;
+}
+/* Edit chapters: one line for each chapter, its name reading as text until it is edited and its order beside it;
+   what to look at opens under it while it is being edited, and stays when written. */
+.mr-chapter-edit {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 4px;
+  padding: 5px 6px 5px 10px;
+  border-radius: 10px;
+}
+.mr-chapter-edit:focus-within {
+  background: var(--soft);
+}
+.mr-chapter-edit > textarea {
+  grid-column: 2;
+}
+.mr-chapter-edit:not(:focus-within) > textarea:placeholder-shown {
+  display: none;
+}
+.mr-chapter-edit-top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.mr-chapter-edit-top .mr-sheet-note {
+  flex: none;
+  margin: 0 4px;
+  font-size: calc(12px * var(--type, 1));
+}
+.mr-chapter-edit-order {
+  display: flex;
+  flex: none;
+}
+/* With a pointer, a chapter's order shows where the pointer or focus rests; on touch screens it is always there. */
+@media (hover: hover) and (min-width: 761px) {
+  .mr-chapter-edit:not(:hover, :focus-within) .mr-chapter-edit-order {
+    opacity: 0;
+  }
+}
+.mr-chapter-edit-order .mr-icon-btn {
+  width: 30px;
+  height: 30px;
+}
+.mr-chapters .mr-chapter-edit input,
+.mr-chapters .mr-chapter-edit textarea {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+}
+.mr-chapters .mr-chapter-edit input {
+  flex: 1;
+  margin-left: -8px;
+  font: 500 calc(14px * var(--type, 1)) / 1.4 var(--sans);
+}
+.mr-chapters .mr-chapter-edit textarea {
+  width: calc(100% + 8px);
+  min-height: 32px;
+  margin-left: -8px;
+  resize: none;
+  field-sizing: content;
+  color: var(--muted);
+  font: 400 calc(13px * var(--type, 1)) / 1.45 var(--sans);
+}
+.mr-chapters .mr-chapter-edit :is(input, textarea):hover {
+  border-color: var(--rule);
+}
+.mr-chapters .mr-chapter-edit :is(input, textarea):focus {
+  border-color: var(--control-rule);
+  outline: none;
+  background: var(--bg);
+  color: var(--fg);
+}
+.mr-chapter-assignment {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  margin: 2px 10px 0;
+}
+.mr-chapters .mr-chapter-assignment select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--soft);
+  color: var(--fg);
+  font: 400 calc(13px * var(--type, 1)) / 1.4 var(--sans);
+}
+.mr-chapters .mr-chapter-assignment select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+.mr-sheet-body > .mr-chapters-tools {
+  margin: 28px 10px 0;
+}
+
+/* The project library in the sheet: what has been read, and the way to read more. */
+.mr-docs-status {
+  margin: 0 0 20px;
+}
+.mr-sheet-section + .mr-docs-status {
+  margin: 20px 0 0;
+}
+.mr-docs-line {
+  margin: 2px 10px 6px;
+  color: var(--muted);
+  font-size: calc(12.5px * var(--type, 1));
+  overflow-wrap: anywhere;
+}
+.mr-docs-line:focus {
+  outline: none;
+}
+/* Everything read: how much, and what could not be, at the foot of the list. */
+.mr-docs-footnote {
+  margin: 24px 10px 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--type, 1));
+  overflow-wrap: anywhere;
+}
+.mr-docs-more {
+  margin: 6px 0 0 10px;
+}
+/* A document in a sheet, after the links that tie it to the review. */
+.mr-docs-doc {
+  padding: 4px 10px 0;
+}
+.mr-sheet-section + .mr-docs-doc {
+  margin-top: 28px;
+  padding-top: 28px;
+  border-top: 1px solid var(--rule);
+}
+
+/* A document in a sheet: why it is there, then the document in the reader's type, at the sheet's width. */
+.mr-pm-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--type, 1));
+  line-height: 1.5;
+}
+
+.mr-pm-path {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--type, 1));
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.mr-pm-why {
+  margin: 0 0 4px;
+  padding: 14px 16px 4px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.mr-sheet .mr-pm-why h3 {
+  margin: 0;
+}
+
+.mr-pm-why-direction {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--type, 1));
+}
+
+.mr-pm-why > .mr-btn {
+  margin: 0 0 12px;
+}
+
+.mr-pm-proof {
+  padding: 12px 0 14px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.mr-pm-why .mr-pm-proof {
+  padding: 6px 0 12px;
+  border-bottom: 0;
+}
+
+.mr-pm-proof blockquote {
+  margin: 0;
+  font: 400 calc(19px * var(--type, 1)) / 1.35 var(--heading-font, var(--body-font));
+  overflow-wrap: anywhere;
+}
+
+.mr-pm-proof .mr-pm-path {
+  margin: 4px 0 8px;
+}
+
+/* Preview: the document in the reader's type, at the sheet's width. */
+.mr-pm-preview .mr-content {
+  width: 100%;
+  margin: 0 0 24px;
+}
+
+.mr-pm-preview .mr-unit {
+  max-width: 100%;
+}
+
+.mr-pm-preview .mr-block {
+  margin-top: var(--block-gap);
+}
+
+.mr-pm-preview .mr-content > :first-child {
+  margin-top: 0;
+}
+
+.mr-pm-preview .mr-content h2 {
+  margin-top: var(--heading-gap, 1.95em);
+  font-size: 1.25em;
+}
+
+.mr-pm-preview .mr-content h3 {
+  display: block;
+  margin-top: var(--heading-gap, 1.95em);
+  font-size: 1.1em;
+}
+
+.mr-sheet-body > .mr-pm-why h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.mr-sheet-body > .mr-pm-why {
+  margin-bottom: 20px;
+}
+
+/* A sheet's own actions, such as Read: outlined, with their icon. */
+.mr-sheet-actions .mr-btn.mr-outline {
+  gap: 6px;
+  padding: 0 12px 0 10px;
+  font-size: calc(13px * var(--type, 1));
+}
+.mr-sheet-actions .mr-outline .mr-icon {
+  width: 16px;
+  height: 16px;
+}
+@media (hover: none), (max-width: 760px) {
+  .mr-root .mr-sheet-keys,
+  .mr-root .mr-sheet kbd {
+    display: none;
+  }
+  .mr-chapter-assignment {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Edit chapters' fields are big enough to touch. */
+  .mr-chapters .mr-chapter-edit input,
+  .mr-chapters .mr-chapter-edit textarea {
+    min-height: 44px;
+    padding-block: 10px;
+  }
+  .mr-chapters .mr-chapter-assignment select {
+    min-height: 44px;
+  }
+  .mr-chapter-edit-order .mr-icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+  .mr-path {
+    --path-pad: 12px;
+  }
 }
 @media (max-width: 760px) {
-  .mr-chapters-panel {
-    inset: 0;
-    width: 100%;
-    max-height: 100%;
-    padding: 20px;
-    border-radius: 0;
+  .mr-root.has-sheet {
+    overflow: hidden;
   }
-  .mr-chapter-button,
-  .mr-chapter summary {
+  .mr-sheet {
+    --sheet-peek: 10px;
+    top: auto;
+    left: 0;
+    width: auto;
+    height: 85dvh;
+  }
+  /* On a phone the stack rises: each sheet a step lower than the one beneath, which narrows behind it, a deck of cards
+     over the page. */
+  .mr-sheet-layer {
+    inset: calc(var(--sheet-peek) * var(--at, 0)) 0 0 0;
+    border: 1px solid var(--rule);
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
+    box-shadow: var(--shadow);
+    transform-origin: top center;
+  }
+  .mr-sheet-layer.is-under {
+    transform: scale(calc(1 - 0.05 * var(--under, 0)));
+  }
+  .mr-root .mr-sheet-edge {
+    top: calc(var(--sheet-peek) * var(--at, 0));
+    right: 0;
+    bottom: auto;
+    left: 0;
+    width: auto;
+    height: var(--sheet-peek);
+  }
+  .mr-sheet-header {
+    padding: 18px 6px 12px 16px;
+  }
+  /* A grab bar marks the bottom sheet; it is drawn, not a control. */
+  .mr-sheet-header::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 36px;
+    height: 4px;
+    margin-left: -18px;
+    border-radius: 2px;
+    background: var(--rule);
+  }
+  .mr-sheet-body {
+    padding: 14px 6px calc(24px + env(safe-area-inset-bottom));
+  }
+  .mr-sheet .mr-btn {
+    min-height: 44px;
+  }
+  .mr-sheet .mr-icon-btn {
+    min-width: 44px;
+  }
+  .mr-root .mr-sheet-tab,
+  .mr-root .mr-sheet-link,
+  .mr-root .mr-sheet-search {
+    min-height: 44px;
+  }
+  .mr-chapter-button {
     min-height: 44px;
     box-sizing: border-box;
   }
-  .mr-chapters-toggle,
-  .mr-project-btn {
+  .mr-chapters-toggle {
     min-height: 44px;
   }
-
-  .mr-project-label {
-    display: none;
+}
+/* It slides in from the edge and back out to it, with the page sliding aside in step (components/motion.ts), and
+   so does each sheet opened on top; on a phone they rise from the bottom and drop back, the scrim fading with them.
+   Closed already, each is still drawn while it goes. */
+@media (prefers-reduced-motion: no-preference) {
+  .mr-sheet-layer {
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  /* Covered, a sheet's contents leave view once the sheet on top has slid over them; uncovered, they are back at once. */
+  .mr-sheet-layer.is-under > * {
+    transition: visibility 0s linear 0.28s;
+  }
+  .mr-sheet:not([hidden]),
+  .mr-sheet-layer + .mr-sheet-layer {
+    animation: mr-sheet-in 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .mr-sheet.is-closing,
+  .mr-sheet-layer.is-leaving {
+    animation: mr-sheet-out 0.22s ease-in forwards;
+  }
+  .mr-root button.mr-sheet-backdrop:not([hidden]) {
+    animation: mr-scrim-in 0.28s ease-out;
+  }
+  .mr-root button.mr-sheet-backdrop.is-closing {
+    animation: mr-scrim-in 0.22s ease-in reverse forwards;
+  }
+  .mr-root .mr-sheet.is-closing[hidden],
+  .mr-root button.mr-sheet-backdrop.is-closing[hidden] {
+    /* biome-ignore lint/complexity/noImportantStyles: outranks the rule that hides every [hidden] element, for the slide out only */
+    display: block !important;
+    pointer-events: none;
+  }
+  .mr-root .mr-sheet-layer.is-leaving[hidden] {
+    /* biome-ignore lint/complexity/noImportantStyles: outranks the rule that hides every [hidden] element, for the slide out only */
+    display: flex !important;
+    pointer-events: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) and (max-width: 760px) {
+  .mr-sheet:not([hidden]),
+  .mr-sheet-layer + .mr-sheet-layer {
+    animation-name: mr-sheet-rise;
+  }
+  .mr-sheet.is-closing,
+  .mr-sheet-layer.is-leaving {
+    animation-name: mr-sheet-drop;
+  }
+}
+@keyframes mr-sheet-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes mr-sheet-out {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes mr-sheet-rise {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes mr-sheet-drop {
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes mr-scrim-in {
+  from {
+    opacity: 0;
   }
 }
 
@@ -3521,10 +4381,18 @@
   .mr-topbar {
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
+}
+:where(.mr-root.is-narrowed) .mr-topbar {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
 
+@media (max-width: 1279px) {
   .mr-pill-label {
     display: none;
   }
+}
+:where(.mr-root.is-narrowed) .mr-pill-label {
+  display: none;
 }
 
 /* Phones: the wordmark gives way to the document name, and settings become a bottom sheet. */
@@ -4284,6 +5152,10 @@
     display: none;
   }
 }
+:where(.mr-root.is-narrowed) .mr-threads,
+:where(.mr-root.is-narrowed) .mr-comment-btn.is-lane {
+  display: none;
+}
 
 .mr-threads > * {
   position: absolute;
@@ -4873,28 +5745,34 @@
 
 @media (min-width: 761px) and (max-width: 1279px) {
   .mr-document.is-code {
-    width: min(calc(100vw - 48px), var(--code-width));
-    margin-left: calc((100% - min(calc(100vw - 48px), var(--code-width))) / 2);
+    width: min(calc(var(--vw) - 48px), var(--code-width));
+    margin-left: calc((100% - min(calc(var(--vw) - 48px), var(--code-width))) / 2);
   }
 }
-
-/* Contents, document, conversation, set the way a reading site sets an article: the text is centred in
-   the window, the contents hang in the margin to its left and the comments column fills the margin to
-   its right, up to a comfortable card width (--rail-max). Even margins read as a frame around the text;
-   one empty column the size of the text reads as a hole. The text only moves left of centre when the
-   comments column would otherwise be narrower than --rail-min, and on very wide windows the margins
-   simply grow, evenly. */
+/* A sheet beside the review can leave a wide window with less than the wide layout needs. */
+@media (min-width: 761px) {
+  :where(.mr-root.is-narrowed) .mr-document.is-code {
+    width: min(calc(var(--vw) - 48px), var(--code-width));
+    margin-left: calc((100% - min(calc(var(--vw) - 48px), var(--code-width))) / 2);
+  }
+}
 @media (min-width: 1280px) {
-  .mr-root {
-    --measure: min(var(--measure-max), calc(100vw - 2 * var(--edge) - var(--toc-width) - var(--toc-gap) - var(--rail-gap) - 320px));
+  /* Contents, document, conversation, set the way a reading site sets an article: the text is centred in
+     the window, the contents hang in the margin to its left and the comments column fills the margin to
+     its right, up to a comfortable card width (--rail-max). Even margins read as a frame around the text;
+     one empty column the size of the text reads as a hole. The text only moves left of centre when the
+     comments column would otherwise be narrower than --rail-min, and on very wide windows the margins
+     simply grow, evenly. */
+  .mr-root:where(:not(.is-narrowed)) {
+    --measure: min(var(--measure-max), calc(var(--vw) - 2 * var(--edge) - var(--toc-width) - var(--toc-gap) - var(--rail-gap) - 320px));
     /* Where the text starts: centred (less the layout's --shift), but never so far right that the
        comments column drops below --rail-min, nor so far left that the contents leave the window. */
     --text-left: max(
       calc(var(--edge) + var(--toc-width) + var(--toc-gap)),
-      min(calc((100vw - var(--measure)) / 2 - var(--shift)), calc(100vw - var(--edge) - var(--rail-min) - var(--rail-gap) - var(--measure)))
+      min(calc((var(--vw) - var(--measure)) / 2 - var(--shift)), calc(var(--vw) - var(--edge) - var(--rail-min) - var(--rail-gap) - var(--measure)))
     );
     --left: calc(var(--text-left) - var(--edge) - var(--toc-width) - var(--toc-gap));
-    --rail-width: min(var(--rail-max), calc(100vw - var(--edge) - var(--text-left) - var(--measure) - var(--rail-gap)));
+    --rail-width: min(var(--rail-max), calc(var(--vw) - var(--edge) - var(--text-left) - var(--measure) - var(--rail-gap)));
     --rail-end: calc(var(--text-left) + var(--measure) + var(--rail-gap) + var(--rail-width));
     /* Source files have no contents, so they start in that column (further left only where their
        comments would otherwise get less than 300px) and run to 120 characters where the window allows;
@@ -4903,38 +5781,47 @@
     --code-span: min(var(--code-width), calc(var(--rail-end) - var(--edge) - var(--rail-gap) - 300px));
     --code-left: max(var(--edge), min(calc(var(--left) + var(--edge)), calc(var(--rail-end) - var(--rail-gap) - 300px - var(--code-span))));
   }
-  .mr-main {
+
+  :where(.mr-root:not(.is-narrowed)) .mr-main {
     padding-right: 0;
     padding-left: 0;
   }
-  .mr-article {
+
+  :where(.mr-root:not(.is-narrowed)) .mr-article {
     margin-right: 0;
     margin-left: var(--text-left);
   }
+
   /* The current document's name starts where the document does: its dot lines up with the text. */
-  .mr-topbar {
+  :where(.mr-root:not(.is-narrowed)) .mr-topbar {
     grid-template-columns: minmax(0, calc(var(--text-left) - 24px)) minmax(0, var(--measure)) minmax(0, 1fr);
   }
-  .mr-tb-center {
+
+  :where(.mr-root:not(.is-narrowed)) .mr-tb-center {
     justify-content: flex-start;
   }
-  .mr-file-btn {
+
+  :where(.mr-root:not(.is-narrowed)) .mr-file-btn {
     margin-left: -12px;
   }
-  .mr-document.is-code {
+
+  :where(.mr-root:not(.is-narrowed)) .mr-document.is-code {
     width: var(--code-span);
     margin-left: calc(var(--code-left) - var(--text-left));
   }
-  .mr-threads > .is-code-card {
+
+  :where(.mr-root:not(.is-narrowed)) .mr-threads > .is-code-card {
     right: auto;
     left: calc(var(--code-left) + var(--code-span) - var(--text-left) - var(--measure));
     width: calc(var(--rail-end) - var(--code-left) - var(--code-span) - var(--rail-gap));
   }
-  .mr-comment-btn.is-lane.is-beside-code {
+
+  :where(.mr-root:not(.is-narrowed)) .mr-comment-btn.is-lane.is-beside-code {
     left: calc(var(--code-left) + var(--code-span) - var(--text-left) + var(--rail-gap));
     width: calc(var(--rail-end) - var(--code-left) - var(--code-span) - var(--rail-gap));
   }
-  .mr-comment-btn.is-lane.is-beside-code.is-gap {
+
+  :where(.mr-root:not(.is-narrowed)) .mr-comment-btn.is-lane.is-beside-code.is-gap {
     left: calc(var(--code-left) + var(--code-span) - var(--text-left) + (var(--rail-gap) - 34px) / 2);
     width: 34px;
   }
@@ -4965,16 +5852,16 @@
 .mr-root[data-layout="wide"] {
   --measure-max: 920px;
 }
-
-/* Code blocks in a document are as wide as their longest line (--chars, set by render.ts), up to
-   120 characters. They grow to the left, into the contents column and the margin beyond it, so the
-   comments column beside the text stays clear; the contents step aside while one passes. */
 @media (min-width: 1280px) {
-  .mr-root {
+  /* Code blocks in a document are as wide as their longest line (--chars, set by render.ts), up to
+     120 characters. They grow to the left, into the contents column and the margin beyond it, so the
+     comments column beside the text stays clear; the contents step aside while one passes. */
+  .mr-root:where(:not(.is-narrowed)) {
     --code-md-width: calc(var(--code-size) * 73.2 + 52px);
     --code-md-span: min(var(--code-md-width), calc(var(--measure) + var(--toc-width) + var(--toc-gap) + var(--left)));
   }
-  .mr-content > pre {
+
+  :where(.mr-root:not(.is-narrowed)) .mr-content > pre {
     width: clamp(100%, calc(var(--chars, 0) * 1ch + 2ch + 52px), var(--code-md-span));
     margin-left: calc(100% - clamp(100%, calc(var(--chars, 0) * 1ch + 2ch + 52px), var(--code-md-span)));
   }
@@ -4989,25 +5876,27 @@
   --rail-min: calc(360px * var(--fit));
   --rail-max: calc(440px * var(--fit));
 }
-
 @media (min-width: 1280px) {
   /* Focus: the text alone and centred; reader.ts keeps comments below the text they discuss. */
-  .mr-root[data-layout="focus"] {
+  .mr-root:where(:not(.is-narrowed))[data-layout="focus"] {
     --toc-width: 0px;
     --toc-gap: 0px;
-    --measure: min(720px, calc(100vw - 2 * var(--edge)));
-    --text-left: calc((100vw - var(--measure)) / 2);
+    --measure: min(720px, calc(var(--vw) - 2 * var(--edge)));
+    --text-left: calc((var(--vw) - var(--measure)) / 2);
   }
-  .mr-root[data-layout="focus"] .mr-toc {
+
+  .mr-root:where(:not(.is-narrowed))[data-layout="focus"] .mr-toc {
     display: none;
   }
+
   /* Source files and code blocks still run to 120 characters, centred on the text. */
-  .mr-root[data-layout="focus"] {
-    --code-span: min(var(--code-width), calc(100vw - 2 * var(--edge)));
-    --code-left: calc((100vw - var(--code-span)) / 2);
-    --code-md-span: min(var(--code-md-width), calc(100vw - 2 * var(--edge)));
+  .mr-root:where(:not(.is-narrowed))[data-layout="focus"] {
+    --code-span: min(var(--code-width), calc(var(--vw) - 2 * var(--edge)));
+    --code-left: calc((var(--vw) - var(--code-span)) / 2);
+    --code-md-span: min(var(--code-md-width), calc(var(--vw) - 2 * var(--edge)));
   }
-  .mr-root[data-layout="focus"] .mr-content > pre {
+
+  .mr-root:where(:not(.is-narrowed))[data-layout="focus"] .mr-content > pre {
     margin-left: calc((100% - clamp(100%, calc(var(--chars, 0) * 1ch + 2ch + 52px), var(--code-md-span))) / 2);
   }
 }
@@ -5159,12 +6048,13 @@
   --toc-gap: 52px;
 }
 @media (min-width: 1280px) {
-  .mr-root[data-layout="files"] {
+  .mr-root:where(:not(.is-narrowed))[data-layout="files"] {
     --code-span: min(var(--code-width), calc(var(--rail-end) - var(--text-left) - var(--rail-gap) - 300px));
     --code-left: var(--text-left);
     --code-md-span: var(--measure);
   }
 }
+
 .mr-file-list .mr-toc-title {
   margin-left: 10px;
 }
@@ -5998,9 +6888,6 @@
   color: var(--muted);
   font: 400 12px / 1.4 var(--sans);
   overflow-wrap: anywhere;
-}
-.mr-chapter-context select {
-  min-height: 44px;
 }
 .mr-chapter-context-list {
   padding: 0;
