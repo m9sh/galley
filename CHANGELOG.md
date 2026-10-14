@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.18.0](https://github.com/m9sh/galley/compare/v0.17.0...v0.18.0) (2026-10-14)
+
+
+### Features
+
+* **reader:** read the project's docs in a stack of sheets beside the review ([e20bbf9](https://github.com/m9sh/galley/commit/e20bbf97486acccaf6e99c4544c7c3470af4b1f7))
+* **reader:** read the project's docs in a stack of sheets beside the review ([0bb0d6a](https://github.com/m9sh/galley/commit/0bb0d6a50b1844f5d850323e1947e630a83f69b7)), closes [#49](https://github.com/m9sh/galley/issues/49)
+
 ## [0.17.0](https://github.com/m9sh/galley/compare/v0.16.0...v0.17.0) (2026-10-12)
 
 
