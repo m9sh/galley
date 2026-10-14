@@ -15,15 +15,25 @@
   gap: 12px;
   height: 52px;
   padding: 0 12px;
+  border-bottom: 1px solid transparent;
+  transition:
+    transform 0.28s ease,
+    background-color 0.28s ease,
+    backdrop-filter 0.28s ease;
+}
+/* Frosted only once the page scrolls under it. At the top nothing is beneath the bar, and a background there would cut the
+   page's own glow (Aurora, Sunset) off in a hard line at its lower edge. */
+.mr-topbar.is-scrolled {
   background: color-mix(in srgb, var(--bg) 84%, transparent);
   -webkit-backdrop-filter: saturate(180%) blur(16px);
   backdrop-filter: saturate(180%) blur(16px);
-  border-bottom: 1px solid transparent;
-  transition: transform 0.28s ease;
 }
 
-/* Light washes down from the whole top edge: teal, violet and rose blend with the palette's accent.
-   The broad glow stays anchored to the screen, becoming softer once reading moves down the page. */
+/* Light washes down from the whole top edge: teal on the left, violet in the middle and rose on the right, each blended
+   with the palette's accent. The broad glow stays anchored to the screen, becoming softer once reading moves down the page.
+   Each colour fades out in its own gradient, along an eased curve (82% × (1 − t)^2.4) with no corners for the eye to
+   catch. Chrome dithers a gradient it draws, so a fade only a few shades deep stays smooth; a mask that did the fading
+   was not dithered, and showed as stripes. The masks here only blend the colours from side to side. */
 .mr-topbar {
   --aurora-a: color-mix(in srgb, color-mix(in srgb, #2dd4bf 60%, var(--accent)) var(--aurora-strength, 10%), transparent);
   --aurora-b: color-mix(in srgb, color-mix(in srgb, #a78bfa 60%, var(--accent)) var(--aurora-strength, 10%), transparent);
@@ -39,30 +49,64 @@
   position: absolute;
   inset: 0 0 auto;
   z-index: -1;
-  background: linear-gradient(100deg, var(--aurora-a), var(--aurora-b) 48%, var(--aurora-c));
+  height: 320px;
   pointer-events: none;
   transition: opacity 0.75s ease;
-}
-.mr-topbar::before {
-  height: 320px;
-  mask-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.35) 30%, rgba(0, 0, 0, 0.07) 68%, transparent);
   animation: mr-aurora-glow 32s ease-in-out infinite alternate;
 }
+.mr-topbar::before {
+  background: linear-gradient(
+    color-mix(in srgb, var(--aurora-b) 82%, transparent) 0%,
+    color-mix(in srgb, var(--aurora-b) 67.1%, transparent) 8%,
+    color-mix(in srgb, var(--aurora-b) 54.0%, transparent) 16%,
+    color-mix(in srgb, var(--aurora-b) 41.1%, transparent) 25%,
+    color-mix(in srgb, var(--aurora-b) 29.2%, transparent) 35%,
+    color-mix(in srgb, var(--aurora-b) 18.7%, transparent) 46%,
+    color-mix(in srgb, var(--aurora-b) 10.2%, transparent) 58%,
+    color-mix(in srgb, var(--aurora-b) 3.9%, transparent) 72%,
+    color-mix(in srgb, var(--aurora-b) 0.7%, transparent) 86%,
+    transparent
+  );
+  mask-image: linear-gradient(to right, transparent, #000 48%, transparent);
+}
 .mr-topbar::after {
-  height: 96px;
-  opacity: 0.18;
-  mask-image: linear-gradient(rgba(0, 0, 0, 0.5), transparent);
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--aurora-a) 82%, transparent) 0%,
+      color-mix(in srgb, var(--aurora-a) 67.1%, transparent) 8%,
+      color-mix(in srgb, var(--aurora-a) 54.0%, transparent) 16%,
+      color-mix(in srgb, var(--aurora-a) 41.1%, transparent) 25%,
+      color-mix(in srgb, var(--aurora-a) 29.2%, transparent) 35%,
+      color-mix(in srgb, var(--aurora-a) 18.7%, transparent) 46%,
+      color-mix(in srgb, var(--aurora-a) 10.2%, transparent) 58%,
+      color-mix(in srgb, var(--aurora-a) 3.9%, transparent) 72%,
+      color-mix(in srgb, var(--aurora-a) 0.7%, transparent) 86%,
+      transparent
+    )
+    left / 48% 100% no-repeat,
+    linear-gradient(
+      color-mix(in srgb, var(--aurora-c) 82%, transparent) 0%,
+      color-mix(in srgb, var(--aurora-c) 67.1%, transparent) 8%,
+      color-mix(in srgb, var(--aurora-c) 54.0%, transparent) 16%,
+      color-mix(in srgb, var(--aurora-c) 41.1%, transparent) 25%,
+      color-mix(in srgb, var(--aurora-c) 29.2%, transparent) 35%,
+      color-mix(in srgb, var(--aurora-c) 18.7%, transparent) 46%,
+      color-mix(in srgb, var(--aurora-c) 10.2%, transparent) 58%,
+      color-mix(in srgb, var(--aurora-c) 3.9%, transparent) 72%,
+      color-mix(in srgb, var(--aurora-c) 0.7%, transparent) 86%,
+      transparent
+    )
+    right / 52% 100% no-repeat;
+  mask-image: linear-gradient(to right, #000, transparent 48%, #000);
 }
 .no-top-glow .mr-topbar::before,
 .no-top-glow .mr-topbar::after {
   content: none;
   animation: none;
 }
-.mr-topbar.is-scrolled::before {
-  opacity: 0.55;
-}
+.mr-topbar.is-scrolled::before,
 .mr-topbar.is-scrolled::after {
-  opacity: 0.1;
+  opacity: 0.55;
 }
 @keyframes mr-aurora-glow {
   from {
@@ -73,7 +117,8 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mr-topbar::before {
+  .mr-topbar::before,
+  .mr-topbar::after {
     animation: none;
   }
 }
