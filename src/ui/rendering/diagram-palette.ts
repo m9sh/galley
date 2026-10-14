@@ -10,9 +10,13 @@ export interface DiagramPalette {
   rule: string;
   code: string;
   accent: string;
+  /** The page's change colours, for what a change adds, edits and removes in a diagram. */
+  add: string;
+  mod: string;
+  del: string;
 }
 
-export const PALETTE_KEYS = ['bg', 'fg', 'muted', 'soft', 'rule', 'code', 'accent'] as const;
+export const PALETTE_KEYS = ['bg', 'fg', 'muted', 'soft', 'rule', 'code', 'accent', 'add', 'mod', 'del'] as const;
 
 /** Plain hex colours only: nothing in a palette can be read as CSS or as a URL. */
 export function isPalette(value: unknown): value is DiagramPalette {

@@ -1,4 +1,5 @@
-import { button, h } from '../components/dom.ts';
+import { button, chip, h } from '../components/dom.ts';
+import { icons } from '../components/icons.ts';
 
 export interface ReadingStop {
   path: string;
@@ -33,73 +34,93 @@ export class ReadingSequence {
   }
 }
 
-function action(label: string, act: string, at: number): HTMLButtonElement {
-  const b = button(label, act, 'mr-chapter-button');
+function action(label: string, act: string, at: number, className = 'mr-chapter-button'): HTMLButtonElement {
+  const b = button(label, act, className);
   b.dataset.at = String(at);
   return b;
 }
 
-/** Reuse the chapter disclosure and file-list presentation; library chapters count choices, never Viewed. */
+/** A bundled icon before a control's words, or as the whole of an icon-only control. */
+function withIcon(control: HTMLButtonElement, icon: string, at: 'afterbegin' | 'beforeend' = 'afterbegin'): HTMLButtonElement {
+  // biome-ignore lint/plugin: a bundled icon constant, never document content.
+  control.insertAdjacentHTML(at, icon);
+  return control;
+}
+
+/** The reader's own path through the project: numbered stops in their order, each a click from being read. */
 export function sequenceView(items: ReadingStop[], current: number, commit: string): HTMLElement {
   const view = h('section', 'mr-library-chapters');
-  view.append(
+  const actions = h('div', 'mr-seq-actions');
+  if (items.length) actions.append(withIcon(action('Read chapter', 'sequence-open', 0, 'mr-btn mr-primary mr-seq-start'), icons.book));
+  actions.append(button('Browse all documents', 'docs', 'mr-btn mr-outline'));
+  const head = h('header', 'mr-seq-head');
+  head.append(
     h('h1', 'mr-title', 'Library chapters'),
     h('p', 'mr-subtitle', 'Choose a path through the project. Add documents or headings, then put them in the order you want to read.'),
-    h('p', 'mr-repo-quiet', `Only for this session at ${commit}. Reading does not mark anything Viewed. A newer commit clears this sequence.`),
-    button('Browse all documents', 'docs', 'mr-btn mr-outline'),
+    actions,
   );
-  const chapter = h('details', 'mr-chapter');
-  chapter.open = true;
-  const summary = h('summary');
-  summary.append(h('span', 'mr-chapter-title', 'Your reading sequence'), h('span', 'mr-chapter-progress', `${items.length} selected · Added by you`));
-  const body = h('div', 'mr-chapter-body');
-  const list = h('ol', 'mr-chapter-files');
-  items.forEach((item, at) => {
-    const row = h('li', `mr-chapter-file${at === current ? ' is-current' : ''}`);
-    const open = action(item.title, 'sequence-open', at);
-    open.className = 'mr-chapter-file-link';
-    open.replaceChildren(h('span', 'mr-sequence-title', item.title), h('small', '', `${item.path}${item.anchor ? ` · § ${item.anchor}` : ''}`));
-    if (at === current) open.setAttribute('aria-current', 'step');
-    const controls = h('div', 'mr-chapter-edit-order');
-    for (const [label, act, disabled] of [
-      ['Earlier', 'sequence-earlier', at === 0],
-      ['Later', 'sequence-later', at === items.length - 1],
-      ['Remove', 'sequence-remove', false],
-    ] as const) {
-      const b = action(label, act, at);
-      b.disabled = disabled;
-      b.setAttribute(
-        'aria-label',
-        `${label === 'Remove' ? 'Remove' : 'Move'} ${item.title}${label === 'Remove' ? ' from this chapter' : ` ${label.toLowerCase()}`}`,
-      );
-      controls.append(b);
-    }
-    row.append(open, controls);
-    list.append(row);
-  });
-  body.append(list);
-  if (!items.length) body.append(h('p', 'mr-chapter-reason', 'No documents yet. Browse the library or use Add to chapter while reading.'));
-  const start = action('Read chapter', 'sequence-open', 0);
-  start.disabled = !items.length;
-  body.append(start);
-  chapter.append(summary, body);
-  view.append(chapter);
+  const card = h('section', 'mr-seq-card');
+  card.setAttribute('aria-label', 'Your reading sequence');
+  const top = h('header', 'mr-seq-card-head');
+  top.append(h('h2', '', 'Your reading sequence'), chip('own', 'Added by you'));
+  card.append(top);
+  if (items.length) {
+    const list = h('ol', 'mr-seq-stops');
+    items.forEach((item, at) => {
+      const row = h('li', `mr-seq-stop${at === current ? ' is-current' : ''}`);
+      const open = action('', 'sequence-open', at, 'mr-seq-open');
+      const text = h('span', 'mr-seq-text');
+      text.append(h('span', 'mr-sequence-title', item.title), h('small', '', `${item.path}${item.anchor ? ` · § ${item.anchor}` : ''}`));
+      open.append(h('span', 'mr-seq-number', String(at + 1)), text);
+      if (at === current) {
+        open.setAttribute('aria-current', 'step');
+        open.append(h('span', 'mr-seq-here', 'You are here'));
+      }
+      const controls = h('div', 'mr-seq-controls');
+      for (const [label, act, icon, disabled] of [
+        ['Earlier', 'sequence-earlier', icons.up, at === 0],
+        ['Later', 'sequence-later', icons.down, at === items.length - 1],
+        ['Remove', 'sequence-remove', icons.close, false],
+      ] as const) {
+        const b = withIcon(action('', act, at, 'mr-btn mr-icon-btn'), icon);
+        b.disabled = disabled;
+        b.title = label;
+        b.setAttribute(
+          'aria-label',
+          `${label === 'Remove' ? 'Remove' : 'Move'} ${item.title}${label === 'Remove' ? ' from this chapter' : ` ${label.toLowerCase()}`}`,
+        );
+        controls.append(b);
+      }
+      row.append(open, controls);
+      list.append(row);
+    });
+    card.append(list);
+  } else {
+    const empty = h('div', 'mr-seq-empty');
+    empty.append(h('p', 'mr-seq-empty-title', 'No documents yet'), h('p', '', 'Use Add beside a document or a link, or Add to chapter while reading.'));
+    card.append(empty);
+  }
+  view.append(
+    head,
+    card,
+    h('p', 'mr-seq-note', `Only for this session at ${commit}. Reading does not mark anything Viewed. A newer commit clears this sequence.`),
+  );
   return view;
 }
 
-/** The existing quiet chapter route, with explicit steps and no completion count. */
+/** While reading a stop: where it is in the sequence, the way back to it, and the stops either side. */
 export function sequenceRoute(items: ReadingStop[], current: number): HTMLElement {
   const route = h('nav', 'mr-chapter-route');
   route.setAttribute('aria-label', 'Library chapter');
   route.hidden = current < 0;
-  route.append(button('Chapters', 'sequence', 'mr-chapter-button'));
+  route.append(withIcon(button('Chapters', 'sequence', 'mr-chapter-button'), icons.book));
   if (current >= 0) {
     route.append(h('span', 'mr-chapter-route-text', `Your reading sequence · ${current + 1} of ${items.length}`));
-    for (const [label, at] of [
-      ['Previous', current - 1],
-      ['Next', current + 1],
+    for (const [label, at, icon] of [
+      ['Previous', current - 1, icons.chevronLeft],
+      ['Next', current + 1, icons.chevronRight],
     ] as const) {
-      const b = action(label, 'sequence-open', at);
+      const b = withIcon(action(label, 'sequence-open', at), icon, at < current ? 'afterbegin' : 'beforeend');
       b.disabled = at < 0 || at >= items.length;
       route.append(b);
     }

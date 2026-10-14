@@ -120,7 +120,7 @@ it('infrastructure: workflows, jobs and environments in order, and a reference t
   ]);
   // The documents lens is one click away, as it was.
   lens('documents');
-  expect(ui.text('.mr-map-title')).toBe('Shop');
+  expect(ui.text('.mr-pm-place[data-lane="here"] strong')).toBe('Shop');
 });
 
 it('says what configuration it could not read: too large, missing, refused by the frame, or beyond the listing', async () => {
@@ -225,8 +225,8 @@ it('decisions: status, which supersede which and what they name, as written; two
   // A decision is a document: it opens in the reader, or on the document map.
   ui.press('On the document map');
   expect(ui.q('[data-lens="documents"]').getAttribute('aria-pressed')).toBe('true');
-  expect(ui.text('.mr-map-title')).toBe('ADR 2: Use a queue');
-  expect(ui.shadow().activeElement).toBe(ui.q('.mr-map-title'));
+  expect(ui.text('.mr-pm-place[data-lane="here"] strong')).toBe('Use a queue');
+  expect(ui.shadow().activeElement).toBe(ui.q('.mr-pm-place[data-lane="here"]'));
   lens('decisions');
   ui.press('Read', '.mr-lens-focus button');
   await ui.settled();
@@ -322,7 +322,7 @@ it('the reader proposes components and connections, marked as theirs; a type the
 
 it('a proposal is about the document being read only when the reader keeps it so, and what they type survives a redraw', async () => {
   // Opened from a review, no document is open yet: the form offers none.
-  await ui.open(repository(shop), { review: { title: 'Change', revision: 'head', ref: 'topic', chapters: [] } });
+  await ui.open(repository(shop), { review: { title: 'Change', ref: 'topic', chapters: [] } });
   await vi.waitFor(() => expect(ui.q('.mr-review-status .mr-map-status').textContent).toMatch(/^Built from all/));
   ui.click('[data-view="map"]');
   lens('architecture');
@@ -372,7 +372,8 @@ it('after a refresh, the map says which links changed among the documents read a
     'Since c0ffee1 Among the 4 documents read at both commits, 1 link is new and 1 link is gone. New: Handbook → New Gone: Handbook → Old Dismiss',
   );
   ui.press('Old', '.mr-map-since button');
-  expect(ui.text('.mr-map-title')).toBe('Old');
+  expect(ui.text('.mr-pm-place[data-lane="here"] strong')).toBe('Old');
+  expect(ui.shadow().activeElement).toBe(ui.q('.mr-pm-place[data-lane="here"]'));
   ui.press('Dismiss', '.mr-map-since button');
   expect(ui.all('.mr-map-since')).toHaveLength(0);
 });

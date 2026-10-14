@@ -1,12 +1,12 @@
-import { ChapterContext } from '../../core/review-context.ts';
-import { chapterContext, type ContextOpening } from '../components/chapter-context.ts';
+import { ChapterContext, ReviewDocs } from '../../core/review-context.ts';
+import { chapterContext } from '../components/chapter-context.ts';
 import {
   ReaderError,
   type DocContents,
   type DocRef,
   type DocStatus,
+  type RepositorySource,
   type ReviewOverview,
-  type ReviewProject,
   type ReviewSource,
   type CommentTarget,
   type CommentPlan,
@@ -17,6 +17,7 @@ import { renderCodeFile } from '../rendering/code-files.ts';
 import { quietFile, type QuietFile } from '../../core/quiet.ts';
 import { readingOrder } from '../../core/order.ts';
 import { ChapterMap, type ChapterFileState } from './chapters.ts';
+import { ReviewLibrary, type DocOpening } from './review-library.ts';
 import { loadPosition, savePosition } from './positions.ts';
 import { MoveFinder, showMove } from './moves.ts';
 import { enhanceSymbols, refreshSymbols } from '../rendering/symbols.ts';
@@ -64,7 +65,17 @@ const SHORTCUTS: Shortcuts = [
       [[']', '['], 'Next / previous file'],
       [['F'], 'Go to a file'],
       [['/'], 'Search this review, including folded parts'],
-      [['M'], 'Open the chapter map'],
+    ],
+  ],
+  [
+    'Chapters and Library',
+    [
+      [['M'], 'Open or close them'],
+      [['↑', '↓'], 'Move through a list'],
+      [['↵'], 'Open what you are on'],
+      [['←', '→'], 'Previous / next chapter, in a chapter'],
+      [['/'], 'Search the docs, in the Library'],
+      [['Esc'], 'Back a sheet, then close'],
     ],
   ],
   [
@@ -134,7 +145,6 @@ const TEMPLATE = `
     </div>
     <div class="mr-tb-right">
       <button type="button" class="mr-btn mr-icon-btn mr-search-btn" data-act="search" hidden aria-haspopup="dialog" aria-expanded="false" title="Search this review (/)" aria-label="Search this review">${icons.search}</button>
-      <button type="button" class="mr-btn mr-project-btn" data-act="project" hidden aria-haspopup="menu" aria-expanded="false" title="Read project material at this review’s base or head" aria-label="Project library">${icons.book}<span class="mr-project-label">Library</span></button>
       <button type="button" class="mr-btn mr-chapters-toggle" hidden aria-haspopup="dialog" aria-expanded="false">Chapters</button>
       <button class="mr-btn mr-icon-btn mr-viewed" data-act="viewed" aria-pressed="false" disabled hidden>${icons.viewed}</button>
       <button class="mr-btn mr-icon-btn" data-act="settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings" aria-label="Reading settings">${icons.settings}</button>
@@ -142,7 +152,6 @@ const TEMPLATE = `
   </header>
   <p class="mr-viewed-feedback" role="status" hidden></p>
   <div class="mr-menu mr-files" role="menu" aria-label="Changed files" hidden></div>
-  <div class="mr-menu mr-project" role="menu" aria-label="Project library" hidden></div>
 ${settingsSheet('Choose a view that helps you follow the changes.', [
   {
     id: 'reading',
@@ -362,7 +371,11 @@ class Reader {
   private readonly root: HTMLElement;
   private readonly chapters: ChapterMap;
   private readonly projectContext = new ChapterContext();
-  private contextRevision: 'base' | 'head' = 'head';
+  /** The repository behind the review, as the change leaves it, and what has been read of it for the sheet. */
+  private repository: RepositorySource | null = null;
+  private reviewDocs: ReviewDocs | null = null;
+  /** The project library in the review's sheet, beside Chapters. */
+  private readonly library: ReviewLibrary;
   private readonly palettes = new PaletteCarousel(this.shadow);
   private chapterOrder: DocRef[] | null = null;
   private readonly el: Record<
@@ -375,7 +388,6 @@ class Reader {
     | 'viewedFeedback'
     | 'fileCount'
     | 'files'
-    | 'project'
     | 'settings'
     | 'toc'
     | 'article'
@@ -449,7 +461,10 @@ class Reader {
   /** The repository's docs, opened over the review from Project library; the review waits underneath, as it was. */
   private layer: RepoReaderHandle | null = null;
   private readonly dark = matchMedia('(prefers-color-scheme: dark)');
-  private readonly resize = new ResizeObserver(() => this.schedule(true));
+  private readonly resize = new ResizeObserver(() => {
+    this.fitWidth();
+    this.schedule(true);
+  });
   private readonly prevOverflow: string;
   private readonly prevFocus: Element | null;
 
@@ -470,7 +485,6 @@ class Reader {
       viewedFeedback: q('.mr-viewed-feedback'),
       fileCount: q('.mr-file-btn .mr-count'),
       files: q('.mr-files'),
-      project: q('.mr-project'),
       settings: q('.mr-settings'),
       toc: q('.mr-toc'),
       article: q('.mr-article'),
@@ -489,34 +503,52 @@ class Reader {
       toggle: q('.mr-chapters-toggle') as HTMLButtonElement,
       mount: this.el.doc,
       beforeOpen: () => this.closeMenus(),
+      // The text, its contents and the top bar slide with the sheet instead of jumping to their new places.
+      parts: () => this.root.querySelectorAll<HTMLElement>('.mr-article, .mr-toc, .mr-tb-center, .mr-tb-right'),
+      reflow: (change) => this.reflow(change),
       navigate: (doc) => this.showChapterFile(doc),
       resume: () => this.root.focus({ preventScroll: true }),
       reorder: (docs) => this.reorderChapters(docs),
       state: (doc) => this.chapterState(doc),
       diffUrl: () => this.source!.diffUrl,
+      library: () => this.library.showList(),
+      shown: () => this.library.atChapters(),
       projectContext: (chapter) => {
-        const project = this.source?.project;
-        if (!project) return null;
+        if (!this.source?.project) return null;
         return chapterContext({
           chapter: { id: chapter.id, paths: chapter.files.map((doc) => doc.path) },
-          revision: this.contextRevision,
-          ...project[this.contextRevision],
           context: this.projectContext,
           canContinue: chapter.files.some((doc) => !this.chapterState(doc).unsupported),
-          select: (revision) => {
-            this.contextRevision = revision;
-            this.chapters.returnToContext(chapter.id, 'revision');
-          },
-          open: (target) => {
-            this.chapters.close();
-            this.openProject(target.revision, target);
-          },
+          status: this.library.more() ? this.library.status() : null,
+          // Each document opens on top, beside the review; Back or Esc returns to the chapter.
+          open: (target) => this.library.showDoc(target),
           remove: (attachment) => {
             this.projectContext.remove(attachment);
-            this.chapters.returnToContext(chapter.id, 'find');
+            this.chapters.redraw();
           },
         });
       },
+      linked: (chapter) => {
+        const snapshot = this.projectContext.snapshot;
+        if (!snapshot) return null;
+        return new Set(chapter.files.flatMap((doc) => snapshot.related.get(doc.path)!.map((related) => related.path))).size;
+      },
+    });
+    const head = () => this.source!.project!.head;
+    this.library = new ReviewLibrary({
+      root: this.root,
+      show: (content) => this.chapters.showPage(content),
+      push: (content) => this.chapters.push(content),
+      docs: () => this.docs(),
+      source: () => this.repo(),
+      get head() {
+        return head();
+      },
+      context: this.projectContext,
+      images: () => this.settings.images,
+      dark: () => this.root.classList.contains('is-dark'),
+      palette: () => this.palette(),
+      full: (opener, at) => this.openProject(opener, at),
     });
     this.search = new ReviewSearch<SearchAt>({
       root: this.root,
@@ -621,7 +653,6 @@ class Reader {
     if (this.closed) return;
     this.source = source;
     this.shadow.querySelector<HTMLElement>('[data-act="code-files"]')!.title = `${source.codeDocs?.length ?? 0} supported code files`;
-    if (source.project) this.offerProject(source.project);
     const all = [...source.docs, ...(source.codeDocs ?? [])];
     if (!all.length) {
       this.chapters.setSource([], source.otherFiles ?? [], Boolean(source.project));
@@ -668,6 +699,7 @@ class Reader {
     }
     this.closed = true;
     this.layer?.close();
+    this.reviewDocs?.stop();
     this.chapters.close();
     cancelAnimationFrame(this.frame);
     this.resize.disconnect();
@@ -1225,12 +1257,6 @@ class Reader {
       }
       menu.append(item);
     });
-    // Phones have no room for Project library in the top bar; it is here instead.
-    if (this.source!.project) {
-      const head = h('p', 'mr-files-project', 'Project library');
-      head.setAttribute('role', 'presentation');
-      menu.append(head, ...this.projectItems(this.source!.project));
-    }
     this.updateActiveViewed();
     if (this.settings.layout === 'files') this.buildToc(this.rendered);
   }
@@ -1277,45 +1303,51 @@ class Reader {
     }
   }
 
-  /** Project library: the repository behind the review, at its base or its head, read over the review (RFC 0049). */
-  private offerProject(project: ReviewProject): void {
-    this.shadow.querySelector<HTMLElement>('[data-act="project"]')!.hidden = false;
-    this.el.project.replaceChildren(
-      h('p', 'mr-project-intro', 'Read the repository’s docs and map at one side of this review. Close them to come back here, where you were.'),
-      ...this.projectItems(project),
+  /** The repository behind the review, opened once at its head: the sheet and the full library read the same one. */
+  private repo(): RepositorySource {
+    this.repository ??= this.source!.project!.open();
+    return this.repository;
+  }
+
+  /** What has been read of it for the sheet; reading starts only when the reviewer asks. */
+  private docs(): ReviewDocs {
+    // The repository is opened only when something is read from it.
+    const repo = () => this.repo();
+    this.reviewDocs ??= new ReviewDocs(
+      {
+        get commit() {
+          return repo().commit;
+        },
+        discover: () => repo().discover(),
+        load: (path) => repo().load(path),
+      },
+      this.projectContext,
+      () => new Set(this.chapters.outline().flatMap((chapter) => chapter.paths)),
+      () => {
+        this.library.refresh();
+        if (this.reviewDocs!.state !== 'reading') this.chapters.redraw();
+      },
     );
+    return this.reviewDocs;
   }
 
-  /** The two sides of the review to read the project's docs at: in the Project library menu, and in the files menu. */
-  private projectItems(project: ReviewProject): HTMLElement[] {
-    const item = (revision: 'base' | 'head', title: string) => {
-      const at = project[revision];
-      const b = h('button', 'mr-menu-item');
-      b.type = 'button';
-      b.setAttribute('role', 'menuitem');
-      b.dataset.act = 'project-open';
-      b.dataset.revision = revision;
-      const name = h('span', 'mr-menu-name');
-      name.append(h('span', 'mr-path-name', title), h('span', 'mr-path-dir', `${at.ref} @ ${at.commit.slice(0, 7)}`));
-      b.append(name);
-      return b;
-    };
-    return [item('head', 'As this change leaves them'), item('base', 'Before this change')];
-  }
-
-  private openProject(revision: 'base' | 'head', target?: ContextOpening): void {
+  /**
+   * The full Project library over the review, as the change leaves the repository (RFC 0049), for its map and notes;
+   * the review and its sheet wait as they were. Opened at a document from a chapter, it can carry on with that chapter.
+   */
+  private openProject(opener: HTMLElement, target?: DocOpening): void {
     const source = this.source!;
-    const project = source.project!;
-    const back = this.shadow.querySelector<HTMLElement>('[data-act="project"]')!;
-    this.layer = openRepository(project.open(revision), {
-      review: { title: source.title, revision, ref: project[revision].ref, chapters: this.chapters.outline(), context: this.projectContext, entry: target },
+    const entry = target && { ...target, key: target.key ?? 'doc', canContinue: target.canContinue ?? false };
+    this.layer = openRepository(this.repo(), {
+      review: { title: source.title, ref: source.project!.head.ref, chapters: this.chapters.outline(), context: this.projectContext, entry },
       onClose: (action) => {
         this.layer = null;
         if (this.closed) return;
-        if (target) {
-          if (action === 'continue') this.chapters.continueChapter(target.chapter);
-          else this.chapters.returnToContext(target.chapter, target.key);
-        } else back.focus({ preventScroll: true });
+        // What the library read is the sheet's too.
+        this.library.refresh();
+        this.chapters.redraw();
+        if (action === 'continue') this.chapters.continueChapter(target!.chapter!);
+        else opener.focus({ preventScroll: true });
       },
     });
   }
@@ -1323,8 +1355,8 @@ class Reader {
   private closeMenus(): boolean {
     const drawerOpen = !this.el.settings.hidden;
     const searchOpen = this.search.close();
-    const wasOpen = drawerOpen || searchOpen || !this.el.files.hidden || !this.el.project.hidden;
-    this.el.files.hidden = this.el.project.hidden = this.el.settings.hidden = true;
+    const wasOpen = drawerOpen || searchOpen || !this.el.files.hidden;
+    this.el.files.hidden = this.el.settings.hidden = true;
     for (const b of this.shadow.querySelectorAll('.mr-topbar [aria-expanded]')) b.setAttribute('aria-expanded', 'false');
     if (drawerOpen) {
       for (const el of this.root.querySelectorAll<HTMLElement>('.mr-topbar, .mr-main, .mr-toc')) el.inert = false;
@@ -2017,6 +2049,22 @@ class Reader {
     CSS.highlights?.delete('galley-search');
   }
 
+  /** A wide window keeps the wide layout unless a sheet beside the review leaves it less room than that needs. */
+  private fitWidth(): void {
+    this.root.classList.toggle('is-narrowed', innerWidth >= 1280 && this.root.offsetWidth < 1280);
+  }
+
+  /** Change the reader's width and keep the paragraph at the top of the view where it was. */
+  private reflow(change: () => void): void {
+    const top = this.root.getBoundingClientRect().top + 72;
+    const anchor = [...this.root.querySelectorAll<HTMLElement>('.mr-main [data-mr-u]')].find((el) => el.getBoundingClientRect().bottom > top);
+    const before = anchor?.getBoundingClientRect().top;
+    change();
+    this.fitWidth();
+    if (anchor) this.root.scrollTop += anchor.getBoundingClientRect().top - before!;
+    this.schedule(true);
+  }
+
   /** Where the reader was before searching: the file in view, how far into it, and what had focus. */
   private rememberPlace(): () => void {
     const view = this.views[this.index];
@@ -2253,13 +2301,6 @@ class Reader {
         if (action.closest('.mr-files')) this.el.fileBtn.focus({ preventScroll: true });
         this.search.toggle();
         return;
-      case 'project':
-        this.toggleMenu(this.el.project, action);
-        return;
-      case 'project-open':
-        this.closeMenus();
-        this.openProject(action.dataset.revision as 'base' | 'head');
-        return;
       case 'settings':
         if (this.source && !this.views.some((view) => !view.section.hidden)) this.selectSettingsTab('review');
         this.toggleMenu(this.el.settings, action);
@@ -2288,6 +2329,13 @@ class Reader {
       case 'zoom-diagram':
         this.openLightbox(action);
         return;
+      case 'diagram-sides': {
+        const open = action.closest('.mr-diagram')!.classList.toggle('is-sides');
+        action.setAttribute('aria-expanded', String(open));
+        action.textContent = open ? 'Hide before and after' : 'Show before and after';
+        this.schedule(true);
+        return;
+      }
       case 'close-lightbox':
         this.closeLightbox();
         return;

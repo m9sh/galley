@@ -2,12 +2,14 @@ import { expect, it } from 'vitest';
 import { indexDocument, ProjectIndex, type Corrections } from './docindex.ts';
 import {
   documentMap,
+  linksAround,
   MAP_LINK_LIMIT,
   MAP_NEIGHBOUR_LIMIT,
   MAP_NODE_LIMIT,
   MAP_PROOF_LIMIT,
   mapOverview,
   MapPlacement,
+  reviewMap,
   type ProjectMapModel,
 } from './project-map.ts';
 
@@ -176,8 +178,14 @@ it('places each neighbour once, including cycles and reciprocal links, and never
   ]);
   expect(view.connections).toEqual(model.connections.filter((connection) => connection.to !== 'c'));
   expect(view.hidden).toBe(0);
-  expect(layout.neighbourhood(model, 'lonely', 8)).toMatchObject({ places: [{ place: { id: 'lonely' }, lane: 'here', slot: 0 }], connections: [], hidden: 0 });
-  expect(layout.neighbourhood(model, 'missing', 8)).toEqual({ places: [], connections: [], hidden: 0 });
+  expect(view.totals).toEqual({ incoming: 1, outgoing: 1 });
+  expect(layout.neighbourhood(model, 'lonely', 8)).toMatchObject({
+    places: [{ place: { id: 'lonely' }, lane: 'here', slot: 0 }],
+    connections: [],
+    hidden: 0,
+    totals: { incoming: 0, outgoing: 0 },
+  });
+  expect(layout.neighbourhood(model, 'missing', 8)).toEqual({ places: [], connections: [], hidden: 0, totals: { incoming: 0, outgoing: 0 } });
 });
 
 it('keeps occupied slots as indexing adds earlier names or changes a connection direction; a new snapshot resets them', () => {
@@ -195,6 +203,8 @@ it('keeps occupied slots as indexing adds earlier names or changes a connection 
   ]);
   const second = layout.neighbourhood(after, 'focus', 8);
   for (const id of ['b', 'z']) expect(second.places.find((p) => p.place.id === id)).toMatchObject(first.places.find((p) => p.place.id === id)!);
+  // z now links here too, yet stays where it was drawn, and the lane counts say where the places are.
+  expect(second.totals).toEqual({ incoming: 2, outgoing: 2 });
   expect(second.places.find((p) => p.place.id === 'a')).toMatchObject({ lane: 'incoming', slot: 1 });
   // Other neighbourhoods do not consume this focus's slots.
   layout.neighbourhood(after, 'a', 8);
@@ -210,9 +220,105 @@ it('bounds high-degree neighbourhoods, keeps hidden counts and supports a centre
   const view = layout.neighbourhood(model, 'focus', 1000);
   expect(view.places).toHaveLength(1 + MAP_NEIGHBOUR_LIMIT * 2);
   expect(view.hidden).toBe(30 - MAP_NEIGHBOUR_LIMIT * 2);
+  expect(view.totals).toEqual({ incoming: 15, outgoing: 15 });
   expect(layout.neighbourhood(model, 'focus', 1.9).places).toHaveLength(3);
   const only = layout.neighbourhood(model, 'focus', -1);
   expect(only.places).toHaveLength(1);
   expect(only.connections).toEqual([]);
   expect(only.hidden).toBe(30);
+});
+
+it('maps a review: the files it changes that are not documents become places, and documents’ links to them lines', () => {
+  const repeated = Array.from({ length: MAP_PROOF_LIMIT + 1 }, (_, at) => `[r${at}](../src/render.ts)`).join(' ');
+  const index = indexOf({
+    'docs/guide.md': '# Guide\n\n## Code\n\nThe [renderer](../src/render.ts) and the [store](../src/store.ts).',
+    'docs/many.md': `# Many\n\n${repeated}`,
+    'docs/spec.md': '# Spec\n\n[guide](guide.md)',
+  });
+  const model = reviewMap(index, corrections, ['docs/spec.md', 'src/render.ts', 'src/render.ts', 'logo.png']);
+  // A changed document stays a document; any other changed file is a place of its own, read for nothing.
+  expect(model.places.map((place) => [place.id, place.kind, place.state])).toStrictEqual([
+    ['docs/guide.md', 'Document', 'indexed'],
+    ['docs/many.md', 'Document', 'indexed'],
+    ['docs/spec.md', 'Document', 'indexed'],
+    ['src/render.ts', 'File', 'file'],
+    ['logo.png', 'File', 'file'],
+  ]);
+  expect(model.places[3]).toMatchObject({ title: 'render.ts', folder: 'src', kindFrom: 'none', statuses: [] });
+  expect(model.places[4]).toMatchObject({ title: 'logo.png', folder: '' });
+  // Only explicit links to a changed file are lines, with their evidence; a link to unchanged code is not.
+  const lines = model.connections.map((connection) => [connection.from, connection.to, connection.proof.length, connection.hiddenProof]);
+  expect(lines).toStrictEqual([
+    ['docs/spec.md', 'docs/guide.md', 1, 0],
+    ['docs/guide.md', 'src/render.ts', 1, 0],
+    ['docs/many.md', 'src/render.ts', MAP_PROOF_LIMIT, 1],
+  ]);
+  expect(model.connections[1].proof).toStrictEqual([{ path: 'docs/guide.md', line: 5, quote: 'renderer', section: 'Code' }]);
+});
+
+it('lays a set out in the middle, between what links to it and what it links to, quiet where nothing connects', () => {
+  const model = graph(
+    [
+      ['in/a.md', 'mid/one.md'],
+      ['in/b.md', 'mid/three.md'],
+      ['mid/one.md', 'out/x.md'],
+      ['mid/one.md', 'mid/three.md'],
+      ['both.md', 'mid/one.md'],
+      ['mid/three.md', 'both.md'],
+      ['in/a.md', 'out/x.md'],
+    ],
+    ['mid/two.md', 'mid/four.md'],
+  );
+  const centre = ['mid/one.md', 'mid/two.md', 'mid/three.md', 'missing.md', 'mid/one.md', 'mid/four.md'];
+  const around = new MapPlacement().around(model, centre, MAP_NEIGHBOUR_LIMIT, 24);
+  // The middle in the order given, once each, quiet when nothing connects; what links both ways is linking in.
+  expect(around.places.map((position) => [position.place.id, position.lane, position.quiet ?? false])).toStrictEqual([
+    ['mid/one.md', 'here', false],
+    ['mid/two.md', 'here', true],
+    ['mid/three.md', 'here', false],
+    ['mid/four.md', 'here', true],
+    ['in/a.md', 'incoming', false],
+    ['out/x.md', 'outgoing', false],
+    ['both.md', 'incoming', false],
+    ['in/b.md', 'incoming', false],
+  ]);
+  expect([around.totals, around.centre, around.hidden]).toStrictEqual([{ incoming: 3, outgoing: 1 }, { connected: 2, unconnected: 2 }, 0]);
+  // Every line among the places shown, the middle's own included.
+  expect(around.connections).toHaveLength(7);
+  expect(linksAround(model, centre)).toStrictEqual({
+    incoming: ['both.md', 'in/a.md', 'in/b.md'],
+    outgoing: ['out/x.md'],
+    middle: ['mid/one.md', 'mid/three.md'],
+    unconnected: ['mid/two.md', 'mid/four.md'],
+  });
+  // Too many for the middle: those that connect come first, and what is not shown is counted.
+  const small = new MapPlacement().around(model, centre, 1, 3);
+  expect(small.places.map((position) => position.place.id)).toStrictEqual(['mid/one.md', 'mid/two.md', 'mid/three.md', 'in/a.md', 'out/x.md']);
+  expect(small.hidden).toBe(3);
+  expect(new MapPlacement().around(model, centre, 1, 1).places.filter((position) => position.lane === 'here')).toHaveLength(1);
+});
+
+it('seats a neighbour level with the middle it links to, and keeps its seat as more is read', () => {
+  const placement = new MapPlacement();
+  const first = graph([
+    ['z.md', 'm/1.md'],
+    ['a.md', 'm/3.md'],
+    ['k.md', 'm/2.md'],
+  ]);
+  const centre = ['m/1.md', 'm/2.md', 'm/3.md'];
+  const seats = (model: ProjectMapModel) =>
+    placement
+      .around(model, centre, MAP_NEIGHBOUR_LIMIT, 24)
+      .places.filter((position) => position.lane === 'incoming')
+      .map((position) => position.place.id);
+  // Seats around one document are its own: they take nothing from those around a set.
+  placement.neighbourhood(first, 'm/1.md', MAP_NEIGHBOUR_LIMIT);
+  expect(seats(first)).toStrictEqual(['z.md', 'k.md', 'a.md']);
+  // Read further, an earlier name and a new link change nothing for those already seated.
+  expect(seats(graph([...first.connections.map((c): [string, string] => [c.from, c.to]), ['b.md', 'm/1.md'], ['a.md', 'm/1.md']]))).toStrictEqual([
+    'z.md',
+    'k.md',
+    'a.md',
+    'b.md',
+  ]);
 });

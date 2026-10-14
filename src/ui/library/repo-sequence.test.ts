@@ -12,9 +12,13 @@ it('builds a chapter from explicit links or the outline, changes its order and r
   await ui.open(source);
   chapters();
   expect(ui.text('.mr-repo-chapters')).toContain('No documents yet');
-  expect(ui.text('.mr-sequence-links')).toContain('Links from this document README.md');
+  expect(ui.text('.mr-sequence-links')).toBe('Links from this document In README.md · 1 link the decision docs/adr/0001-use-markdown.md · line 3 Add');
+  expect(ui.all('.mr-library-chapters [data-act="sequence-open"]')).toHaveLength(0);
   ui.click('[data-act="sequence-add"]');
-  expect(ui.text('.mr-repo-chapters .mr-chapter-files')).toContain('the decision');
+  expect(ui.text('.mr-repo-chapters .mr-seq-stops')).toBe('1 the decision docs/adr/0001-use-markdown.md');
+  // A link already in the sequence says so, and choosing it again changes nothing.
+  expect(ui.text('.mr-seq-add')).toBe('Added');
+  expect(ui.q('.mr-seq-add').getAttribute('aria-label')).toBe('the decision is in your reading sequence');
   ui.click('[data-act="sequence-add"]');
   expect(ui.text('.mr-toast')).toBe('Already in your reading sequence.');
   ui.click('.mr-repo-chapters [data-act="docs"]');
@@ -27,9 +31,9 @@ it('builds a chapter from explicit links or the outline, changes its order and r
   chapters();
   expect(source.load).toHaveBeenCalledTimes(1);
   ui.click('[data-act="sequence-later"][data-at="0"]');
-  expect(ui.text('.mr-chapter-files')).toMatch(/^Handbook/);
+  expect(ui.text('.mr-seq-stops')).toMatch(/^1 Handbook/);
   ui.click('[data-act="sequence-earlier"][data-at="1"]');
-  expect(ui.text('.mr-chapter-files')).toMatch(/^the decision/);
+  expect(ui.text('.mr-seq-stops')).toMatch(/^1 the decision/);
   ui.click('.mr-repo-chapters [data-act="sequence-open"]');
   await ui.settled();
   expect(ui.text('.mr-lead')).toBe('ADR 1: Use Markdown');
@@ -85,7 +89,9 @@ it('adds search matches including indexed headings, without loading the selected
   ui.click('[data-act="sequence-add"]');
   ui.key('Escape');
   chapters();
-  expect(ui.text('.mr-chapter-files')).toContain('Context');
+  expect(ui.text('.mr-seq-stops')).toContain('Context');
+  // A linked document already read goes by its title; one not read yet by the words that link to it.
+  expect(ui.all('.mr-seq-link-title').map((title) => title.textContent)).toStrictEqual(['the spec', 'Handbook']);
   ui.click('[data-act="sequence-open"][data-at="1"]');
   await ui.settled();
   expect(ui.q('#user-content-context').classList.contains('mr-flash')).toBe(true);
@@ -124,7 +130,7 @@ it('clears snapshot-bound choices only after a successful change of commit, incl
   vi.mocked(source.refresh).mockRejectedValueOnce(new ReaderError('Offline', 'Try again'));
   ui.click('[data-act="refresh"]');
   await vi.waitFor(() => expect(ui.text('.mr-toast')).toBe('Offline'));
-  expect(ui.text('.mr-chapter-files')).toContain('Handbook');
+  expect(ui.text('.mr-seq-stops')).toContain('Handbook');
   const next = repository(handbook, { commit: 'newcommit' });
   vi.mocked(source.refresh).mockResolvedValue(next);
   ui.click('[data-act="refresh"]');
@@ -154,7 +160,7 @@ it('allows opening chapters before the source settles and with no readable docum
 });
 
 it('keeps standalone sequence controls out of the review library, including search results', async () => {
-  await ui.open(repository(), { review: { title: 'Review', revision: 'head', ref: 'main', chapters: [{ title: 'Changes', paths: ['README.md'] }] } });
+  await ui.open(repository(), { review: { title: 'Review', ref: 'main', chapters: [{ title: 'Changes', paths: ['README.md'] }] } });
   ui.click('[data-act="docs"]');
   await vi.waitFor(() => expect(ui.all('.mr-repo-outline .mr-menu-item')).toHaveLength(3));
   const search = ui.q<HTMLInputElement>('.mr-repo-search');
@@ -179,4 +185,11 @@ it('Escape closes the article attachment form and returns focus to its disclosur
   expect(ui.q('.mr-root')).toBeTruthy();
   ui.key('Escape');
   expect(document.querySelector('#galley-repo-reader')).toBeNull();
+});
+
+it('a document opened on its own, before anything is listed, names its links by their words', async () => {
+  await ui.open(repository(handbook, { start: { path: 'README.md', folder: false } }));
+  chapters();
+  expect(ui.text('.mr-seq-link-title')).toBe('the decision');
+  expect(ui.q('.mr-seq-add').getAttribute('aria-label')).toBe('Add the decision to your reading sequence');
 });

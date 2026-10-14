@@ -62,7 +62,7 @@ export async function loadGitHub(ctx: GitHubContext, github: GitHubApi): Promise
   };
 
   const { data: pr } = await api<{
-    base: { sha: string; ref?: string };
+    base: { sha: string };
     head: { sha: string; ref?: string };
     title?: string;
     body?: string | null;
@@ -153,12 +153,11 @@ export async function loadGitHub(ctx: GitHubContext, github: GitHubApi): Promise
         };
 
   const project: ReviewProject = {
-    base: { ref: pr.base.ref ?? pr.base.sha.slice(0, 7), commit: pr.base.sha },
     head: { ref: pr.head.ref ?? headSha.slice(0, 7), commit: headSha },
-    open(revision) {
-      // A review's revisions never move; its repository is read at exactly that commit.
+    open() {
+      // A review's head never moves; its repository is read at exactly that commit.
       const source: RepositorySource = githubRepositoryAt(ctx, github, hasToken, {
-        ...project[revision],
+        ...project.head,
         pinned: true,
         start: { path: '', folder: true },
         refresh: async () => source,

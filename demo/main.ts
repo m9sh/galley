@@ -299,16 +299,13 @@ const repository: RepositorySource = {
   newIssue: (title, body) => `https://github.com/acme/handbook/issues/new?${new URLSearchParams({ title, body })}`,
 };
 
-// The merge request's own repository: its docs at the base or head, opened over the review (Project library).
+// The merge request's own repository: its docs as the change leaves them, opened over the review (Project library).
 source.project = {
-  base: { ref: 'main', commit: repository.commit },
   head: { ref: 'docs/reading-first', commit: '9c1d7e3b5a2f4c6e8d0b1a3c5e7f9b2d4a6c8e0f' },
-  open: (revision) => {
-    const at = revision === 'head' ? source.project!.head : source.project!.base;
+  open: () => {
     const pinned: RepositorySource = {
       ...repository,
-      ref: at.ref,
-      commit: at.commit,
+      ...source.project!.head,
       pinned: true,
       start: { path: '', folder: true },
       refresh: async () => pinned,

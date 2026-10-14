@@ -2,68 +2,77 @@ import { expect, it, vi } from 'vitest';
 import { ChapterContext } from '../../core/review-context.ts';
 import { chapterContext } from './chapter-context.ts';
 
-it('keeps opening explicit, distinguishes the revision and announces that context has not been read', () => {
+const words = (el: Element) =>
+  [...el.querySelectorAll('.mr-sheet-section-title, .mr-sheet-count, .mr-sheet-row-title, .mr-sheet-row-meta, .mr-sheet-note, button.mr-sheet-link')].map(
+    (part) => part.textContent,
+  );
+
+it('says nothing has been read yet and offers the way to read, and reads nothing itself', () => {
   const open = vi.fn();
-  const select = vi.fn();
-  const view = chapterContext({
+  const status = document.createElement('div');
+  status.className = 'mr-docs-status';
+  const [docs, ...rest] = chapterContext({
     chapter: { id: 'code', paths: ['src/a.ts'] },
-    revision: 'head',
-    ref: 'feature/a',
-    commit: 'abc12345',
     canContinue: true,
     context: new ChapterContext(),
+    status,
     open,
-    select,
     remove: vi.fn(),
   });
+  expect(rest).toStrictEqual([]);
   expect(open).not.toHaveBeenCalled();
-  expect(view.textContent).toContain('No project context read yet');
-  expect(view.textContent).toContain('feature/a @ abc1234');
-  view.querySelector<HTMLButtonElement>('[data-context-key="find"]')!.click();
-  expect(open).toHaveBeenCalledWith({ chapter: 'code', revision: 'head', key: 'find', canContinue: true });
-  const picker = view.querySelector('select')!;
-  picker.value = 'base';
-  picker.dispatchEvent(new Event('change'));
-  expect(select).toHaveBeenCalledWith('base');
+  expect(docs.getAttribute('aria-label')).toBe('Docs that link here');
+  expect(words(docs)).toStrictEqual(['Docs that link here']);
+  expect(docs.contains(status)).toBe(true);
+  // Read, and nothing links here: it says so, without claiming more than was read; everything read, no status.
+  const empty = new ChapterContext();
+  empty.snapshot = { commit: 'abc', status: 'Built from all 3 documents at abc.', related: new Map() };
+  const [none] = chapterContext({ chapter: { id: 'code', paths: ['src/a.ts'] }, canContinue: true, context: empty, status: null, open, remove: vi.fn() });
+  expect(words(none)).toStrictEqual(['Docs that link here', 'No document read so far links to these files.']);
 });
 
-it('shows link evidence and explicit attachments separately, with safe text, section targets and removal', () => {
+it('lists each document once, opening on top, and what the reader added, which can be removed', () => {
   const context = new ChapterContext();
-  context.snapshots.set('base', {
+  const spec = {
+    path: 'spec.md',
+    title: '<b>Spec</b>',
+    kind: 'Spec',
+    flag: 'worth-checking' as const,
+    evidence: [{ path: 'spec.md', text: 'renderer', line: 7 }],
+  };
+  context.snapshot = {
     commit: 'abc',
     status: 'Built from 1 of 3 documents. Links from the others are not shown yet.',
     related: new Map([
-      [
-        'src/a.ts',
-        [{ path: 'spec.md', title: '<b>Spec</b>', kind: 'Spec', flag: 'worth-checking', evidence: [{ path: 'spec.md', text: 'renderer', line: 7 }] }],
-      ],
+      ['src/a.ts', [spec, { path: 'notes.md', title: 'Notes', kind: null, flag: 'changed', evidence: [] }]],
+      ['src/b.ts', [spec]],
     ]),
-  });
-  const attachment = { chapter: 'code', revision: 'base' as const, commit: 'abc', path: 'adr.md', heading: 'choice', title: 'Decision — choice' };
+  };
+  const attachment = { chapter: 'code', commit: 'abc1234', path: 'adr.md', heading: 'choice', title: 'Decision — choice' };
   context.add(attachment);
   const open = vi.fn();
   const remove = vi.fn();
-  const view = chapterContext({
-    chapter: { id: 'code', paths: ['src/a.ts', 'unread.ts'] },
-    revision: 'base',
-    ref: 'main',
-    commit: 'abc',
-    canContinue: false,
-    context,
-    open,
-    select: vi.fn(),
-    remove,
-  });
-  expect(view.querySelector('b')).toBeNull();
-  expect(view.textContent).toContain('Links to src/a.ts');
-  expect(view.textContent).toContain('Added by you');
-  const controls = [...view.querySelectorAll('button')];
-  controls.find((button) => button.textContent === '<b>Spec</b>')!.click();
-  expect(open).toHaveBeenLastCalledWith(expect.objectContaining({ path: 'spec.md', revision: 'base' }));
-  controls.find((button) => button.textContent!.includes('line 7'))!.click();
-  expect(open).toHaveBeenLastCalledWith(expect.objectContaining({ line: 7 }));
-  controls.find((button) => button.textContent === attachment.title)!.click();
+  const [docs, added] = chapterContext({ chapter: { id: 'code', paths: ['src/a.ts', 'src/b.ts'] }, canContinue: false, context, status: null, open, remove });
+  expect(docs.querySelector('b')).toBe(null);
+  // A chapter with more than one file says which of them each document links to.
+  expect(words(docs)).toStrictEqual([
+    'Docs that link here',
+    '2',
+    '<b>Spec</b>',
+    'Spec · Worth checking · links to 2 of these files',
+    'Notes',
+    'Changed in this review · links to a.ts',
+  ]);
+  docs.querySelector<HTMLElement>('[data-context-key="doc:spec.md"]')!.click();
+  expect(open).toHaveBeenLastCalledWith({ chapter: 'code', path: 'spec.md', anchor: undefined, key: 'doc:spec.md', canContinue: false });
+  expect(words(added)).toStrictEqual(['Added by you', '1', 'Decision — choice', 'Added by you · abc1234', 'Remove']);
+  added.querySelector<HTMLElement>('[data-context-key="attached:adr.md:choice"]')!.click();
   expect(open).toHaveBeenLastCalledWith(expect.objectContaining({ path: 'adr.md', anchor: 'choice' }));
-  controls.find((button) => button.textContent === 'Remove')!.click();
+  const button = added.querySelector<HTMLElement>('.mr-sheet-link')!;
+  expect(button.getAttribute('aria-label')).toBe('Remove Decision — choice from this chapter');
+  button.click();
   expect(remove).toHaveBeenCalledWith(attachment);
+  // One file: saying which is noise.
+  const [single] = chapterContext({ chapter: { id: 'code', paths: ['src/b.ts'] }, canContinue: true, context, status: null, open, remove });
+  expect(words(single)).toStrictEqual(['Docs that link here', '1', '<b>Spec</b>', 'Spec · Worth checking']);
 });

@@ -1,5 +1,16 @@
 import { expect, it } from 'vitest';
-import { classify, fileTitle, folderTree, INDEX_BATCH, indexDocument, pathKind, ProjectIndex, readForIndex, type Corrections } from './docindex.ts';
+import {
+  classify,
+  fileTitle,
+  folderTree,
+  INDEX_BATCH,
+  indexCoverage,
+  indexDocument,
+  pathKind,
+  ProjectIndex,
+  readForIndex,
+  type Corrections,
+} from './docindex.ts';
 import { MAX_DOCUMENT_CHARS } from './limits.ts';
 
 const none: Corrections = { docs: new Map(), folders: new Map() };
@@ -168,4 +179,22 @@ it('a cancelled pass stops starting reads and drops results that arrive late', a
   expect(result.read).toBe(0);
   expect(index.docs.size).toBe(0);
   expect((await readForIndex(index, async () => '# Doc')).read).toBe(5);
+});
+
+it('says what an index was built from, what the listing left out and what could not be read, never more', () => {
+  const index = new ProjectIndex(['a.md', 'b.md', 'c.md']);
+  expect(indexCoverage(index, 'c0ffee1234', { limits: [], failed: 0, skipped: 0 })).toStrictEqual([
+    'Built from 0 of 3 documents at c0ffee1. Links from the others are not shown yet.',
+  ]);
+  for (const path of index.listed) index.add(indexDocument(path, '# Doc'));
+  expect(indexCoverage(index, 'c0ffee1234', { limits: ['Only the first 1,000 files were listed.'], failed: 1, skipped: 2 })).toStrictEqual([
+    'Built from all 3 documents at c0ffee1.',
+    'Only the first 1,000 files were listed.',
+    '1 document could not be read.',
+    '2 documents are too large to read.',
+  ]);
+  expect(indexCoverage(new ProjectIndex(['a.md']), 'c0ffee1', { limits: [], failed: 2, skipped: 1 }).slice(1)).toStrictEqual([
+    '2 documents could not be read.',
+    '1 document is too large to read.',
+  ]);
 });

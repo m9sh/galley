@@ -32,7 +32,7 @@ Press **Read** on a GitHub pull request or GitLab merge request. Documents open 
 
 Your team gets more context for its feedback, using the GitHub or GitLab workflow it already knows.
 
-Between reviews, press **Read the project** on a repository, folder or Markdown file to read the project's own documentation at one commit. Follow links between specs, decisions and guides without losing your place, and open the **Map** to see which documents link to the one you are reading, with each link as evidence. Switch the map to **Architecture**, **Infrastructure** or **Decisions** for what the configuration declares and what the decision records state, keep private **Notes** you save only when you choose, and from a review open **Project library** at its base or head. Library reading starts in Focus; choose Balanced or Wide text in **Reading settings → Layout**, or cycle them with <kbd>L</kbd>, without changing the review's layout.
+Between reviews, press **Read the project** on a repository, folder or Markdown file to read the project's own documentation at one commit. Follow links between specs, decisions and guides without losing your place, and open the **Map** to see which documents link to the one you are reading, with each link as evidence. Switch the map to **Architecture**, **Infrastructure** or **Decisions** for what the configuration declares and what the decision records state, keep private **Notes** you save only when you choose, and from a review, read the docs that link to each chapter's files in the sheet beside it, with the **Library** and its search there too. Library reading starts in Focus; choose Balanced or Wide text in **Reading settings → Layout**, or cycle them with <kbd>L</kbd>, without changing the review's layout.
 
 Prefer a clear platform page? In the toolbar popup, choose **Settings…** and turn off **Read button on the page**. Open with **Read this review** or **Read the project** in the popup, or <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>R</kbd> (changeable in your browser's extension shortcuts). With the page button off, Galley fetches files only when you ask.
 
@@ -91,6 +91,7 @@ The [user guide](docs/GUIDE.md) covers every setting, token and platform detail.
 | <kbd>]</kbd> <kbd>[</kbd> | Next / previous file |
 | <kbd>F</kbd> | Go to a file |
 | <kbd>/</kbd> | Search the review, including folded parts |
+| <kbd>M</kbd> | Chapters and the Library: <kbd>↑</kbd> <kbd>↓</kbd> move through a list, <kbd>↵</kbd> opens, <kbd>←</kbd> <kbd>→</kbd> step through chapters, <kbd>Esc</kbd> goes back a sheet |
 | <kbd>R</kbd> | Comment on the selection, or on the paragraph in focus |
 | <kbd>⌘</kbd>/<kbd>Ctrl</kbd> <kbd>Enter</kbd> | Post the comment or reply |
 | <kbd>V</kbd> | Mark the file viewed |

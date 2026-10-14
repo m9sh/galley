@@ -7,14 +7,29 @@ import { filterDocument, paragraphTarget, selectionTarget } from './reading.ts';
 const fence = (code: string) => `\`\`\`mermaid\n${code}\n\`\`\``;
 const render = renderMarkdown;
 
-it('Mermaid fences retain whole old/new diagrams and trusted source coordinates', () => {
+it('an edited flowchart is one drawing of its changes, with both whole versions a click away and trusted source coordinates', () => {
   const before = fence('flowchart LR\n A --> B'),
     after = fence('flowchart LR\n A --> C');
   const r = render(before, after);
   expect(r.diagrams).toHaveLength(1);
-  expect(r.diagrams[0].versions).toHaveLength(2);
-  expect(r.diagrams[0].versions[0].source).toBe('flowchart LR\n A --> B\n');
-  expect(r.diagrams[0].versions[1].source).toBe('flowchart LR\n A --> C\n');
+  const figure = r.diagrams[0].el;
+  expect(figure.classList).toContain('has-changes');
+  expect(r.diagrams[0].versions.map((version) => [version.side, version.name])).toStrictEqual([
+    ['head', 'changes marked: 2 added, 2 removed'],
+    ['base', 'old version'],
+    ['head', 'new version'],
+  ]);
+  expect(r.diagrams[0].versions[0].source).toBe(
+    'flowchart LR\n A  galleyAddedEdge1@--> C\n  B\n  A galleyRemovedEdge1@-.-> B\n  class C galleyAdded\n  class B galleyRemoved\n',
+  );
+  // Its source is what the document says, not what draws the marks.
+  expect(r.diagrams[0].versions[0].sourceDetails.querySelector('code')!.textContent).toBe('flowchart LR\n A --> C\n');
+  expect(figure.querySelector('.mr-diagram-changes .mr-diagram-caption')!.textContent).toBe('Changes2 added2 removed');
+  expect([...figure.querySelectorAll('.mr-diagram-changes .mr-chip')].map((chip) => chip.className)).toStrictEqual(['mr-chip is-added', 'mr-chip is-removed']);
+  const sides = figure.querySelector<HTMLButtonElement>('.mr-diagram-sides')!;
+  expect([sides.textContent, sides.dataset.act, sides.getAttribute('aria-expanded')]).toStrictEqual(['Show before and after', 'diagram-sides', 'false']);
+  expect(r.diagrams[0].versions[1].source).toBe('flowchart LR\n A --> B\n');
+  expect(r.diagrams[0].versions[2].source).toBe('flowchart LR\n A --> C\n');
   expect(r.blocks[0].el).toBe(r.diagrams[0].el);
   expect(r.changes[0]).toBe(r.diagrams[0].el);
   expect(r.content.querySelector('ins, del')).toBe(null);
@@ -93,4 +108,22 @@ it('keeps links inside a drawing only when they point at a part of the drawing i
   const image = decodeURIComponent(diagramImage(document, svg).split(',')[1]);
   expect(image).toContain('href="#b"');
   expect(image).not.toContain('evil.example');
+});
+
+it('an edited diagram that is not a flowchart, or that cannot be marked, shows both whole versions', () => {
+  const sequence = render(fence('sequenceDiagram\n A->>B: hi'), fence('sequenceDiagram\n A->>B: hello'));
+  expect(sequence.diagrams[0].el.classList).not.toContain('has-changes');
+  expect(sequence.diagrams[0].versions.map((version) => version.name)).toStrictEqual(['old version', 'new version']);
+  const edited = render(fence('flowchart LR\n A[One] --> B'), fence('flowchart LR\n A[Two] --> B'));
+  expect(edited.diagrams[0].el.querySelector('.mr-diagram-changes .mr-diagram-caption')!.textContent).toBe('Changes1 edited');
+  expect(edited.diagrams[0].el.querySelector('.mr-diagram-changes .mr-chip')!.className).toBe('mr-chip is-modified');
+});
+
+it('a fence that stops or starts being Mermaid keeps one drawing beside the other version’s code', () => {
+  const stopped = render(fence('flowchart LR\n A --> B'), '```text\nflowchart LR\n A --> B\n```');
+  expect(stopped.diagrams[0].el.classList).not.toContain('has-changes');
+  expect(stopped.diagrams[0].versions.map((version) => version.side)).toStrictEqual(['base']);
+  const started = render('```text\nflowchart LR\n A --> B\n```', fence('flowchart LR\n A --> B'));
+  expect(started.diagrams[0].el.classList).not.toContain('has-changes');
+  expect(started.diagrams[0].versions.map((version) => version.side)).toStrictEqual(['head']);
 });

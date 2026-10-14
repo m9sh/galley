@@ -8,6 +8,7 @@ import {
   DOC_KINDS,
   fileTitle,
   folderTree,
+  indexCoverage,
   indexDocument,
   KIND_NAMES,
   KIND_SOURCES,
@@ -43,9 +44,12 @@ import { layoutPanel, LibraryLayout, LAYOUT_NAMES } from '../components/layout-c
 import css from '../components/reader.css';
 import { digestText, ProjectNotes, when } from './project-store.ts';
 import { loadImage, renderDocument, type RenderedDoc } from '../rendering/render.ts';
-import { button, configStatus, exportSheet, external, h, lensSwitch, lensView, notesView, reviewView, type ConfigState } from './repo-views.ts';
+import { button, configStatus, exportSheet, external, h, lensSwitch, lensView, notesView, type ConfigState } from './repo-views.ts';
 import repoCss from './repo.css';
 import { ReadingSequence, sequenceRoute, sequenceView, type ReadingStop } from './reading-sequence.ts';
+import { documentMap, reviewMap } from '../../core/project-map.ts';
+import { DocumentMap } from './map-view.ts';
+import { Sheet } from '../components/sheet.ts';
 import { DEFAULT_SETTINGS, loadSettings, updateSettings, TEXT_SIZES, type Settings } from '../preferences/settings.ts';
 import {
   applyReadingControls,
@@ -62,14 +66,13 @@ import {
  * The repository reader: a project's docs read at one commit, with the same typography, sanitiser and
  * diagrams as the review reader, and none of its review operations. Its views share one index: Read,
  * a document with its contents and the documents that link to it; Map, one document's neighbourhood
- * of links, or what configuration and decision records state, with the evidence for each; Notes, the
+ * of links as a map or a list (map-view.ts), or what configuration and decision records state, with the
+ * evidence for each; Notes, the
  * reader's own thinking; and, when opened from a review, This review. History lasts as long as the
  * reader is open; notes, proposals and types are kept only when the reader saves them (ADR 0028).
  */
 
 const WORDS_PER_MINUTE = 230;
-/** Neighbours shown in a column of the map before "Show more". */
-const MAP_COLUMN = 8;
 /** Below this many documents, every folder of the outline starts open. */
 const OPEN_OUTLINE = 40;
 /** Room under the top bar when a paragraph is brought into view. */
@@ -125,7 +128,7 @@ const TEMPLATE = `
       <button class="mr-btn mr-file-btn" data-act="docs" aria-haspopup="dialog" aria-expanded="false" title="Project library (/)"><span class="mr-file-name">Project library</span>${icons.chevronDown}</button>
     </div>
     <div class="mr-tb-right">
-      <div class="mr-seg mr-repo-views" role="group" aria-label="View"><button data-view="review" aria-pressed="false" aria-label="This review" hidden>${icons.review}<span>This review</span></button><button data-view="chapters" aria-pressed="false" aria-label="Library chapters">${icons.book}<span>Chapters</span></button><button data-view="read" aria-pressed="true" aria-label="Read">${icons.book}<span>Read</span></button><button data-view="map" aria-pressed="false" aria-label="Map" title="Map (M)">${icons.map}<span>Map</span></button><button data-view="notes" aria-pressed="false" aria-label="Notes" title="Your notes (N)">${icons.note}<span>Notes</span></button></div>
+      <div class="mr-views-pick"><button class="mr-btn mr-views-btn" data-act="views" aria-haspopup="true" aria-expanded="false" title="Change the view"><span class="mr-views-icon">${icons.book}</span><span class="mr-views-label">Read</span>${icons.chevronDown}</button><div class="mr-repo-views" role="group" aria-label="View" hidden><button data-view="review" aria-pressed="false" aria-label="This review" hidden>${icons.review}<span>This review</span></button><button data-view="chapters" aria-pressed="false" aria-label="Library chapters" data-key="C">${icons.book}<span>Chapters</span></button><button data-view="read" aria-pressed="true" aria-label="Read">${icons.book}<span>Read</span></button><button data-view="map" aria-pressed="false" aria-label="Map" title="Map (M)" data-key="M">${icons.map}<span>Map</span></button><button data-view="notes" aria-pressed="false" aria-label="Notes" title="Your notes (N)" data-key="N">${icons.note}<span>Notes</span></button></div></div>
       <button class="mr-btn mr-repo-commit" data-act="refresh" hidden>${icons.refresh}<span class="mr-repo-commit-label"></span></button>
       <button class="mr-btn mr-icon-btn" data-act="settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings" aria-label="Reading settings">${icons.settings}</button>
     </div>
@@ -232,11 +235,10 @@ interface Place {
 
 type View = 'read' | 'map' | 'notes' | 'review' | 'chapters';
 
-/** The review a repository reader was opened from (RFC 0049, Phase 5): its title, the revision read and its chapters. */
+/** The review a repository reader was opened from (RFC 0049, Phase 5): its title, its head and its chapters. */
 export interface ReviewContext {
   title: string;
-  revision: 'base' | 'head';
-  /** The branch of that revision. */
+  /** The branch the change is on: the library reads the repository as the change leaves it. */
   ref: string;
   /** The review's chapters, in reading order, with the paths each one changes. */
   chapters: Array<{ id?: string; title: string; paths: string[] }>;
@@ -290,7 +292,15 @@ class RepoReader {
   private path: string | null = null;
   private rendered: RenderedDoc | null = null;
   private view: View = 'read';
+  /** The middle of the Documents map: kept while the reader goes off to read, moved only on purpose (ADR 0030). */
   private focus: string | null = null;
+  /** The Documents map, with its own camera and selection; drawn anew for a new commit. */
+  private mapView: DocumentMap | null = null;
+  /** The reader's sheets (components/sheet.ts): a place chosen on the Documents map, and one chosen in This review. */
+  private readonly mapSheet: Sheet;
+  private readonly docSheet: Sheet;
+  /** This review on the same map, around what the review changes, with its own camera, selection and sheet. */
+  private reviewMap: DocumentMap | null = null;
   /** The map's lens: documents and their links, or what configuration and decision records state. */
   private lens: 'documents' | LensName = 'documents';
   private entityFocus: string | null = null;
@@ -337,6 +347,21 @@ class RepoReader {
     // biome-ignore lint/plugin: the bundled stylesheets and a fixed template; no document content.
     this.shadow.innerHTML = `<style>${css}${repoCss}</style>${TEMPLATE}`;
     this.root = this.q('.mr-root');
+    // Both maps' details sheets look the same (mr-map-sheet); each is told apart by its own class.
+    const sheet = (className: string, closeLabel: string, dismiss: () => void) => {
+      const made = new Sheet({
+        root: this.root,
+        className,
+        closeLabel,
+        parts: () => this.slidingParts(),
+        background: () => this.root.querySelectorAll<HTMLElement>('.mr-topbar, .mr-main'),
+        dismiss,
+      });
+      made.element.classList.add('mr-map-sheet');
+      return made;
+    };
+    this.mapSheet = sheet('mr-pm-sheet', 'Close details', () => this.mapView!.closeSheet());
+    this.docSheet = sheet('mr-doc-sheet', 'Close details', () => this.reviewMap!.closeSheet());
     this.q('.mr-doc').append(this.skeleton());
     this.prevOverflow = document.documentElement.style.overflow;
     this.prevFocus = document.activeElement;
@@ -347,26 +372,25 @@ class RepoReader {
     this.root.addEventListener('change', (e) => this.onChange(e));
     this.root.addEventListener('submit', (e) => this.onSubmit(e));
     if (review) {
-      // Opened over a review: closing goes back to it, where the reader left it.
-      const close = this.q('[data-act="close"]');
-      close.title = 'Back to the review (Esc)';
-      close.setAttribute('aria-label', 'Back to the review (Esc)');
+      // Opened over a review, the way back to it leads the top bar, in place of Close and the wordmark.
+      this.root.classList.add('is-over-review');
       this.q('[data-view="review"]').hidden = false;
       this.q('[data-view="chapters"]').hidden = true;
-      const returnBar = h('nav', 'mr-repo-return');
-      returnBar.setAttribute('aria-label', 'Return to review');
-      const chapter = review.entry ? review.chapters.find((chapter) => chapter.id === review.entry!.chapter) : undefined;
-      returnBar.append(h('span', '', chapter ? chapter.title : review.title), button('Return to review', 'close', 'mr-btn mr-outline'));
-      if (review.entry) {
-        const next = button('Continue chapter', 'continue-chapter', 'mr-btn mr-outline');
-        next.disabled = !review.entry.canContinue;
-        returnBar.append(next);
-      }
-      this.q('.mr-topbar').after(returnBar);
+      const chapter = review.chapters.find((chapter) => chapter.id !== undefined && chapter.id === review.entry?.chapter);
+      const back = button('', 'close', 'mr-btn mr-repo-return');
+      // biome-ignore lint/plugin: a bundled icon constant, never document content.
+      back.innerHTML = icons.chevronLeft;
+      back.append(h('span', 'mr-label-long', 'Return to review'), h('span', 'mr-label-short', 'Review'));
+      back.setAttribute('aria-label', 'Return to review (Esc)');
+      back.title = `Back to ${chapter ? chapter.title : review.title} in the review (Esc)`;
+      // Opened from a chapter, reading here can carry on with that chapter: said once above the document.
+      if (chapter) this.q('.mr-repo-read').prepend(this.continueBar(chapter.title, review.entry!.canContinue));
+      this.q('.mr-tb-left > [data-act="close"]').replaceWith(back);
     }
     // Phones put view choices in the document menu, leaving the top bar for the reading title.
     const views = this.q('.mr-repo-views').cloneNode(true) as HTMLElement;
     views.className = 'mr-seg mr-repo-menu-views';
+    views.hidden = false;
     views.setAttribute('aria-label', 'Library view');
     this.q('.mr-repo-docs').prepend(views);
     this.root.addEventListener('scroll', () => this.onScroll(), { passive: true });
@@ -382,6 +406,21 @@ class RepoReader {
       this.settings = settings;
       this.applySettings();
     });
+  }
+
+  /** Where the reader came from in the review, and the way on with that chapter. */
+  private continueBar(title: string, enabled: boolean): HTMLElement {
+    const bar = h('nav', 'mr-review-route');
+    bar.setAttribute('aria-label', 'Review chapter');
+    const where = h('span', 'mr-review-route-text', 'From the review chapter ');
+    where.append(h('strong', '', title));
+    const next = button('Continue chapter', 'continue-chapter', 'mr-btn mr-review-continue');
+    // biome-ignore lint/plugin: a bundled icon constant, never document content.
+    next.insertAdjacentHTML('beforeend', icons.chevronRight);
+    next.title = 'Back to the review, at the next part of this chapter';
+    next.disabled = !enabled;
+    bar.append(where, next);
+    return bar;
   }
 
   // ---------------------------------------------------------------- source
@@ -458,6 +497,8 @@ class RepoReader {
     this.closed = true;
     if (this.indexing) this.indexing.cancelled = true;
     if (this.config.run) this.config.run.cancelled = true;
+    this.mapView?.destroy();
+    this.reviewMap?.destroy();
     this.notes?.flush();
     for (const type of ['keydown', 'keyup', 'keypress']) window.removeEventListener(type, this.shield, true);
     this.dark.removeEventListener('change', this.onSchemeChange);
@@ -560,6 +601,11 @@ class RepoReader {
     this.configs.clear();
     this.config = { state: 'idle', read: 0, notes: [], run: null };
     this.entityFocus = null;
+    // The map's camera, selection and places start over at a new commit; its middle stays if it is still there.
+    this.mapView?.destroy();
+    this.mapView = null;
+    this.reviewMap?.destroy();
+    this.reviewMap = null;
     this.source = next;
     this.discovery = null;
     this.listing = null;
@@ -682,7 +728,7 @@ class RepoReader {
         current: review.entry?.chapter,
         headings: indexDocument(path, this.read.get(path)!).headings,
         add: (chapter, heading, label) => {
-          review.context!.add({ chapter, revision: review.revision, commit: source.commit, path, heading, title: heading ? `${title} — ${label}` : title });
+          review.context!.add({ chapter, commit: source.commit, path, heading, title: heading ? `${title} — ${label}` : title });
         },
       });
       intro.push(attachment);
@@ -748,19 +794,35 @@ class RepoReader {
       const links = doc.links.filter((link) => link.path && link.path !== this.path && /\.(md|markdown|mdown|mkd|mdx)$/i.test(link.path));
       if (links.length) {
         const section = h('section', 'mr-sequence-links');
-        section.append(h('h2', '', 'Links from this document'), h('p', 'mr-repo-quiet', this.path));
+        section.setAttribute('aria-label', 'Links from this document');
+        section.append(h('h2', '', 'Links from this document'), h('p', 'mr-seq-note', `In ${this.path} · ${plural(links.length, 'link')}`));
+        const list = h('ul', 'mr-seq-links');
         for (const link of links) {
-          const row = h('div', 'mr-sequence-link');
-          const add = button(`Add ${link.text}`, 'sequence-add', 'mr-chapter-button');
-          add.dataset.path = link.path!;
-          add.dataset.anchor = link.anchor;
-          add.dataset.title = link.text;
-          const evidence = button(`Source link · line ${link.line}`, 'evidence', 'mr-repo-proof');
+          // A document already read goes by its own title; one not read yet by the words that link to it.
+          const title = this.index?.docs.get(link.path!)?.title ?? link.text;
+          const row = h('li', 'mr-sequence-link');
+          const text = h('div', 'mr-seq-text');
+          const evidence = button(`line ${link.line}`, 'evidence', 'mr-seq-line');
           evidence.dataset.path = this.path;
           evidence.dataset.line = String(link.line);
-          row.append(add, h('small', '', `${link.path}${link.anchor ? `#${link.anchor}` : ''}`), evidence);
-          section.append(row);
+          evidence.title = `Open ${this.path} at line ${link.line}`;
+          evidence.setAttribute('aria-label', `Source link, line ${link.line}`);
+          const where = h('small');
+          where.append(`${link.path}${link.anchor ? `#${link.anchor}` : ''} · `, evidence);
+          text.append(h('span', 'mr-seq-link-title', title), where);
+          // A stop already chosen says so; choosing it again only says it is there.
+          const added = this.sequence.items.some((item) => item.path === link.path && item.anchor === link.anchor);
+          const add = button(added ? 'Added' : 'Add', 'sequence-add', `mr-btn mr-outline mr-seq-add${added ? ' is-added' : ''}`);
+          // biome-ignore lint/plugin: a bundled icon constant, never document content.
+          add.insertAdjacentHTML('afterbegin', added ? icons.check : icons.plus);
+          add.dataset.path = link.path!;
+          add.dataset.anchor = link.anchor;
+          add.dataset.title = title;
+          add.setAttribute('aria-label', added ? `${title} is in your reading sequence` : `Add ${title} to your reading sequence`);
+          row.append(text, add);
+          list.append(row);
         }
+        section.append(list);
         pane.append(section);
       }
     }
@@ -785,28 +847,23 @@ class RepoReader {
       box.append(h('p', 'mr-repo-quiet', `Galley has read ${read.toLocaleString('en')}${total} in this repository.`));
     }
     const edges = index?.incoming(path) ?? [];
-    if (edges.length) box.append(this.edgeList(edges, 'from', 'open'));
+    if (edges.length) box.append(this.edgeList(edges));
     else if (index && index.docs.size >= index.listed.length) box.append(h('p', 'mr-repo-quiet', 'No other document links here.'));
     if (!index || index.docs.size < index.listed.length) box.append(button(this.indexing ? 'Reading documents…' : 'Find links to this document', 'index'));
     return box;
   }
 
-  /** Connections as a list: each document, and under it every link that makes the connection. */
-  private edgeList(edges: Edge[], end: 'from' | 'to', act: 'open' | 'focus', limit = Number.POSITIVE_INFINITY): HTMLElement {
+  /** The documents that link here, each with every link that makes the connection; they have all been read. */
+  private edgeList(edges: Edge[]): HTMLElement {
     const list = h('ul', 'mr-repo-edges');
-    edges.forEach((edge, i) => {
-      const other = edge[end];
+    for (const edge of edges) {
       const item = h('li', 'mr-repo-edge');
-      if (i >= limit) item.hidden = true;
-      const name = button(this.titleOf(other), act, 'mr-repo-edge-doc');
-      name.dataset.path = other;
-      name.title = other;
+      const name = button(this.titleOf(edge.from), 'open', 'mr-repo-edge-doc');
+      name.dataset.path = edge.from;
+      name.title = edge.from;
       item.append(name);
-      const doc = this.index!.docs.get(other);
-      if (doc) {
-        const { kind, from } = classify(doc, this.corrections);
-        if (kind !== 'other') item.append(this.kindChip(kind, from));
-      }
+      const { kind, from } = classify(this.index!.docs.get(edge.from)!, this.corrections);
+      if (kind !== 'other') item.append(this.kindChip(kind, from));
       const evidence = h('ul', 'mr-repo-evidence');
       for (const link of edge.evidence) {
         const proof = button('', 'evidence', 'mr-repo-proof');
@@ -820,8 +877,7 @@ class RepoReader {
       }
       item.append(evidence);
       list.append(item);
-    });
-    if (edges.length > limit) list.append(button(`Show ${edges.length - limit} more`, 'more', 'mr-btn mr-repo-more'));
+    }
     return list;
   }
 
@@ -1037,13 +1093,21 @@ class RepoReader {
     this.q('.mr-repo-thinking').hidden = view !== 'notes';
     this.q('.mr-repo-review').hidden = view !== 'review';
     this.q('.mr-repo-chapters').hidden = view !== 'chapters';
+    // Each map's sheet keeps its place for the return to it; the map space is the two maps'.
+    if (view !== 'review') this.reviewMap?.park();
+    if (view !== 'map') this.mapView?.park();
+    if (view !== 'map' && view !== 'review') this.root.classList.remove('is-map-space');
     // Focus never stays in a view that is hidden: it goes back to the reader.
     if (this.shadow.activeElement?.closest('[hidden]')) this.root.focus({ preventScroll: true });
     this.q('.mr-toc').hidden = view !== 'read';
     for (const b of this.shadow.querySelectorAll<HTMLElement>('[data-view]')) b.setAttribute('aria-pressed', String(b.dataset.view === view));
+    // One control names the view and opens the others.
+    const current = this.q(`.mr-repo-views [data-view="${view}"]`);
+    this.q('.mr-views-label').textContent = current.textContent;
+    this.q('.mr-views-icon').replaceChildren(current.querySelector('svg')!.cloneNode(true));
   }
 
-  private async showMap(focus = this.path ?? this.focus): Promise<void> {
+  private async showMap(focus = this.focus ?? this.path): Promise<void> {
     if (!this.source) return;
     this.closeMenus();
     this.setView('map');
@@ -1140,22 +1204,14 @@ class RepoReader {
     const index = this.index!;
     const status = h('div', 'mr-map-status');
     status.setAttribute('role', 'status');
-    const read = index.docs.size;
-    const total = index.listed.length;
-    status.append(
-      h(
-        'p',
-        '',
-        read >= total
-          ? `Built from all ${plural(total, 'document')} at ${shortSha(this.source!.commit)}.`
-          : `Built from ${read.toLocaleString('en')} of ${plural(total, 'document')} at ${shortSha(this.source!.commit)}. Links from the others are not shown yet.`,
-      ),
-    );
+    const [built, ...notes] = indexCoverage(index, this.source!.commit, {
+      limits: this.listing!.limits,
+      failed: this.unreadable.failed.size,
+      skipped: this.unreadable.skipped.size,
+    });
+    status.append(h('p', '', built));
     if (this.indexing) status.append(button('Stop reading', 'stop-index'));
-    else if (read < total) status.append(button('Index more', 'index'));
-    const notes: string[] = [...this.listing!.limits];
-    if (this.unreadable.failed.size) notes.push(`${plural(this.unreadable.failed.size, 'document')} could not be read.`);
-    if (this.unreadable.skipped.size) notes.push(`${plural(this.unreadable.skipped.size, 'document is', 'documents are')} too large to read.`);
+    else if (index.docs.size < index.listed.length) status.append(button('Index more', 'index'));
     for (const note of notes) status.append(h('p', 'mr-repo-limit', note));
     return status;
   }
@@ -1167,81 +1223,104 @@ class RepoReader {
   }
 
   private drawMap(): void {
+    const spatial = this.lens === 'documents' && this.focus !== null;
+    this.root.classList.toggle('is-map-space', spatial);
+    if (!spatial) this.mapView?.park();
     if (this.lens !== 'documents') {
       this.drawLens(this.lens);
       return;
     }
     const map = this.q('.mr-repo-map');
-    const index = this.index!;
     const head = this.mapHead();
     const since = this.sinceRefresh();
     if (since) head.append(since);
-    if (!this.focus) {
+    if (!spatial) {
       map.replaceChildren(head, h('p', 'mr-repo-quiet', 'No Markdown documents at this commit.'));
       return;
     }
-    const focus = this.focus;
-    const doc = index.docs.get(focus);
-    // Folders are where a document lives, not something it links to: shown as a path, never as a line.
-    const crumbs = h('nav', 'mr-map-crumbs');
-    crumbs.setAttribute('aria-label', 'Folder');
-    const folder = folderOf(focus);
-    const siblings = index.listed.filter((path) => path !== focus && folderOf(path) === folder).length;
-    crumbs.append(h('span', '', `In ${folder ? `${folder}/` : 'the top folder'}${siblings ? ` with ${plural(siblings, 'other document')}` : ''}`));
-    const center = h('div', 'mr-map-center');
-    const title = h('h2', 'mr-map-title', this.titleOf(focus));
-    title.tabIndex = -1;
-    center.append(title, h('p', 'mr-path-dir', focus));
-    if (doc) {
-      const { kind, from } = classify(doc, this.corrections);
-      const facts = h('p', 'mr-map-facts');
-      facts.append(this.kindChip(kind, from));
-      if (doc.status) facts.append(h('span', 'mr-repo-status', doc.status));
-      if (this.changed.has(focus)) facts.append(chip('modified', 'Changed in this review'));
-      if (doc.unread) facts.append(h('span', 'mr-repo-limit', doc.unread === 'failed' ? 'Could not be read' : 'Too large to read'));
-      center.append(facts, this.kindEditor(focus, kind, from));
-    } else center.append(h('p', 'mr-repo-quiet', 'Not read yet: its own links are not shown.'));
-    const read = button('Read', 'open', 'mr-btn mr-primary');
-    read.dataset.path = focus;
-    center.append(read);
-    const column = (label: string, edges: Edge[], end: 'from' | 'to', empty: string) => {
-      const col = h('section', 'mr-map-col');
-      col.setAttribute('aria-label', label);
-      col.append(h('h3', '', `${label} (${edges.length})`));
-      col.append(edges.length ? this.edgeList(edges, end, 'focus', MAP_COLUMN) : h('p', 'mr-repo-quiet', empty));
-      return col;
-    };
-    const grid = h('div', 'mr-map-grid');
-    grid.append(
-      column('Linked from', index.incoming(focus), 'from', 'No document read so far links here.'),
-      center,
-      column('Links to', index.outgoing(focus), 'to', doc ? 'It links to no other listed document.' : 'Read it to see its links.'),
-    );
-    const parts: HTMLElement[] = [head, crumbs, grid];
-    const problems = index.problems.filter((p) => p.from === focus);
-    if (problems.length) {
-      const box = h('section', 'mr-map-problems');
-      box.setAttribute('aria-label', 'Links the map cannot follow');
-      box.append(h('h3', '', 'Links the map cannot follow'));
-      const list = h('ul');
-      for (const p of problems) {
-        const item = h('li');
-        const proof = button('', 'evidence', 'mr-repo-proof');
-        proof.dataset.path = focus;
-        proof.dataset.line = String(p.link.line);
-        proof.append(h('q', '', p.link.text || p.link.href), ` line ${p.link.line}`);
-        item.append(
-          proof,
-          p.kind === 'missing-doc'
-            ? `: ${p.link.path} is not among the listed documents${this.listing?.limits.length ? ', which are incomplete' : ''}.`
-            : `: “${p.link.anchor}” is not a section of ${p.link.path}.`,
-        );
-        list.append(item);
-      }
-      box.append(list);
-      parts.push(box);
+    this.mapView ??= new DocumentMap({
+      preview: (path) => this.preview(path),
+      details: (path) => this.mapDetails(path),
+      problems: (path) => this.mapProblems(path),
+      refocus: (path) => {
+        this.focus = path;
+      },
+      sheet: this.mapSheet,
+      commit: this.source!.commit,
+    });
+    head.querySelector('.mr-lens-switch')!.after(this.mapView.tools);
+    map.replaceChildren(head, this.mapView.element);
+    this.mapView.draw({ model: documentMap(this.index!, this.corrections), focus: this.focus!, here: this.path, changed: this.changed });
+  }
+
+  /** A document in the map's sheet, rendered as the reader would, with diagrams as their source. */
+  private async preview(path: string): Promise<HTMLElement | null> {
+    const source = this.source!;
+    let r: RenderedDoc;
+    try {
+      const text = await this.load(path);
+      r = renderDocument(document, {
+        path,
+        status: 'modified',
+        base: text,
+        head: text,
+        links: source.links,
+        origin: location.origin,
+        images: this.settings.images,
+      });
+    } catch {
+      return null;
     }
-    map.replaceChildren(...parts);
+    for (const diagram of r.diagrams)
+      for (const version of diagram.versions) {
+        version.view.hidden = true;
+        version.sourceDetails.open = true;
+      }
+    // The sheet's header already names the document; its front matter is for reading in full.
+    r.lead?.remove();
+    r.content.querySelector('details.mr-meta')?.remove();
+    void highlightCode(r.content);
+    const box = h('div', 'mr-pm-preview');
+    box.append(r.content);
+    return box;
+  }
+
+  /** A read document's type, where it came from, its status, and the reader's way to correct the type. */
+  private mapDetails(path: string): HTMLElement[] {
+    const doc = this.index!.docs.get(path);
+    if (!doc) return [];
+    const { kind, from } = classify(doc, this.corrections);
+    const facts = h('p', 'mr-map-facts');
+    facts.append(this.kindChip(kind, from));
+    if (doc.status) facts.append(h('span', 'mr-repo-status', doc.status));
+    if (doc.unread) facts.append(h('span', 'mr-repo-limit', doc.unread === 'failed' ? 'Could not be read' : 'Too large to read'));
+    return [facts, this.kindEditor(path, kind, from)];
+  }
+
+  /** Links a document makes that the map cannot follow, each with the link that makes it. */
+  private mapProblems(path: string): HTMLElement | null {
+    const problems = this.index!.problems.filter((p) => p.from === path);
+    if (!problems.length) return null;
+    const box = h('section', 'mr-map-problems');
+    box.setAttribute('aria-label', 'Links the map cannot follow');
+    box.append(h('h3', '', 'Links the map cannot follow'));
+    const list = h('ul');
+    for (const p of problems) {
+      const item = h('li');
+      const proof = button('', 'evidence', 'mr-repo-proof');
+      proof.dataset.path = path;
+      proof.dataset.line = String(p.link.line);
+      proof.append(h('q', '', p.link.text || p.link.href), ` line ${p.link.line}`);
+      item.append(
+        proof,
+        p.kind === 'missing-doc'
+          ? `: ${p.link.path} is not among the listed documents${this.listing!.limits.length ? ', which are incomplete' : ''}.`
+          : `: “${p.link.anchor}” is not a section of ${p.link.path}.`,
+      );
+      list.append(item);
+    }
+    box.append(list);
+    return box;
   }
 
   /** The reader can correct a type, as a settings row; Galley says where every type came from. */
@@ -1708,36 +1787,57 @@ class RepoReader {
   private publishContext(): Map<string, import('../../core/review-context.ts').ReviewRelated[]> {
     const related = new Map([...this.changed].map((path) => [path, relatedDocuments(this.index!, path, this.changed, this.corrections)]));
     const status = [...this.indexStatus().querySelectorAll('p')].map((p) => p.textContent).join(' ');
-    this.review!.context?.snapshots.set(this.review!.revision, { commit: this.source!.commit, status, related });
+    if (this.review!.context) this.review!.context.snapshot = { commit: this.source!.commit, status, related };
     return related;
   }
 
+  /**
+   * This review on the Documents map (ADR 0030): what the review changes in the middle, chapter by chapter, between the
+   * documents that link to it and those it links to, under the same top row as the map; List shows all of it as rows.
+   */
   private drawReview(): void {
     const review = this.review!;
-    const index = this.index!;
     const source = this.source!;
-    const related = this.publishContext();
+    this.publishContext();
     const status = h('div', 'mr-review-status');
     status.append(this.indexStatus());
     const configs = new Set(this.listing!.configs.files.map((file) => file.path));
     if ([...this.changed].some((path) => configs.has(path))) status.append(configStatus(this.configState()));
-    this.q('.mr-repo-review').replaceChildren(
-      reviewView({
-        title: review.title,
-        revision: `its ${review.revision}, ${review.ref} @ ${shortSha(source.commit)}`,
-        status,
-        chapters: review.chapters.map((chapter) => ({
-          title: chapter.title,
-          attachments: review.context?.forChapter(chapter.id!, review.revision),
-          files: chapter.paths.map((path) => ({
-            path,
-            changedDoc: index.documentAt(path) === path,
-            related: related.get(path)!,
-            declares: (this.configs.get(path)?.items ?? []).slice(0, 12).map((item) => item.name),
-          })),
-        })),
-      }),
-    );
+    this.root.classList.add('is-map-space');
+    this.reviewMap ??= new DocumentMap({
+      preview: (path) => this.preview(path),
+      details: (path) => this.mapDetails(path),
+      problems: (path) => this.mapProblems(path),
+      explore: (path) => {
+        this.focus = path;
+        void this.showMap();
+      },
+      sheet: this.docSheet,
+      commit: source.commit,
+    });
+    const head = h('header', 'mr-map-head');
+    const at = h('p', 'mr-review-at', `${review.title} · ${review.ref} @ ${shortSha(source.commit)}`);
+    at.title = 'The repository as this change leaves it';
+    head.append(h('h1', 'mr-title', 'This review'), at, this.reviewMap.tools, status);
+    const from = this.shadow.querySelector<HTMLElement>('.mr-repo-read > .mr-review-route')?.cloneNode(true) as HTMLElement | undefined;
+    if (from) head.append(from);
+    this.q('.mr-repo-review').replaceChildren(head, this.reviewMap.element);
+    const paths = review.chapters.flatMap((chapter) => chapter.paths);
+    this.reviewMap.draw({
+      model: reviewMap(this.index!, this.corrections, paths),
+      focus: '',
+      here: this.path,
+      changed: this.changed,
+      review: {
+        chapters: review.chapters.map((chapter) => ({ title: chapter.title, paths: chapter.paths, attachments: review.context?.forChapter(chapter.id!) })),
+        declares: Object.fromEntries(paths.map((path) => [path, (this.configs.get(path)?.items ?? []).slice(0, 12).map((item) => item.name)])),
+      },
+    });
+  }
+
+  /** What moves when a sheet beside the page narrows or widens it: the view that is shown, and the top bar. */
+  private slidingParts(): NodeListOf<HTMLElement> {
+    return this.root.querySelectorAll<HTMLElement>('.mr-main > :not([hidden]), .mr-tb-center, .mr-tb-right');
   }
 
   // ---------------------------------------------------------------- chrome
@@ -1810,7 +1910,10 @@ class RepoReader {
 
   private closeMenus(): boolean {
     let closed = false;
-    for (const [menu, control] of [['.mr-repo-docs', '[data-act="docs"]']]) {
+    for (const [menu, control] of [
+      ['.mr-repo-docs', '[data-act="docs"]'],
+      ['.mr-repo-views', '[data-act="views"]'],
+    ]) {
       if (!this.q(menu).hidden) closed = true;
       this.q(menu).hidden = true;
       this.q(control).setAttribute('aria-expanded', 'false');
@@ -1835,6 +1938,8 @@ class RepoReader {
     const target = e.target as Element;
     const link = target.closest<HTMLAnchorElement>('.mr-content a[data-mr-path]');
     if (link) {
+      if (link.closest('.mr-pm-sheet') && this.mapView!.previewLink(link, e)) return;
+      if (link.closest('.mr-doc-sheet') && this.reviewMap!.previewLink(link, e)) return;
       this.follow(link, e);
       return;
     }
@@ -1874,6 +1979,10 @@ class RepoReader {
       if (!target.closest('.mr-menu, [data-act="docs"], [data-act="settings"]')) this.closeMenus();
       return;
     }
+    if (el.dataset.act!.startsWith('pm-')) {
+      (this.view === 'review' ? this.reviewMap! : this.mapView!).onAct(el);
+      return;
+    }
     const path = el.dataset.path;
     const id = el.dataset.id!;
     const notes = this.notes!;
@@ -1893,6 +2002,17 @@ class RepoReader {
       case 'docs':
         this.toggleDocs();
         return;
+      case 'views': {
+        const menu = this.q('.mr-repo-views');
+        const open = menu.hidden;
+        this.closeMenus();
+        if (open) {
+          menu.hidden = false;
+          el.setAttribute('aria-expanded', 'true');
+          menu.querySelector<HTMLElement>('[aria-pressed="true"]')!.focus();
+        }
+        return;
+      }
       case 'sequence':
         this.showSequence();
         return;
@@ -1949,11 +2069,7 @@ class RepoReader {
       case 'focus':
         this.focus = path!;
         this.drawMap();
-        this.q('.mr-map-title').focus();
-        return;
-      case 'more':
-        for (const item of el.parentElement!.querySelectorAll<HTMLElement>('li[hidden]')) item.hidden = false;
-        el.remove();
+        this.mapView!.focusCentre();
         return;
       case 'map':
         return void this.showMap();
@@ -2008,7 +2124,7 @@ class RepoReader {
         this.lens = 'documents';
         this.focus = path!;
         this.drawMap();
-        this.q('.mr-map-title').focus();
+        this.mapView!.focusCentre();
         return;
       case 'read-configs':
         return void this.readConfigs();
@@ -2231,10 +2347,12 @@ class RepoReader {
         this.root.focus({ preventScroll: true });
         return;
       }
+      const views = !this.q('.mr-repo-views').hidden;
       if (this.closeMenus()) {
-        this.q('[data-act="docs"]').focus({ preventScroll: true });
+        this.q(views ? '[data-act="views"]' : '[data-act="docs"]').focus({ preventScroll: true });
         return;
       }
+      if (this.mapView?.closeSheet() || this.reviewMap?.closeSheet()) return;
       const attachment = this.shadow.querySelector<HTMLDetailsElement>('.mr-repo-read:not([hidden]) .mr-chapter-attachment[open]');
       if (attachment) {
         attachment.open = false;
@@ -2255,6 +2373,8 @@ class RepoReader {
       e.preventDefault();
       return;
     }
+    // Over the page on a phone, a sheet keeps Tab inside it.
+    if (this.mapSheet.onKey(e) || this.docSheet.onKey(e)) return;
     const target = e.composedPath()[0];
     const tab = target instanceof HTMLElement && target.matches('[data-settings-tab]') ? nextTab(SETTINGS_TABS, target.dataset.settingsTab!, e.key) : null;
     if (tab) {
@@ -2270,7 +2390,9 @@ class RepoReader {
       return;
     }
     if (e.altKey || e.ctrlKey || e.metaKey) return;
-    if (sheet) return;
+    if ((this.view === 'review' ? this.reviewMap : this.mapView)?.onKey(e)) return;
+    // A phone's map sheet is modal too: shortcuts wait until it closes.
+    if (sheet || this.mapSheet.isModal || this.docSheet.isModal) return;
     if (e.key === '/') {
       e.preventDefault();
       this.toggleDocs(true);

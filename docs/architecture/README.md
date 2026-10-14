@@ -155,7 +155,7 @@ A failure keeps the draft; writes are never retried ([ADR 0008](../adr/0008-comm
 | `src/ui/library/` | Project library shell, map and notes views, saved notes, configuration client | `repo-reader.ts`, `repo-views.ts`, `reading-sequence.ts`, `repo.css`, `project-store.ts`, `configs.ts` | jsdom in tests |
 | `src/ui/rendering/` | Sanitised Markdown, code, diagrams, images, source comments and reading behavior | `render.ts`, `reading.ts`, `code*.ts`, `diagrams.ts`, `image.ts`, `specs.ts`, `symbols.ts`, `source-comments.ts` | jsdom in tests |
 | `src/ui/sandbox/` | Opaque frame transport and bundled engines; isolated image fallback | `sandbox.ts`, `sandbox-frame.ts`, `*-frame.ts`, `*-frame.html`, `elk-shim.ts` | jsdom and Chrome |
-| `src/ui/components/` | Shared DOM controls, layout picker, chapter context and attachment form, settings sheet, icons, fonts and common reader styles | `dom.ts`, `layout-controls.ts`, `chapter-context.ts`, `chapter-attachment.ts`, `settings-sheet.ts`, `icons.ts`, `fonts.ts`, `fonts/`, `reader.css` | jsdom in tests |
+| `src/ui/components/` | Shared DOM controls, the side sheet and its stack, the slide that goes with it, layout picker, chapter context and attachment form, settings sheet, icons, fonts and common reader styles | `dom.ts`, `sheet.ts`, `motion.ts`, `layout-controls.ts`, `chapter-context.ts`, `chapter-attachment.ts`, `settings-sheet.ts`, `icons.ts`, `fonts.ts`, `fonts/`, `reader.css` | jsdom in tests |
 | `src/ui/preferences/` | Shared preference model, persistence and application | `settings.ts` | jsdom in tests |
 | `src/ui/opening/` | The optional page launcher | `launcher.ts` | jsdom in tests |
 | `src/background/` | The only holder of GitHub tokens; allowlisted API proxy; restores enabled sites | `worker.ts` | Node in tests |
@@ -185,7 +185,7 @@ Dependencies point inwards: `core` imports only types from `platforms/types.ts`;
 | `loadThreads?()` | Existing review threads, each with `reply?()` |
 | `overview?` | The request's own title and description |
 
-Errors meant for the reviewer are `ReaderError(message, hint, needsToken)`. A new platform implements this interface; the reader does not change. `project?` opens the review's repository at its base or head (`ReviewProject`, below).
+Errors meant for the reviewer are `ReaderError(message, hint, needsToken)`. A new platform implements this interface; the reader does not change. `project?` opens the review's repository at its head, as the change leaves it (`ReviewProject`, below).
 
 ## The `RepositorySource` contract
 

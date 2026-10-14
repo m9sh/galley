@@ -533,13 +533,17 @@ try {
   });
   await new Promise((resolve) => setTimeout(resolve, 150));
   await page.screenshot({ path: join(screenshots, 'galley-reader-context.png') });
-  // Mermaid renders locally and preserves both whole diagram versions for source comments.
+  // Mermaid renders locally. An edited flowchart is one drawing of its changes, with both whole versions a
+  // click away; comments on the drawing are about the new lines, and on the old version about the old ones.
   await page.waitForFunction(() =>
     [...document.querySelector('#galley-reader').shadowRoot.querySelectorAll('.mr-diagram-view')].every((el) => el.dataset.state === 'ready'),
   );
   const diagrams = await inspect(() => {
     const s = document.querySelector('#galley-reader').shadowRoot;
-    const versions = s.querySelector('.mr-diagram').querySelectorAll('[data-mr-side]');
+    const figure = s.querySelector('.mr-diagram');
+    const hidden = [...figure.querySelectorAll('.mr-diagram-version')].map((version) => version.getClientRects().length === 0);
+    figure.querySelector('.mr-diagram-sides').click();
+    const versions = figure.querySelectorAll('[data-mr-side]');
     const targets = [...versions].map((version) => {
       version.querySelector('img').dispatchEvent(new PointerEvent('pointerover', { bubbles: true, composed: true }));
       s.querySelector('.mr-comment-btn').click();
@@ -547,17 +551,24 @@ try {
     });
     s.activeElement.closest('.mr-composer').querySelector('.mr-cancel').click();
     const image = s.querySelector('.mr-diagram-view img');
+    const changes = new DOMParser().parseFromString(decodeURIComponent(figure.querySelector('.mr-diagram-changes img').src.split(',')[1]), 'image/svg+xml');
     return {
       count: s.querySelectorAll('.mr-diagram-view img').length,
+      hidden,
+      caption: figure.querySelector('.mr-diagram-changes .mr-diagram-caption').textContent,
+      added: [...changes.querySelectorAll('g.node.galleyAdded')].length,
+      gone: [...changes.querySelectorAll('path[id*="-galleyRemovedEdge"]')].length,
       targets,
       editors: s.querySelectorAll('.mr-composer').length,
       natural: image.width,
       shown: image.getBoundingClientRect().width,
     };
   });
-  assert.equal(diagrams.count, 3);
-  assert.equal(diagrams.targets[0], 'Comment on old lines 30–34');
-  assert.equal(diagrams.targets[1], 'Comment on lines 31–37');
+  assert.equal(diagrams.count, 4);
+  assert.deepEqual(diagrams.hidden, [false, true, true], 'Only the drawing of the changes shows until Show before and after');
+  assert.equal(diagrams.caption, 'Changes5 added1 removed');
+  assert.deepEqual([diagrams.added, diagrams.gone], [2, 1]);
+  assert.deepEqual(diagrams.targets, ['Comment on lines 31–37', 'Comment on old lines 30–34', 'Comment on lines 31–37']);
   assert.equal(diagrams.editors, 0, 'An editor left empty makes way for the next one; Cancel closes the other');
   // Diagrams are shown at the size they were laid out for, never stretched beyond it.
   assert.ok(diagrams.natural > 0 && diagrams.shown <= diagrams.natural + 1, JSON.stringify(diagrams));

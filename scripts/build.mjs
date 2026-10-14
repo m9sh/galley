@@ -99,8 +99,9 @@ async function assemble() {
   if (!bundles.every((bundle) => metafiles.has(bundle.name))) return;
   checkTokenIsolation();
   for (const { name } of bundles.filter((bundle) => bundle.shipped)) {
-    const leak = Object.keys(metafiles.get(name).inputs).find((input) => /(?:core|demo)\/project-map\.(?:ts|css)$/.test(input));
-    if (leak) throw new Error(`${name}: ${leak} is demo-only until ADR 0030 is accepted`);
+    // The map's demo prototype stays out of the extension; the extension's map is src/ui/library/map-view.ts (ADR 0030).
+    const leak = Object.keys(metafiles.get(name).inputs).find((input) => /demo\/project-map\.(?:ts|css)$/.test(input));
+    if (leak) throw new Error(`${name}: ${leak} is the demo prototype, not part of the extension`);
   }
   await mkdir(`${root}demo/build`, { recursive: true });
   for (const frame of FRAMES) {

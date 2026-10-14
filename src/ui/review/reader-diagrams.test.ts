@@ -24,3 +24,16 @@ it('makes room again whenever a diagram finishes drawing, when the document is s
   expect(drawn.renderDiagrams.mock.calls.length).toBeGreaterThan(shown);
   expect(frame).toHaveBeenCalled();
 });
+
+it('an edited flowchart shows its changes, and its two whole versions on request', async () => {
+  const fence = (flow: string) => `# Guide\n\n\`\`\`mermaid\nflowchart LR\n ${flow}\n\`\`\`\n`;
+  await ui.open(review({ load: async () => ({ base: fence('A --> B'), head: fence('A --> C') }) }));
+  const figure = ui.q('.mr-diagram.has-changes');
+  const sides = ui.q<HTMLButtonElement>('.mr-diagram-sides');
+  sides.click();
+  expect(figure.classList).toContain('is-sides');
+  expect([sides.getAttribute('aria-expanded'), sides.textContent]).toStrictEqual(['true', 'Hide before and after']);
+  sides.click();
+  expect(figure.classList).not.toContain('is-sides');
+  expect([sides.getAttribute('aria-expanded'), sides.textContent]).toStrictEqual(['false', 'Show before and after']);
+});

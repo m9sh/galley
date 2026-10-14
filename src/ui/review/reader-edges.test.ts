@@ -515,7 +515,8 @@ it('falls back to a safe text size for a corrupt stored size and accepts validat
   await ui.open(review());
   expect(ui.q('.mr-text-size').textContent).toBe('20 px');
   expect(ui.q('.mr-root').style.getPropertyValue('--body-size')).toBe('20px');
-  for (const name of ['bg', 'fg', 'muted', 'soft', 'rule', 'code-bg', 'accent']) ui.q('.mr-root').style.setProperty(`--${name}`, '#123456');
+  for (const name of ['bg', 'fg', 'muted', 'soft', 'rule', 'code-bg', 'accent', 'add', 'mod', 'del'])
+    ui.q('.mr-root').style.setProperty(`--${name}`, '#123456');
   ui.key('a');
   expect(ui.q('.mr-root').style.getPropertyValue('--accent')).toBe('#123456');
   const track = ui.q('.mr-palette-track');

@@ -19,38 +19,62 @@ const showMap = async () => {
   ui.click('[data-view="map"]');
   await vi.waitFor(() => expect(ui.q('.mr-map-status').textContent).toMatch(/^Built from all/));
 };
+const card = (id: string) => ui.all('.mr-pm-place').find((place) => place.dataset.id === id)!;
+const centre = () => ui.q('.mr-pm-place[data-lane="here"]');
+const cards = (lane: 'incoming' | 'outgoing') => ui.all(`.mr-pm-place[data-lane="${lane}"]`).map((place) => place.dataset.id);
+const pick = (id: string) => card(id).click();
 
-it('the map shows one document, what links to it and what it links to, each with the links as evidence', async () => {
+it('the map puts a document between what links to it and what it links to; choosing one previews it beside the map', async () => {
   await ui.open(repository(handbook, { start: { path: decision, folder: false } }));
   await showMap();
   expect(ui.q('.mr-repo-read').hidden).toBe(true);
   expect(ui.q('[data-view="map"]').getAttribute('aria-pressed')).toBe('true');
+  expect(ui.q('.mr-root').classList).toContain('is-map-space');
   expect(ui.text('.mr-map-status')).toBe('Built from all 3 documents at c0ffee1.');
-  expect(ui.text('.mr-map-title')).toBe('ADR 1: Use Markdown');
-  expect(ui.text('.mr-map-crumbs')).toBe('In docs/adr/');
-  expect(ui.text('.mr-map-facts')).toBe('Decision Accepted');
-  expect(ui.q('.mr-map-facts .mr-chip').title).toBe('Decision, guessed from its path');
-  // A type is a fact, not a change: a chip without a change colour.
-  expect(ui.q('.mr-map-facts .mr-chip').className).toBe('mr-chip');
-  const [from, to] = ui.all('.mr-map-col');
-  expect(from.querySelector('h3')!.textContent).toBe('Linked from (2)');
-  expect([...from.querySelectorAll('.mr-repo-edge')].map(words)).toStrictEqual([
-    'Handbook Overview the decision in “Handbook”, line 3',
-    'Reading Spec the decision in “Goals”, line 10',
-  ]);
-  expect(to.querySelector('h3')!.textContent).toBe('Links to (2)');
-  // Every connection opens its evidence in the reader, at the paragraph that holds the link.
-  ui.press('in “Goals”, line 10', '.mr-repo-proof');
+  expect(words(centre())).toBe('ADR 1 Use Markdown docs/adr You are here');
+  expect(centre().getAttribute('aria-label')).toBe('ADR 1: Use Markdown, Decision, docs/adr/0001-use-markdown.md, you are here');
+  expect(ui.all('.mr-pm-lane-head').map(words)).toStrictEqual(['Linked from 0', 'In focus', 'Links to 2']);
+  // Both were drawn as links before they were read; they link back, so they stay put with an arrowhead at each end.
+  expect(cards('outgoing')).toStrictEqual(['README.md', 'docs/specs/reading.md']);
+  expect(ui.text('[data-lane="incoming"] .mr-pm-empty')).toBe('Every document that links here is also one it links to.');
+  expect(ui.all('.mr-pm-edge').map((edge) => edge.querySelectorAll('.mr-pm-arrow').length)).toStrictEqual([2, 2]);
+
+  // Choosing a place previews it in a sheet beside the map; the middle stays where it was.
+  pick('docs/specs/reading.md');
+  await vi.waitFor(() => expect(ui.q('.mr-pm-preview')).toBeTruthy());
+  expect(ui.q('.mr-pm-sheet').hidden).toBe(false);
+  expect(ui.q('.mr-pm-sheet').getAttribute('aria-label')).toBe('Document preview');
+  expect(ui.text('.mr-pm-sheet .mr-sheet-header')).toBe('Spec Read Close details Reading docs/specs/reading.md · c0ffee1 Preview Links 2');
+  expect(ui.text('.mr-pm-preview')).toBe('Goals Read the decision.');
+  expect(card('docs/specs/reading.md').getAttribute('aria-pressed')).toBe('true');
+  expect(words(centre())).toBe('ADR 1 Use Markdown docs/adr You are here');
+  // Links, a tab away, say how it connects to the middle, with each link as evidence.
+  ui.click('.mr-pm-tab[data-tab="links"]');
+  expect(ui.shadow().activeElement).toBe(ui.q('.mr-pm-tab[data-tab="links"]'));
+  expect(ui.text('.mr-pm-why')).toBe(
+    'How it connects to Use Markdown Use Markdown links here the spec docs/adr/0001-use-markdown.md · Context · line 9 · c0ffee1 Read source paragraph This links to Use Markdown the decision docs/specs/reading.md · Goals · line 10 · c0ffee1 Read source paragraph',
+  );
+  ui.click('.mr-pm-why [data-act="evidence"][data-line="10"]');
   await ui.settled();
   expect(ui.text('.mr-lead')).toBe('Reading');
   expect(ui.all('.mr-content p').find((p) => p.textContent === 'Read the decision.')!.classList).toContain('mr-flash');
-  // Back in the map, a neighbour becomes the middle.
+  expect(ui.q('.mr-root').classList).not.toContain('is-map-space');
+
+  // Back on the map, everything is where the reader left it, and the document being read says so.
   ui.click('[data-view="map"]');
-  expect(ui.text('.mr-map-title')).toBe('Reading');
-  ui.press('ADR 1: Use Markdown', '.mr-repo-map .mr-repo-edge-doc');
-  expect(ui.text('.mr-map-title')).toBe('ADR 1: Use Markdown');
-  expect(ui.shadow().activeElement).toBe(ui.q('.mr-map-title'));
-  ui.press('Read', '.mr-map-center button');
+  expect(words(centre())).toBe('ADR 1 Use Markdown docs/adr');
+  expect(words(card('docs/specs/reading.md'))).toBe('Spec Reading docs/specs You are here');
+  expect(ui.q('.mr-pm-sheet').hidden).toBe(false);
+  ui.press('Back to my place');
+  expect(words(centre())).toBe('Spec Reading docs/specs You are here');
+  expect(cards('incoming')).toStrictEqual([decision]);
+  expect(ui.text('.mr-pm-sheet .mr-sheet-title')).toBe('Reading');
+  // Show its connections makes the chosen document the middle; Read opens the whole document.
+  pick(decision);
+  ui.click('.mr-pm-sheet [data-act="pm-focus"]');
+  expect(words(centre())).toBe('ADR 1 Use Markdown docs/adr');
+  expect(ui.all('.mr-pm-sheet [data-act="pm-focus"]')).toHaveLength(0);
+  ui.press('Read', '.mr-pm-sheet .mr-sheet-actions button');
   await ui.settled();
   expect(ui.text('.mr-lead')).toBe('ADR 1: Use Markdown');
   // Backlinks below the document come from the same index.
@@ -70,15 +94,23 @@ it('links the map cannot follow are listed with the link that makes them', async
   const source = repository(files, { start: { path: 'a.md', folder: false } });
   await ui.open(source);
   await showMap();
-  expect(ui.all('.mr-map-problems li').map(words)).toStrictEqual([
+  pick('a.md');
+  ui.click('.mr-pm-tab[data-tab="links"]');
+  expect(ui.all('.mr-pm-sheet .mr-map-problems li').map(words)).toStrictEqual([
     'gone line 3: gone.md is not among the listed documents.',
     'no section line 3: “nope” is not a section of b.md.',
     'section line 3: “also-missing” is not a section of a.md.',
   ]);
+  // A document with nothing to follow has no such list.
+  pick('b.md');
+  ui.click('.mr-pm-tab[data-tab="links"]');
+  expect(ui.all('.mr-map-problems')).toHaveLength(0);
   ui.close();
   vi.mocked(source.discover).mockResolvedValue(listing(['a.md', 'b.md'], ['GitHub listed only part of docs/.']));
   await ui.open(source);
   await showMap();
+  pick('a.md');
+  ui.click('.mr-pm-tab[data-tab="links"]');
   expect(ui.text('.mr-map-problems li')).toBe('gone line 3: gone.md is not among the listed documents, which are incomplete.');
   expect(ui.text('.mr-map-status .mr-repo-limit')).toBe('GitHub listed only part of docs/.');
 });
@@ -110,11 +142,25 @@ it('a large repository is read for the map in bounded passes that can be stopped
   expect(ui.text('.mr-map-status')).toBe(
     `Built from ${INDEX_BATCH + 1} of 164 documents at c0ffee1. Links from the others are not shown yet. Index more 1 document could not be read. 2 documents are too large to read.`,
   );
-  expect(ui.text('.mr-map-col h3')).toBe(`Linked from (${INDEX_BATCH - 3})`);
-  // Long columns show the first few, and the rest on request.
-  expect(ui.all('.mr-map-col:first-child .mr-repo-edge:not([hidden])')).toHaveLength(8);
-  ui.press(`Show ${INDEX_BATCH - 11} more`);
-  expect(ui.all('.mr-map-col:first-child .mr-repo-edge:not([hidden])')).toHaveLength(INDEX_BATCH - 3);
+  // The first document it links to was drawn before it was read, and keeps its place on the right.
+  expect(ui.text('[data-lane="incoming"] .mr-pm-lane-head')).toBe(`Linked from ${INDEX_BATCH - 4}`);
+  expect(cards('outgoing')).toStrictEqual(['d000.md']);
+  // A lane shows its first eight; the rest are in List, kept to this neighbourhood.
+  expect(cards('incoming')).toHaveLength(8);
+  ui.press(`Show ${INDEX_BATCH - 12} more in List`, '.mr-pm button');
+  expect(ui.q('.mr-pm-canvas').hidden).toBe(true);
+  expect(ui.q('[data-act="pm-view-list"]').getAttribute('aria-pressed')).toBe('true');
+  expect(ui.text('.mr-pm-filter')).toBe(`${INDEX_BATCH - 3} documents connected to Top`);
+  expect(ui.all('.mr-pm-list .mr-pm-place')).toHaveLength(100);
+  ui.press(`Show ${INDEX_BATCH - 103} more of ${INDEX_BATCH - 3}`);
+  expect(ui.all('.mr-pm-list .mr-pm-place')).toHaveLength(INDEX_BATCH - 3);
+  ui.click('[data-act="pm-clear-near"]');
+  expect(ui.all('.mr-pm-filter')).toHaveLength(0);
+  expect(ui.shadow().activeElement).toBe(ui.q('.mr-pm-list .mr-pm-place'));
+  expect(ui.text('.mr-pm-list .mr-pm-more')).toBe('Show 64 more of 164');
+  // Each row says where it is, and what is not read yet says so.
+  expect(words(ui.q('.mr-pm-list .mr-pm-place[data-id="big.md"]'))).toBe('Document big big.md · Too large to read 0 linked from · 0 links to');
+  expect(ui.text('.mr-pm-group[aria-label="Top folder"] .mr-pm-folder')).toBe('Top folder 100 documents');
   // A pass the reader stops leaves what it read; Index more continues.
   const slow = deferred<string>();
   source.load = vi.fn(() => slow.promise);
@@ -128,6 +174,10 @@ it('a large repository is read for the map in bounded passes that can be stopped
   ui.press('Index more');
   await vi.waitFor(() => expect(ui.text('.mr-map-status')).toMatch(/^Built from all 164 documents/));
   expect(ui.text('.mr-map-status')).toBe('Built from all 164 documents at c0ffee1. 1 document could not be read. 2 documents are too large to read.');
+  ui.click('[data-act="pm-view-map"]');
+  expect(ui.q('.mr-pm-canvas').hidden).toBe(false);
+  expect(ui.q('.mr-pm-list').hidden).toBe(true);
+  expect(ui.q('[data-act="pm-view-map"]').getAttribute('aria-pressed')).toBe('true');
 });
 
 it('documents that could not be read, or are too large, say so in the map', async () => {
@@ -138,14 +188,28 @@ it('documents that could not be read, or are too large, say so in the map', asyn
   });
   await ui.open(source);
   await showMap();
-  ui.press('b', '.mr-repo-map .mr-repo-edge-doc');
-  expect(ui.text('.mr-map-facts')).toBe('Document Could not be read');
-  ui.press('A', '.mr-repo-map .mr-repo-edge-doc');
-  ui.press('c', '.mr-repo-map .mr-repo-edge-doc');
-  expect(ui.text('.mr-map-facts')).toBe('Document Too large to read');
+  expect(cards('outgoing')).toStrictEqual(['b.md', 'c.md']);
+  expect(words(card('b.md'))).toBe('Document b Could not be read');
+  expect(words(card('c.md'))).toBe('Document c Too large to read');
   expect(ui.text('.mr-map-status')).toContain('1 document could not be read. 1 document is too large to read.');
-  ui.press('A', '.mr-repo-map .mr-repo-edge-doc');
-  ui.press('Read', '.mr-map-center button');
+  // There is nothing to preview: the sheet opens on its links, and says what it knows.
+  pick('b.md');
+  expect(ui.q<HTMLButtonElement>('.mr-pm-tab[data-tab="preview"]').disabled).toBe(true);
+  expect(ui.q('.mr-pm-tab[data-tab="links"]').getAttribute('aria-selected')).toBe('true');
+  expect(ui.text('.mr-pm-sheet .mr-sheet-body > .mr-pm-note')).toBe('Not read: only the links to it are shown.');
+  expect(ui.text('.mr-pm-sheet .mr-map-facts')).toBe('Document Could not be read');
+  expect(ui.text('.mr-pm-link-group[aria-label="Links to"]')).toBe('Links to 0 No links to other listed documents.');
+  ui.click('.mr-pm-sheet [data-act="pm-focus"]');
+  expect(ui.text('[data-lane="outgoing"] .mr-pm-empty')).toBe('Its links could not be read.');
+  pick('a.md');
+  ui.click('.mr-pm-sheet [data-act="pm-focus"]');
+  pick('c.md');
+  expect(ui.text('.mr-pm-sheet .mr-map-facts')).toBe('Document Too large to read');
+  ui.click('.mr-pm-sheet .mr-sheet-close');
+  expect(ui.q('.mr-pm-sheet').hidden).toBe(true);
+  expect(ui.shadow().activeElement).toBe(card('c.md'));
+  pick('a.md');
+  ui.press('Read', '.mr-pm-sheet .mr-sheet-actions button');
   await ui.settled();
   expect(ui.text('.mr-repo-backlinks')).toBe('Linked from No other document links here.');
 });
@@ -153,9 +217,15 @@ it('documents that could not be read, or are too large, say so in the map', asyn
 it('the reader can correct a document’s type, or a folder’s, and keep it with their notes', async () => {
   await ui.open(repository(handbook, { start: { path: decision, folder: false } }));
   await showMap();
+  pick(decision);
+  ui.click('.mr-pm-tab[data-tab="links"]');
   const select = () => ui.q<HTMLSelectElement>('[data-act="kind"]');
   const folderWide = () => ui.q('[data-act="kind-folder"]');
   // A settings row: Type, with where it came from, and a switch for the whole folder.
+  expect(ui.text('.mr-map-facts')).toBe('Decision Accepted');
+  expect(ui.q('.mr-map-facts .mr-chip').title).toBe('Decision, guessed from its path');
+  // A type is a fact, not a change: a chip without a change colour.
+  expect(ui.q('.mr-map-facts .mr-chip').className).toBe('mr-chip');
   expect(words(select().closest('.mr-set-row')!.firstElementChild!)).toBe('Type Decision, guessed from its path.');
   expect(select().getAttribute('aria-labelledby')).toBe(select().closest('.mr-set-row')!.firstElementChild!.id);
   expect(words(folderWide().closest('.mr-set-row')!)).toBe('Everything in docs/adr/ The same type for the whole folder');
@@ -164,6 +234,7 @@ it('the reader can correct a document’s type, or a folder’s, and keep it wit
   select().dispatchEvent(new Event('change', { bubbles: true }));
   expect(ui.shadow().activeElement).toBe(select());
   expect(ui.text('.mr-map-facts')).toBe('Runbook Accepted');
+  expect(centre().getAttribute('aria-label')).toBe('ADR 1: Use Markdown, Runbook, docs/adr/0001-use-markdown.md, you are here');
   // The reader's own type carries the accent, like everything else of theirs.
   expect(ui.q('.mr-map-facts .mr-chip').classList).toContain('is-own');
   expect(ui.text('.mr-map-kind small')).toBe('Set by you. Kept with your notes when you save them.');
@@ -180,8 +251,8 @@ it('the reader can correct a document’s type, or a folder’s, and keep it wit
   ui.click('[data-act="kind-folder"]');
   expect(folderWide().getAttribute('aria-checked')).toBe('false');
   // The README sits at the top: there is no folder to apply a type to.
-  ui.press('Handbook', '.mr-repo-map .mr-repo-edge-doc');
-  expect(ui.text('.mr-map-crumbs')).toBe('In the top folder');
+  pick('README.md');
+  ui.click('.mr-pm-tab[data-tab="links"]');
   expect(ui.all('[data-act="kind-folder"]')).toHaveLength(0);
   expect(ui.text('.mr-map-kind small')).toBe('Overview, guessed from its path.');
   select().value = 'other';
@@ -281,7 +352,7 @@ it('a listing that fails in the map can be tried again; the read view is where i
   ui.click('[data-view="map"]');
   await vi.waitFor(() => expect(ui.text('.mr-repo-map .mr-message')).toBe('GitHub API rate limit reached. Wait a few minutes. Try again'));
   ui.press('Try again', '.mr-repo-map button');
-  await vi.waitFor(() => expect(ui.text('.mr-map-title')).toBe('ADR 1: Use Markdown'));
+  await vi.waitFor(() => expect(words(centre())).toBe('ADR 1 Use Markdown docs/adr You are here'));
   ui.click('[data-view="read"]');
   expect(ui.text('.mr-lead')).toBe('ADR 1: Use Markdown');
   // Leaving the map before the listing arrives keeps the reader in the document.
@@ -450,8 +521,9 @@ it('evidence without link text or a section is still named, and opens where the 
   const files = { 'a.md': '[](b.md) at the top, and [](gone.md).\n\n# A', 'b.md': '# B' };
   await ui.open(repository(files, { start: { path: 'b.md', folder: false } }));
   await showMap();
-  expect(ui.text('.mr-map-col .mr-repo-proof')).toBe('b.md line 1');
-  ui.press('A', '.mr-repo-map .mr-repo-edge-doc');
+  pick('a.md');
+  ui.click('.mr-pm-tab[data-tab="links"]');
+  expect(ui.text('.mr-pm-why .mr-pm-proof')).toBe('A link without text a.md · Document · line 1 · c0ffee1 Read source paragraph');
   expect(ui.text('.mr-map-problems li')).toBe('gone.md line 1: gone.md is not among the listed documents.');
   ui.click('.mr-map-problems .mr-repo-proof');
   await ui.settled();
@@ -492,4 +564,50 @@ it('a repository that had no documents starts again when a newer commit has some
   vi.mocked(source.refresh).mockResolvedValueOnce(repository(handbook, { commit: 'beef0000beef0000beef0000beef0000beef0000' }));
   ui.click('[data-act="refresh"]');
   await vi.waitFor(() => expect(ui.text('.mr-doc h1')).toBe('Handbook'));
+});
+
+it('the sheet previews a document as the reader would, diagrams as their source; links in it preview in place, and Escape closes it', async () => {
+  const later = { b: deferred<string>(), c: deferred<string>() };
+  const files: Record<string, string> = { 'a.md': '# A\n\nSee [b](b.md) and [c](c.md).', 'b.md': '', 'c.md': '' };
+  const source = repository(files, { start: { path: 'a.md', folder: false } });
+  const load = source.load;
+  source.load = vi.fn((path: string) => (path === 'b.md' ? later.b.promise : path === 'c.md' ? later.c.promise : load(path)));
+  await ui.open(source);
+  ui.click('[data-view="map"]');
+  await vi.waitFor(() => expect(ui.text('.mr-map-status')).toContain('Stop reading'));
+  ui.press('Stop reading');
+  expect(cards('outgoing')).toStrictEqual(['b.md', 'c.md']);
+  expect(words(card('c.md'))).toBe('Document c Not read yet');
+  // Not read yet, it can still be previewed: reading it fails, and the sheet says so.
+  pick('c.md');
+  expect(ui.text('.mr-pm-sheet .mr-sheet-body')).toBe('Opening the document…');
+  // Its type and status come once it has been read.
+  ui.click('.mr-pm-tab[data-tab="links"]');
+  expect(ui.all('.mr-pm-about')).toHaveLength(0);
+  ui.click('.mr-pm-tab[data-tab="preview"]');
+  later.c.reject(new Error('offline'));
+  await vi.waitFor(() => expect(ui.text('.mr-pm-sheet .mr-sheet-body')).toBe('This document cannot be shown here. Read it to see why.'));
+  // A preview has the reader's typography; a diagram shows its source, and the title is in the sheet's header.
+  pick('b.md');
+  later.b.resolve('# B\n\nBack to [a](a.md), or [the code](src/x.ts).\n\n```mermaid\ngraph TD\n  X --> Y\n```\n');
+  await vi.waitFor(() => expect(ui.q('.mr-pm-preview')).toBeTruthy());
+  expect(ui.all('.mr-pm-preview h1')).toHaveLength(0);
+  expect(ui.q('.mr-pm-preview .mr-diagram-view').hidden).toBe(true);
+  expect(ui.q<HTMLDetailsElement>('.mr-pm-preview .mr-diagram-source').open).toBe(true);
+  // A link to a listed document previews it in the sheet; any other link is the reader's to follow.
+  const other = ui.all<HTMLAnchorElement>('.mr-pm-preview a[data-mr-path]').find((a) => a.dataset.mrPath === 'src/x.ts')!;
+  other.addEventListener('click', (event) => event.preventDefault());
+  other.click();
+  expect(ui.text('.mr-pm-sheet .mr-sheet-title')).toBe('b');
+  ui.all<HTMLAnchorElement>('.mr-pm-preview a[data-mr-path]')
+    .find((a) => a.dataset.mrPath === 'a.md')!
+    .click();
+  expect(ui.text('.mr-pm-sheet .mr-sheet-title')).toBe('A');
+  // The map's own keys, then Escape: it closes the sheet, and the reader stays open.
+  ui.q('.mr-pm-canvas').focus();
+  ui.key('0');
+  ui.key('Escape');
+  expect(ui.q('.mr-pm-sheet').hidden).toBe(true);
+  expect(ui.q('#galley-repo-reader')).toBeNull();
+  expect(document.querySelector('#galley-repo-reader')).toBeTruthy();
 });

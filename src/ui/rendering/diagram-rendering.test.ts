@@ -52,18 +52,21 @@ it('renders old and new versions in a sandboxed frame with a locked configuratio
       secure: expect.arrayContaining(['fontURL', 'themeCSS']),
     }),
   );
-  expect(engine.render.mock.calls[0]).toEqual([expect.stringMatching(/^galley-diagram-\d+$/), 'flowchart LR\n A --> C\n']);
+  // The drawing of the changes comes first, then the two whole versions.
+  expect(engine.render.mock.calls[0]).toEqual([expect.stringMatching(/^galley-diagram-\d+$/), expect.stringContaining('A  galleyAddedEdge1@--> B')]);
   pending.resolve({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><script>evil()</script><path d="M0 0"/></svg>' });
   await vi.waitFor(() => expect(d.versions.every((v) => v.view.dataset.state === 'ready')).toBe(true));
-  expect(engine.render).toHaveBeenCalledTimes(2);
+  expect(engine.render).toHaveBeenCalledTimes(3);
+  expect(engine.render.mock.calls[1][1]).toBe('flowchart LR\n A --> C\n');
   expect(document.querySelectorAll('iframe')).toHaveLength(1);
   expect(decodeURIComponent(d.versions[0].view.querySelector('img')!.src)).not.toContain('<script>');
-  expect(d.versions[0].view.querySelector('img')!.alt).toContain('Old version');
+  expect(d.versions[0].view.querySelector('img')!.alt).toBe('Mermaid diagram, changes marked: 2 added, 2 removed. View source below.');
+  expect(d.versions[1].view.querySelector('img')!.alt).toBe('Mermaid diagram, old version. View source below.');
   d.versions[0].view.querySelector('img')!.dispatchEvent(new Event('load'));
-  expect(changed).toHaveBeenCalledTimes(3);
+  expect(changed).toHaveBeenCalledTimes(4);
   renderDiagrams([d], false, changed);
   await Promise.resolve();
-  expect(engine.render).toHaveBeenCalledTimes(2);
+  expect(engine.render).toHaveBeenCalledTimes(3);
 });
 
 it('keeps the frame inside the reader when diagrams are in a shadow root', async () => {
@@ -195,7 +198,18 @@ it('skips detached diagrams, including those closed while rendering is pending',
 it('draws in the reader’s palette, redraws when the palette changes, and shows the drawing at its own size', async () => {
   const { renderDiagrams } = await import('./diagrams.ts');
   const d = await diagram();
-  const palette = { bg: '#fffefa', fg: '#202d25', muted: '#505c52', soft: '#f1f4e9', rule: '#d9dfd2', code: '#f6f7ef', accent: '#506b38' };
+  const palette = {
+    bg: '#fffefa',
+    fg: '#202d25',
+    muted: '#505c52',
+    soft: '#f1f4e9',
+    rule: '#d9dfd2',
+    code: '#f6f7ef',
+    accent: '#506b38',
+    add: '#3b6a2b',
+    mod: '#8f5d00',
+    del: '#9c3a35',
+  };
   engine.render.mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 420.5 96"><path d="M0 0"/></svg>' });
   renderDiagrams([d], false, vi.fn(), palette);
   await connect();
@@ -205,7 +219,7 @@ it('draws in the reader’s palette, redraws when the palette changes, and shows
   );
   const zoom = d.versions[0].view.querySelector<HTMLButtonElement>('.mr-diagram-zoom')!;
   expect(zoom.dataset.act).toBe('zoom-diagram');
-  expect(zoom.getAttribute('aria-label')).toBe('Enlarge the new version of the diagram');
+  expect(zoom.getAttribute('aria-label')).toBe('Enlarge the diagram, new version');
   expect([zoom.querySelector('img')!.width, zoom.querySelector('img')!.height]).toEqual([421, 96]);
   renderDiagrams([d], false, vi.fn(), palette);
   await Promise.resolve();

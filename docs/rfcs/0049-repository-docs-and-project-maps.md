@@ -6,7 +6,7 @@ discussion: https://github.com/m9sh/galley/issues/49
 theme: Read the project, understand the change
 phase: Exploratory plan; separate from the three proposed core review RFCs
 delivery: Phased experiments and implementation gates; owners, effort and dates remain to be estimated
-progress: Phases 1–5 implemented in https://github.com/m9sh/galley/pull/54 (repository reader, project map with architecture, infrastructure and decision lenses, private notes, Project docs from reviews); reader validation sessions, self-hosted GitLab version checks and pilot targets remain; the spatial project map continues in https://github.com/m9sh/galley/issues/68, with a demo-only proposal and layout spike pending ADR 0030 review and voluntary reader sessions
+progress: Phases 1–5 implemented in https://github.com/m9sh/galley/pull/54 (repository reader, project map with architecture, infrastructure and decision lenses, private notes, Project docs from reviews); reader validation sessions, self-hosted GitLab version checks and pilot targets remain; the spatial project map continues in https://github.com/m9sh/galley/issues/68: ADR 0030 is accepted and the extension's Documents map follows it (map and List, details sheet, evidence); from a review, the library is read in the review's sheet beside Chapters (linked docs per chapter, search, each document opened on top of where it was chosen), and This review is the Documents map around what the review changes as the change leaves the repository; search on the map, declared systems, chapters and review context on the map, and voluntary reader sessions remain
 adrs: [1, 9, 11, 19, 24, 25, 26, 27, 28, 30]
 ---
 
@@ -121,7 +121,7 @@ Begin with manual notes and connections. Optional automated suggestions need the
 
 ## Phase 5 — Connect project understanding to reviews
 
-- [x] From an MR, open relevant project docs/map context pinned to a clearly selected base or head revision.
+- [x] From an MR, open relevant project docs/map context pinned to a clearly stated revision: the head, as the change leaves them (what came before is the diff's job).
 - [x] Return to the original review position, draft and question.
 - [x] Link changed paths to explicitly related specs, ADRs, components and runbooks.
 - [x] Flag “related evidence changed” or “worth checking” without automatically claiming that a document is wrong.

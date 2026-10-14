@@ -350,3 +350,24 @@ export async function readForIndex(
   await Promise.all(Array.from({ length: INDEX_CONCURRENCY }, worker));
   return { read, failed, skipped };
 }
+
+const count = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString('en')} ${n === 1 ? one : many}`;
+
+/**
+ * What an index built so far can show, in the words the library and Review chapters share: how many documents it
+ * was built from, then what the listing left out and what could not be read. A zero is never a claim about the rest.
+ */
+export function indexCoverage(index: ProjectIndex, commit: string, unread: { limits: string[]; failed: number; skipped: number }): string[] {
+  const read = index.docs.size;
+  const total = index.listed.length;
+  const at = commit.slice(0, 7);
+  const lines = [
+    read >= total
+      ? `Built from all ${count(total, 'document')} at ${at}.`
+      : `Built from ${read.toLocaleString('en')} of ${count(total, 'document')} at ${at}. Links from the others are not shown yet.`,
+    ...unread.limits,
+  ];
+  if (unread.failed) lines.push(`${count(unread.failed, 'document')} could not be read.`);
+  if (unread.skipped) lines.push(`${count(unread.skipped, 'document is', 'documents are')} too large to read.`);
+  return lines;
+}
