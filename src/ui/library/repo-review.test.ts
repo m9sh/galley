@@ -2,7 +2,7 @@ import { expect, it, vi } from 'vitest';
 import { deferred } from '../../testing/reader.ts';
 import { handbook, listing, repoHarness, repository } from '../../testing/repo.ts';
 import { readConfig } from '../sandbox/config-frame.ts';
-import type { ReviewContext } from './repo-reader.ts';
+import type { ReviewContext } from './repo-reader-shared.ts';
 import { ChapterContext } from '../../core/review-context.ts';
 
 const drawn = vi.hoisted(() => ({ renderDiagrams: vi.fn(), highlightCode: vi.fn(async () => {}) }));
