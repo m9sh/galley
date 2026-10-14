@@ -3,7 +3,7 @@ import type { DocKind } from '../../core/docindex.ts';
 import type { RepositorySource } from '../../platforms/types.ts';
 import { isPalette, PALETTE_KEYS, type DiagramPalette } from '../rendering/diagram-palette.ts';
 import { renderDiagrams } from '../rendering/diagrams.ts';
-import { button, h } from '../components/dom.ts';
+import { button, h, loadingLines } from '../components/dom.ts';
 import { LAYOUT_NAMES } from '../components/layout-controls.ts';
 import { loadImage } from '../rendering/render.ts';
 import { DEFAULT_SETTINGS, updateSettings, TEXT_SIZES, type Settings } from '../preferences/settings.ts';
@@ -33,10 +33,7 @@ class RepoReader extends RepoReaderLenses {
   // ---------------------------------------------------------------- chrome
 
   protected skeleton(): HTMLElement {
-    const s = h('div', 'mr-skeleton');
-    // biome-ignore lint/plugin: fixed placeholder markup.
-    s.innerHTML = '<i class="h"></i><i></i><i></i><i class="s"></i><i></i><i></i><i></i><i class="s"></i>';
-    return s;
+    return loadingLines();
   }
 
   protected message(title: string, body: string, extra: Node[] = []): void {

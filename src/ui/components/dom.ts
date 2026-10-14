@@ -5,6 +5,34 @@ import { icons } from './icons.ts';
  * (docs/design/patterns.md): chips, settings rows, switches, selects and text fields.
  */
 
+/**
+ * Markup bundled with the extension (icons, templates, placeholders), parsed in an inert document and then moved
+ * into the page. It is never document content: that goes through `sanitize()` or becomes text nodes (ADR 0006,
+ * ADR 0033). Writing a string with `innerHTML` is a lint error, and so is parsing one anywhere else.
+ */
+export function markup(html: string): DocumentFragment {
+  const body = new DOMParser().parseFromString(`<body>${html}`, 'text/html').body;
+  const fragment = document.createDocumentFragment();
+  for (const node of body.childNodes) fragment.append(document.importNode(node, true));
+  return fragment;
+}
+
+const parsedIcons = new Map<string, DocumentFragment>();
+
+/** One of Galley's bundled icons (`icons.ts`) as a new node. Each icon is parsed once and copied after that. */
+export function glyph(svg: string): DocumentFragment {
+  const parsed = parsedIcons.get(svg) ?? markup(svg);
+  parsedIcons.set(svg, parsed);
+  return parsed.cloneNode(true) as DocumentFragment;
+}
+
+/** The grey lines shown while something loads. */
+export function loadingLines(): HTMLElement {
+  const lines = h('div', 'mr-skeleton');
+  lines.replaceChildren(markup('<i class="h"></i><i></i><i></i><i class="s"></i><i></i><i></i><i></i><i class="s"></i>'));
+  return lines;
+}
+
 export function h<K extends keyof HTMLElementTagNameMap>(tag: K, className = '', text?: string): HTMLElementTagNameMap[K] {
   const el = document.createElement(tag);
   if (className) el.className = className;
@@ -58,8 +86,7 @@ export function switchButton(act: string, checked: boolean): HTMLButtonElement {
 /** A native select with the reader's chevron. */
 export function selectField(select: HTMLSelectElement): HTMLElement {
   const box = h('div', 'mr-font-select');
-  // biome-ignore lint/plugin: a bundled icon constant.
-  box.insertAdjacentHTML('beforeend', icons.chevronDown);
+  box.append(glyph(icons.chevronDown));
   box.prepend(select);
   return box;
 }

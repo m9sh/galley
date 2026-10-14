@@ -5,7 +5,7 @@ import type { ProjectIndex, Corrections } from '../../core/docindex.ts';
 import type { AnchorState } from '../../core/notes.ts';
 import type { RepositorySource } from '../../platforms/types.ts';
 import { loadReaderFonts } from '../components/fonts.ts';
-import { button, h } from '../components/dom.ts';
+import { button, h, glyph, markup } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
 import { LibraryLayout } from '../components/layout-controls.ts';
 import css from '../components/reader-styles.ts';
@@ -105,8 +105,7 @@ export abstract class RepoReaderBase {
     this.changed = new Set(review?.chapters.flatMap((chapter) => chapter.paths));
     loadReaderFonts(document);
     this.host.id = __GALLEY_DEV__ ? 'galley-repo-reader-dev' : 'galley-repo-reader';
-    // biome-ignore lint/plugin: the bundled stylesheets and a fixed template; no document content.
-    this.shadow.innerHTML = `<style>${css}${repoCss}</style>${TEMPLATE}`;
+    this.shadow.replaceChildren(markup(`<style>${css}${repoCss}</style>${TEMPLATE}`));
     this.root = this.q('.mr-root');
     // Both maps' details sheets look the same (mr-map-sheet); each is told apart by its own class.
     const sheet = (className: string, closeLabel: string, dismiss: () => void) => {
@@ -139,8 +138,7 @@ export abstract class RepoReaderBase {
       this.q('[data-view="chapters"]').hidden = true;
       const chapter = review.chapters.find((chapter) => chapter.id !== undefined && chapter.id === review.entry?.chapter);
       const back = button('', 'close', 'mr-btn mr-repo-return');
-      // biome-ignore lint/plugin: a bundled icon constant, never document content.
-      back.innerHTML = icons.chevronLeft;
+      back.replaceChildren(glyph(icons.chevronLeft));
       back.append(h('span', 'mr-label-long', 'Return to review'), h('span', 'mr-label-short', 'Review'));
       back.setAttribute('aria-label', 'Return to review (Esc)');
       back.title = `Back to ${chapter ? chapter.title : review.title} in the review (Esc)`;

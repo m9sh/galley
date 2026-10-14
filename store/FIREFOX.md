@@ -24,7 +24,7 @@ The validator turns two things into errors, and the Firefox build now fails if e
 ## First submission
 
 1. **You:** create a free developer account at addons.mozilla.org and turn on two-factor authentication.
-2. **Submit a New Add-on** → **On this site** (listed). Upload `galley-firefox-<version>.zip`; the validator runs on upload. It should report no errors. If it warns about `innerHTML`, that is expected and is explained in the reviewer notes below.
+2. **Submit a New Add-on** → **On this site** (listed). Upload `galley-firefox-<version>.zip`; the validator runs on upload. It should report no errors. It reports 14 warnings, all in unmodified third-party code, which the reviewer notes below explain; `npm run lint:firefox` runs the same validator on the build and fails if the list changes.
 3. Leave **Firefox for Android** unticked in the compatibility choice until it has been tried there.
 4. Answer **Do you need to submit source code?** with **Yes** and upload `galley-source-<version>.zip`.
 5. Fill in the listing:
@@ -71,10 +71,13 @@ No code is loaded from the network. No data is sent to any Galley server: there 
 
 SANDBOXED FRAMES. Mermaid and highlight.js run inside diagram-frame.html and highlight-frame.html, shown in an iframe with sandbox="allow-scripts" (an opaque origin with no extension APIs) and a meta Content-Security-Policy that blocks all network access. The reader exchanges messages with them and treats every reply as untrusted.
 
-INNERHTML WARNINGS. The validator lists six assignments to innerHTML. None of them takes document content:
-  content.js, src/ui/opening/launcher.ts and src/ui/review/reader.ts: static templates, CSS text and icon constants bundled with the extension. A lint rule in the repository (lint/no-unsanitized-html.grit) fails the build on any other innerHTML assignment, and pull request content goes through DOMPurify (src/ui/rendering/render.ts).
-  content.js, DOMPurify: the sanitizer's own parser, writing into an inert document.
-  highlight-frame.js, highlight.js: highlightElement, library code Galley never calls. Galley calls hljs.highlight(), which returns a string, and rebuilds every line from the text and hljs-* classes.
+VALIDATOR WARNINGS. The validator reports no errors and 14 warnings. None comes from Galley's own code: it writes bundled markup (icons and templates) through one parser helper, src/ui/components/dom.ts, and builds everything else from DOM nodes and text. A lint rule in the repository (lint/no-unsanitized-html.grit) fails the build on any other write of a string as HTML, and pull request content goes through DOMPurify (src/ui/rendering/render.ts). All 14 warnings are in unmodified npm packages:
+  content.js, DOMPurify (1): the sanitizer's fallback parser writes into an inert document when DOMParser is unavailable.
+  highlight-frame.js, highlight.js (1): highlightElement, library code Galley never calls. Galley calls hljs.highlight(), which returns a string, and rebuilds every line from the text and hljs-* classes.
+  diagram-frame.js, Mermaid and its dependencies (12), inside the sandboxed frame:
+    5 eval or Function. Three copies of lodash (in lodash-es, cytoscape and the Mermaid parser) look for the global object with Function('return this')(), reached only when neither global nor self exists. Two copies of chevrotain's toFastProperties hold an eval after an unconditional return, which never runs.
+    7 innerHTML, in Mermaid's rendering code and its d3-selection and DOMPurify dependencies.
+  npm run lint:firefox runs Mozilla's validator on the build and fails if this list changes (store/firefox-warnings.json).
 
 TO TRY IT. Open any GitHub pull request or GitLab merge request that changes a .md file and press Read. A public example: https://github.com/mermaid-js/mermaid/pull/8144
 ```
@@ -82,6 +85,7 @@ TO TRY IT. Open any GitHub pull request or GitLab merge request that changes a .
 ## Each new version
 
 1. Release as usual; the Firefox and source zips are attached to the GitHub release.
-2. **You:** on the add-on's page choose **Upload New Version**, upload both zips, and paste the same reviewer notes. A changelog for users goes in **Release notes**.
-3. Every version is reviewed. Updates are usually faster than the first one.
-4. To automate this later, Mozilla's [`web-ext sign`](https://extensionworkshop.com/documentation/develop/web-ext-command-reference/#web-ext-sign) uses an API key and secret from the developer hub. Those would be repository secrets, so it is left as a manual step for now.
+2. Run `npm run build && npm run lint:firefox`. It runs Mozilla's validator on the build, and fails if a warning is new or its count changed. If the list changed on purpose, update `store/firefox-warnings.json` and the **VALIDATOR WARNINGS** paragraph of the reviewer notes before pasting them.
+3. **You:** on the add-on's page choose **Upload New Version**, upload both zips, and paste the same reviewer notes. A changelog for users goes in **Release notes**.
+4. Every version is reviewed. Updates are usually faster than the first one.
+5. To automate this later, Mozilla's [`web-ext sign`](https://extensionworkshop.com/documentation/develop/web-ext-command-reference/#web-ext-sign) uses an API key and secret from the developer hub. Those would be repository secrets, so it is left as a manual step for now.

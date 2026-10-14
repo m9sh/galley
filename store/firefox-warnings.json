@@ -1,0 +1,9 @@
+{
+  "linter": "10.14.0",
+  "note": "Warnings Mozilla's validator reports for the Firefox add-on, all in unmodified third-party code. See store/FIREFOX.md. A new warning, or a changed count, fails npm run lint:firefox.",
+  "warnings": {
+    "content.js": { "UNSAFE_VAR_ASSIGNMENT": 1 },
+    "highlight-frame.js": { "UNSAFE_VAR_ASSIGNMENT": 1 },
+    "diagram-frame.js": { "DANGEROUS_EVAL": 5, "UNSAFE_VAR_ASSIGNMENT": 7 }
+  }
+}

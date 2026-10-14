@@ -193,6 +193,7 @@ const MAX_HIGHLIGHTED_HTML = 10_000_000;
  */
 export function splitHighlighted(doc: Document, html: string): DocumentFragment[] {
   const Parser = doc.defaultView?.DOMParser ?? DOMParser;
+  // biome-ignore lint/plugin: parsed in an inert document and never inserted; the lines are rebuilt from text and token classes.
   const parsed = new Parser().parseFromString(`<pre>${html}</pre>`, 'text/html').body.firstElementChild!;
   const lines: DocumentFragment[] = [doc.createDocumentFragment()];
   const classes: string[] = [];

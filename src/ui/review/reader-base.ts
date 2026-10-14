@@ -5,7 +5,7 @@ import { ChapterMap, type ChapterFileState } from './chapters.ts';
 import { ReviewLibrary, type DocOpening } from './review-library.ts';
 import { MoveFinder } from './moves.ts';
 import type { DiagramPalette } from '../rendering/diagram-palette.ts';
-import { h } from '../components/dom.ts';
+import { h, glyph, markup } from '../components/dom.ts';
 import type { RepoReaderHandle } from '../library/repo-reader.ts';
 import { icons } from '../components/icons.ts';
 import css from '../components/reader-styles.ts';
@@ -123,8 +123,7 @@ export abstract class ReaderBase {
   constructor(protected readonly onClose?: () => void) {
     loadReaderFonts(document);
     this.host.id = __GALLEY_DEV__ ? 'galley-reader-dev' : 'galley-reader';
-    // biome-ignore lint/plugin: the bundled stylesheet and a fixed template; no document content.
-    this.shadow.innerHTML = `<style>${css}</style>${TEMPLATE}`;
+    this.shadow.replaceChildren(markup(`<style>${css}</style>${TEMPLATE}`));
     const q = (sel: string) => this.shadow.querySelector<HTMLElement>(sel)!;
     this.root = q('.mr-root');
     this.el = {
@@ -215,8 +214,7 @@ export abstract class ReaderBase {
     });
     this.commentBtn.type = 'button';
     this.commentBtn.dataset.act = 'comment-block';
-    // biome-ignore lint/plugin: a bundled icon constant.
-    this.commentBtn.innerHTML = icons.comment;
+    this.commentBtn.replaceChildren(glyph(icons.comment));
     this.commentBtn.append(h('span', 'mr-comment-btn-label', 'Comment'));
     this.commentBtn.hidden = true;
     this.rail.setAttribute('aria-label', 'Review comments');

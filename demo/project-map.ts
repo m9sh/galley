@@ -1,7 +1,7 @@
 import { indexDocument, ProjectIndex } from '../src/core/docindex.ts';
 import { documentMap } from '../src/core/project-map.ts';
 import type { RepositorySource } from '../src/platforms/types.ts';
-import { button, h } from '../src/ui/components/dom.ts';
+import { button, h, glyph, markup } from '../src/ui/components/dom.ts';
 import { loadReaderFonts } from '../src/ui/components/fonts.ts';
 import { icons } from '../src/ui/components/icons.ts';
 import { keyGroups, READING_SECTIONS, settingsSheet } from '../src/ui/components/settings-sheet.ts';
@@ -31,8 +31,7 @@ export async function openMapPrototype(source: RepositorySource, fixture = 'smal
   const back = button('Back to map', 'return', 'mr-btn mr-atlas-back');
   back.title = 'Back to map (Esc)';
   back.hidden = true;
-  // biome-ignore lint/plugin: a bundled reader icon constant, never document content.
-  back.insertAdjacentHTML('afterbegin', icons.chevronLeft);
+  back.prepend(glyph(icons.chevronLeft));
   const reading = h('span', 'mr-atlas-reading');
   reading.hidden = true;
   left.append(
@@ -82,8 +81,7 @@ export async function openMapPrototype(source: RepositorySource, fixture = 'smal
     choice.title = title;
     if (action === 'map') {
       const icon = h('span', 'mr-atlas-choice-icon');
-      // biome-ignore lint/plugin: a bundled reader icon constant, never document content.
-      icon.innerHTML = icons.map;
+      icon.replaceChildren(glyph(icons.map));
       choice.append(icon);
     } else choice.append(lineIcon(SHAPES.list));
     choice.append(h('span', '', label));
@@ -134,37 +132,40 @@ export async function openMapPrototype(source: RepositorySource, fixture = 'smal
   const shell = h('div', 'mr-atlas-shell');
   shell.append(mapView, article, backdrop, detail);
   const sheet = h('div');
-  // biome-ignore lint/plugin: shared settings compose only bundled controls, copy and icons; no document content.
-  sheet.innerHTML = settingsSheet('Your reading preferences. Changes stay with this prototype.', [
-    { id: 'reading', label: 'Reading', icon: icons.book, panel: READING_SECTIONS },
-    { id: 'layout', label: 'Layout', icon: icons.layout, panel: DENSITY_SECTION },
-    {
-      id: 'keys',
-      label: 'Keys',
-      icon: icons.keyboard,
-      panel: keyGroups([
-        [
-          'Map',
-          [
-            [['/'], 'Find a document'],
-            [['↑', '↓', 'Enter'], 'Choose a search result'],
-            [['←', '↑', '→', '↓'], 'Pan the focused canvas'],
-            [['+', '−'], 'Zoom the focused canvas'],
-            [['0'], 'Fit the map to the canvas'],
-            [['←', '→'], 'Switch Links and Preview in the details sheet'],
-          ],
-        ],
-        [
-          'Settings',
-          [
-            [[','], 'Open reading settings'],
-            [['?'], 'Show shortcuts'],
-            [['Esc'], 'Close the innermost panel, then the prototype'],
-          ],
-        ],
+  sheet.replaceChildren(
+    markup(
+      settingsSheet('Your reading preferences. Changes stay with this prototype.', [
+        { id: 'reading', label: 'Reading', icon: icons.book, panel: READING_SECTIONS },
+        { id: 'layout', label: 'Layout', icon: icons.layout, panel: DENSITY_SECTION },
+        {
+          id: 'keys',
+          label: 'Keys',
+          icon: icons.keyboard,
+          panel: keyGroups([
+            [
+              'Map',
+              [
+                [['/'], 'Find a document'],
+                [['↑', '↓', 'Enter'], 'Choose a search result'],
+                [['←', '↑', '→', '↓'], 'Pan the focused canvas'],
+                [['+', '−'], 'Zoom the focused canvas'],
+                [['0'], 'Fit the map to the canvas'],
+                [['←', '→'], 'Switch Links and Preview in the details sheet'],
+              ],
+            ],
+            [
+              'Settings',
+              [
+                [[','], 'Open reading settings'],
+                [['?'], 'Show shortcuts'],
+                [['Esc'], 'Close the innermost panel, then the prototype'],
+              ],
+            ],
+          ]),
+        },
       ]),
-    },
-  ]);
+    ),
+  );
   root.append(top, shell, sheet.firstElementChild!);
   shadow.append(styles, root);
   document.body.append(host);

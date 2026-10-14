@@ -4,6 +4,7 @@ import type { DocRef, DocStatus } from '../../platforms/types.ts';
 import { icons } from '../components/icons.ts';
 import { Sheet, sheetRow, sheetSection, twin, type SheetContent, type SheetLayer } from '../components/sheet.ts';
 import { platformLink } from '../rendering/render.ts';
+import { glyph } from '../components/dom.ts';
 
 export interface ChapterFileState {
   viewed: boolean;
@@ -66,16 +67,14 @@ const base = (path: string) => path.slice(path.lastIndexOf('/') + 1);
 /** A chapter's place in the path, or a check once all its files are viewed. */
 function mark(place: number, done: boolean): HTMLElement {
   const el = node('span', 'mr-sheet-num', done ? '' : String(place));
-  // biome-ignore lint/plugin: a bundled icon constant, never document content.
-  if (done) el.innerHTML = icons.check;
+  if (done) el.replaceChildren(glyph(icons.check));
   return el;
 }
 
 /** An icon button that names itself in words, for Edit chapters. */
 function iconButton(icon: string, words: string, action: () => void): HTMLButtonElement {
   const el = button('', action, 'mr-btn mr-icon-btn');
-  // biome-ignore lint/plugin: a bundled icon constant, never document content.
-  el.innerHTML = icon;
+  el.replaceChildren(glyph(icon));
   el.append(node('span', 'mr-visually-hidden', words));
   return el;
 }

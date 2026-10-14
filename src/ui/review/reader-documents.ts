@@ -10,7 +10,7 @@ import { enhanceSymbols, refreshSymbols } from '../rendering/symbols.ts';
 import { enhanceSpecs } from '../rendering/specs.ts';
 import { renderSourceComments } from '../rendering/source-comments.ts';
 import { renderDiagrams } from '../rendering/diagrams.ts';
-import { chip, h } from '../components/dom.ts';
+import { chip, h, glyph } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
 import { renderDocument, type RenderedDoc } from '../rendering/render.ts';
 import { filterDocument } from '../rendering/reading.ts';
@@ -266,8 +266,7 @@ export abstract class ReaderDocuments extends ReaderBase {
     const show = actionButton('', 'show-quiet', 'mr-quiet-show');
     const icon = h('span', 'mr-file-action-icon');
     icon.setAttribute('aria-hidden', 'true');
-    // biome-ignore lint/plugin: a bundled icon constant.
-    icon.innerHTML = icons.down;
+    icon.replaceChildren(glyph(icons.down));
     show.append(h('span', '', 'Show changes'), icon);
     show.setAttribute('aria-label', `Show changes in ${doc.path}`);
     const text = h('div', 'mr-quiet-text');
@@ -459,8 +458,7 @@ export abstract class ReaderDocuments extends ReaderBase {
     const fold = actionButton('', 'fold-file', 'mr-fold-file');
     const icon = h('span', 'mr-file-action-icon');
     icon.setAttribute('aria-hidden', 'true');
-    // biome-ignore lint/plugin: a bundled icon constant.
-    icon.innerHTML = icons.up;
+    icon.replaceChildren(glyph(icons.up));
     fold.append(icon, h('span', 'mr-file-action-label', 'Fold'));
     fold.title = 'Fold this file to one line';
     fold.setAttribute('aria-label', `Fold ${doc.path}`);
@@ -494,8 +492,7 @@ export abstract class ReaderDocuments extends ReaderBase {
       link.append(dot, h('span', 'mr-file-link-name', baseName(view.doc.path)));
       if (this.viewed.get(view.doc)!.value) {
         const check = h('span', 'mr-file-check');
-        // biome-ignore lint/plugin: a bundled icon constant.
-        check.innerHTML = icons.check;
+        check.replaceChildren(glyph(icons.check));
         check.setAttribute('aria-label', 'Viewed');
         link.append(check);
       }

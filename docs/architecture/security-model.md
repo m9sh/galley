@@ -65,7 +65,7 @@ flowchart LR
 
 ## Rules for contributors
 
-- Never write a string as HTML. Build DOM nodes, use `textContent`, or pass content through `sanitize()`. A static template of fixed markup needs `// biome-ignore lint/plugin: <reason>`.
+- Never write a string as HTML. Build DOM nodes, use `textContent`, or pass content through `sanitize()`. Markup bundled with the extension (icons, templates) goes through `markup()` or `glyph()` in `src/ui/components/dom.ts`, the one place that parses a string as HTML ([ADR 0033](../adr/0033-parse-bundled-markup-in-one-place.md)).
 - Never add a network request, host permission, storage key or dependency without updating [PRIVACY.md](../../PRIVACY.md), the [storage inventory](storage.md) and, for a new boundary, an ADR.
 - Never import `src/platforms/tokens.ts` or `src/background/` from page-facing code.
 - Never retry a write. Never post without an explicit action.

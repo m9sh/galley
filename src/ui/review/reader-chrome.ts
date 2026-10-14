@@ -4,7 +4,7 @@ import type { DocOpening } from './review-library.ts';
 import { showCommentSource } from '../rendering/source-comments.ts';
 import { isPalette, PALETTE_KEYS, type DiagramPalette } from '../rendering/diagram-palette.ts';
 import { renderDiagrams } from '../rendering/diagrams.ts';
-import { h } from '../components/dom.ts';
+import { h, glyph, loadingLines } from '../components/dom.ts';
 import { openRepository } from '../library/repo-reader.ts';
 import { viewedKey, loadViewed, saveViewed } from './viewed.ts';
 import { icons } from '../components/icons.ts';
@@ -61,8 +61,7 @@ export abstract class ReaderChrome extends ReaderDocuments {
     find.type = 'button';
     find.setAttribute('role', 'menuitem');
     find.dataset.act = 'search';
-    // biome-ignore lint/plugin: a bundled icon constant.
-    find.innerHTML = icons.search;
+    find.replaceChildren(glyph(icons.search));
     find.append(h('span', 'mr-menu-name', 'Search this review'));
     menu.append(head, find);
     docs.forEach((d) => {
@@ -85,8 +84,7 @@ export abstract class ReaderChrome extends ReaderDocuments {
       item.append(h('span', 'mr-menu-status', STATUS_LABEL[d.status]));
       if (this.viewed.get(d)?.value) {
         const check = h('span', 'mr-file-check');
-        // biome-ignore lint/plugin: a bundled icon constant.
-        check.innerHTML = icons.check;
+        check.replaceChildren(glyph(icons.check));
         check.setAttribute('aria-label', 'Viewed');
         item.append(check);
       }
@@ -97,10 +95,7 @@ export abstract class ReaderChrome extends ReaderDocuments {
   }
 
   protected skeleton(): HTMLElement {
-    const s = h('div', 'mr-skeleton');
-    // biome-ignore lint/plugin: fixed placeholder markup.
-    s.innerHTML = '<i class="h"></i><i></i><i></i><i class="s"></i><i></i><i></i><i></i><i class="s"></i>';
-    return s;
+    return loadingLines();
   }
 
   protected showMessage(title: string, body: string, extra: Node[] = []): void {

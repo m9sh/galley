@@ -1,5 +1,5 @@
 import type { ReviewSource, Thread } from '../../platforms/types.ts';
-import { h } from '../components/dom.ts';
+import { h, glyph } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
 import { platformLink, renderSnippet } from '../rendering/render.ts';
 import { filterDocument } from '../rendering/reading.ts';
@@ -237,8 +237,7 @@ class Reader extends ReaderComments {
       item.append(meta, body);
       if (thread.reply) {
         const reply = actionButton('Reply', 'reply-to', 'mr-reply-to');
-        // biome-ignore lint/plugin: a bundled icon constant.
-        reply.insertAdjacentHTML('afterbegin', icons.reply);
+        reply.prepend(glyph(icons.reply));
         reply.dataset.comment = String(i);
         reply.setAttribute('aria-label', `Reply to ${comment.author}`);
         item.append(reply);

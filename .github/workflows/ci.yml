@@ -112,6 +112,10 @@ jobs:
       - run: npm run build
       - name: Check that the release build contains no dev-only code
         run: '! grep -q "galley-launcher-dev" dist/chrome/content.js'
+      # Mozilla's validator, as addons.mozilla.org runs it on upload. Galley's own code adds no warning; the few that
+      # remain come from third-party code and are recorded in store/firefox-warnings.json.
+      - name: Firefox add-on validator
+        run: npm run lint:firefox
 
   e2e:
     name: Browser checks

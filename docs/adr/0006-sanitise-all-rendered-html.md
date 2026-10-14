@@ -43,3 +43,4 @@ Pull requests come from forks. A document, a comment, a pull request description
 
 - `6b4a973` (spoofed markers, data attributes, classes), `a20bac7` (0.3.1, linear HTML checks), `6316046` (security review round 2: comment context as code, link decoding, `user-content-` ids, size caps).
 - [CONTRIBUTING.md, Tests and lint](../../CONTRIBUTING.md#tests-and-lint).
+- [ADR 0033](0033-parse-bundled-markup-in-one-place.md) refines the last bullet of the decision: bundled markup is parsed by one helper instead of being allowed with a suppression comment.
