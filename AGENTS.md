@@ -44,7 +44,7 @@ Each is an accepted decision; breaking one needs a new ADR, not an exception.
 - **Match the surrounding code.** TypeScript, plain DOM, single quotes, two spaces, 160-character lines (Biome formats). Doc comments explain why, in plain sentences. Click handling goes through `data-act` and `Reader.onClick()`; settings through `update()` and `applySettings()` ([patterns](docs/design/patterns.md)).
 - **Tests sit next to the code** (`foo.ts` → `foo.test.ts`), describe behaviour a reviewer would notice, and a bug fix starts with the failing test. Browser-only behaviour goes in `e2e/`.
 - **UI changes are looked at,** not just tested: `npm run screenshots`, then the [design checklist](docs/design/README.md#review-checklist).
-- **Words follow [docs/COPY.md](docs/COPY.md):** the reader's real control labels, benefit first, no unbacked claims.
+- **Words follow [docs/COPY.md](docs/COPY.md):** the reader's real control labels, benefit first, no unbacked claims. Documentation must be readable: well organised, in short paragraphs of one idea each, never a wall of text ([Readable documents](docs/COPY.md#readable-documents)).
 - **Docs change with the code:** the [user guide](docs/GUIDE.md) for behaviour, README counts and keys, architecture pages for boundaries, an ADR for a decision.
 - **Pull request titles are Conventional Commits** and become the squashed commit: `feat(reader): …`, `fix(github): …`, `docs: …`. Choose the type by what an extension user would notice.
 

@@ -12,6 +12,17 @@ Keep humor small and related to the product. “Your scrollbar gets a breather�
 
 Describe the benefit before the visual metaphor. The book-proof origin of Galley's name can explain the brand, but people should not need to understand a “reading room” to understand the product.
 
+## Readable documents
+
+Readability is a must, for every document: the guide, README, privacy text, ADRs, RFCs, how-to guides and pull request descriptions. A reader should find what they need by skimming, and understand it in one pass. Text that is correct but hard to read has not done its job.
+
+- **One idea to a paragraph.** Keep paragraphs to two to four sentences, with a blank line between them. A paragraph that fills more than about six lines of the page is two paragraphs: split it where the idea turns.
+- **Say the point first.** The first sentence of a paragraph says what it is about. Put the answer before the detail, and the exceptions last.
+- **Use structure, not density.** Give each topic a heading. Use a list for three or more parallel items, numbered steps for a procedure and a table to compare. Do not fold a list into a sentence or chain clauses with semicolons.
+- **Short sentences.** One claim to a sentence. Split a sentence that carries several conditions.
+- **One fact or decision to a bullet.** A bullet that needs several sentences wants its own short paragraph, or sub-bullets under a bold label.
+- **Read it back as a newcomer.** Before you finish, skim only the headings and first sentences: can someone find the answer? If a block of text looks like a wall on the page, it is one. Rewrite it.
+
 ## Shared terms
 
 | Use | Meaning |

@@ -32,9 +32,13 @@ Only claim what is true and shown:
 - **Accessible names** read naturally aloud and include context: "Show changes in docs/guide.md", "Close reader (Esc)".
 - British and American spellings both appear in the codebase; match the file you are editing, and keep user-facing text consistent within a surface.
 
+## Readable documents
+
+Readability is a must for the guide, README, privacy text, ADRs, RFCs and every other document, not only for interface words. Organise text into short paragraphs of one idea each, with the point first and a blank line between them. Use headings, lists and tables instead of long blocks, one fact or decision to a bullet, and short sentences. Skim the headings and first sentences before you finish: if someone cannot find the answer that way, or a paragraph looks like a wall, rewrite it. The full rules are in [Readable documents](../../../docs/COPY.md#readable-documents).
+
 ## Reviewing copy
 
-Check each line: Is it true? Is it the shortest clear version? Does it use the real label? Would a reviewer know what to do next? Flag anything that implies Galley judges code, guarantees outcomes or sends data anywhere.
+Check each line: Is it true? Is it the shortest clear version? Does it use the real label? Would a reviewer know what to do next? Flag anything that implies Galley judges code, guarantees outcomes or sends data anywhere. Then check the page: is the text split into short, readable paragraphs, or is any of it a wall?
 
 ## Where copy lives
 
