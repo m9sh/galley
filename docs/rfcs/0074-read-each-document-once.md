@@ -40,7 +40,7 @@ Independently of caching, fewer requests:
 - [x] The map rebuilds from cached indexes without parsing unchanged documents again (step 1).
 - [ ] Reopening the library in the same browser session reads no document it has already read (step 2). With **Remember project outlines on this device** on, the map of a project read again reads none of the documents whose hash is unchanged; the document being opened is still read, and with the switch off a reopened library starts from nothing.
 - [x] Nothing from a repository is written to disk unless the reader turns it on (steps 1–2), and step 3 is off by default.
-- [x] Every cache is bounded in size and lifetime, says what it holds, and can be cleared from the popup or settings. The memory cache is bounded in size and lasts while the reader is open; the on-device outlines are bounded in size, last 7 days from last use, are described in Galley settings and are cleared there.
+- [x] Every cache is bounded in size and lifetime, says what it holds, and can be cleared from the popup or settings. The memory cache is bounded in size and lasts while the reader is open; the on-device outlines are bounded in size, last 7 days from last use (removed when the browser starts, even if never read again), start over with each Galley version, are described in Galley settings and are cleared there.
 - [x] Removing a site's token clears what was cached for that site.
 - [x] Private windows never persist anything.
 - [x] PRIVACY.md and the storage inventory describe exactly what is kept, where and for how long, before step 2 or 3 ships.

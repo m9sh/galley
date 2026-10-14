@@ -1,15 +1,7 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { indexDocument, OUTLINE_FORMAT, type IndexedDoc } from '../../core/docindex.ts';
-import {
-  forgetOutlines,
-  OUTLINE_CHARS,
-  OUTLINE_LIFETIME,
-  OUTLINE_PROJECT_CHARS,
-  outlineUse,
-  recallOutlines,
-  rememberOutlines,
-  touchOutlines,
-} from './outline-cache.ts';
+import { recallOutlines, rememberOutlines, touchOutlines } from './outline-cache.ts';
+import { forgetOutlines, OUTLINE_CHARS, OUTLINE_LIFETIME, OUTLINE_PROJECT_CHARS, outlineUse, pruneOutlines } from './outline-store.ts';
 import { digestText } from './project-store.ts';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -23,7 +15,7 @@ const entry = (path: string, blob = `blob-${path}`, reading: IndexedDoc = doc(pa
 const big = (path: string, chars: number) => entry(path, `blob-${path}`, { ...doc(path), title: 'x'.repeat(chars) });
 
 /** Extension storage in memory: values are copied in and out, as the browser does. */
-function extensionStorage(incognito = false) {
+function extensionStorage(incognito = false, version = '1.0.0') {
   const data = new Map<string, unknown>();
   const copy = (value: unknown) => JSON.parse(JSON.stringify(value));
   const local = {
@@ -37,7 +29,7 @@ function extensionStorage(incognito = false) {
       for (const key of keys) data.delete(key);
     }),
   };
-  vi.stubGlobal('chrome', { storage: { local }, extension: { inIncognitoContext: incognito } });
+  vi.stubGlobal('chrome', { storage: { local }, extension: { inIncognitoContext: incognito }, runtime: { getManifest: () => ({ version }) } });
   return { data, local };
 }
 
@@ -88,9 +80,9 @@ it('reads nothing back from a version it does not know, or from storage that is 
   record.docs['docs/c.md'] = null as never;
   data.set(key, record);
   expect([...(await recallOutlines(PROJECT, NOW)).keys()]).toStrictEqual(['docs/a.md']);
-  data.set(key, { v: OUTLINE_FORMAT + 1, docs: record.docs });
+  data.set(key, { ...record, v: OUTLINE_FORMAT + 1 });
   expect((await recallOutlines(PROJECT, NOW)).size).toBe(0);
-  data.set(key, { v: OUTLINE_FORMAT });
+  data.set(key, { v: OUTLINE_FORMAT, app: '1.0.0' });
   expect((await recallOutlines(PROJECT, NOW)).size).toBe(0);
   data.delete(key);
   expect((await recallOutlines(PROJECT, NOW)).size).toBe(0);
@@ -171,4 +163,36 @@ it('a store that is full or unavailable never gets in the reader’s way when re
   local.remove.mockRejectedValueOnce(new Error('Storage is unavailable'));
   await expect(forgetOutlines()).rejects.toThrow('Storage is unavailable');
   await expect(forgetOutlines()).resolves.toBeUndefined();
+});
+
+it('starts over when Galley has been updated, since a new version may read documents differently', async () => {
+  extensionStorage(false, '1.0.0');
+  await rememberOutlines(PROJECT, SITE, [entry('README.md')], NOW);
+  expect((await recallOutlines(PROJECT, NOW)).size).toBe(1);
+  const installed = globalThis.chrome;
+  vi.stubGlobal('chrome', { ...installed, runtime: { getManifest: () => ({ version: '1.1.0' }) } });
+  expect((await recallOutlines(PROJECT, NOW)).size).toBe(0);
+  // Saving again replaces the old version's readings.
+  await rememberOutlines(PROJECT, SITE, [entry('README.md')], NOW);
+  expect((await recallOutlines(PROJECT, NOW)).size).toBe(1);
+});
+
+it('forgets projects not used for a week without anything being saved, and writes nothing when none has expired', async () => {
+  const { data, local } = extensionStorage();
+  const old = 'github:https://github.com/acme/old';
+  await rememberOutlines(old, SITE, [entry('README.md')], NOW);
+  await rememberOutlines(PROJECT, SITE, [entry('README.md')], NOW + 6 * DAY);
+  expect(data.size).toBe(3);
+  local.set.mockClear();
+  local.remove.mockClear();
+  await pruneOutlines(NOW + 6 * DAY);
+  expect(local.set).not.toHaveBeenCalled();
+  expect(local.remove).not.toHaveBeenCalled();
+  await pruneOutlines(NOW + 8 * DAY);
+  expect(data.size).toBe(2);
+  expect((await recallOutlines(old, NOW + 8 * DAY)).size).toBe(0);
+  expect((await recallOutlines(PROJECT, NOW + 8 * DAY)).size).toBe(1);
+  await pruneOutlines(NOW + 14 * DAY);
+  expect(await outlineUse()).toStrictEqual({ projects: 0, chars: 0 });
+  expect(data.size).toBe(1);
 });

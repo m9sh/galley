@@ -1,4 +1,4 @@
-import { forgetOutlines, outlineUse } from '../ui/library/outline-cache.ts';
+import { forgetOutlines, outlineUse } from '../ui/library/outline-store.ts';
 import { loadSettings, updateSettings } from '../ui/preferences/settings.ts';
 
 const control = document.querySelector<HTMLInputElement>('#read-button')!;

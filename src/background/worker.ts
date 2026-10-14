@@ -2,6 +2,7 @@
 // Content scripts ask for specific API calls; the token never enters the page's renderer.
 import { allowedRequest, fetchGitHub, FORWARDED_HEADERS, type ApiMessage, type ApiReply } from '../platforms/github-api.ts';
 import { restoreSites } from '../platforms/sites.ts';
+import { pruneOutlines } from '../ui/library/outline-store.ts';
 import { OPEN_READER, READ_COMMAND } from '../platforms/page-actions.ts';
 import { getToken, migrateTokens } from '../platforms/tokens.ts';
 
@@ -35,6 +36,10 @@ chrome.runtime.onMessage.addListener((message: ApiMessage, sender, reply) => {
 const restore = () => {
   restoreSites().catch(() => {
     // A site the browser cannot register for stays listed as off in the popup, where it can be enabled again.
+  });
+  // Remembered project outlines expire a week after their last use even when nothing is read or saved in the meantime.
+  pruneOutlines().catch(() => {
+    // They are checked again on the next start, and are never used past their week.
   });
 };
 chrome.runtime.onInstalled.addListener(restore);

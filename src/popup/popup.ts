@@ -1,6 +1,6 @@
 import { BUILT_IN_ORIGINS, siteScript, siteScriptId } from '../platforms/sites.ts';
 import { getToken, migrateTokens, setToken } from '../platforms/tokens.ts';
-import { forgetOutlines } from '../ui/library/outline-cache.ts';
+import { forgetOutlines } from '../ui/library/outline-store.ts';
 import { OPEN_READER, PAGE_STATE, type PageState } from '../platforms/page-actions.ts';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;

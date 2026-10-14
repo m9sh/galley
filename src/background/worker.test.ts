@@ -59,6 +59,28 @@ it('restores enabled sites when the extension is installed or updated, and when 
   await vi.waitFor(() => expect(permissions.getAll).toHaveBeenCalledTimes(2));
 });
 
+it('forgets project outlines not used for a week when the browser starts or Galley is updated, and ignores storage that fails', async () => {
+  const { runtime, storage } = (
+    globalThis as unknown as {
+      chrome: {
+        runtime: { onStartup: { addListener: ReturnType<typeof vi.fn> } };
+        storage: { local: { get: ReturnType<typeof vi.fn>; set: ReturnType<typeof vi.fn>; remove: ReturnType<typeof vi.fn> } };
+      };
+    }
+  ).chrome;
+  const [[onStartup]] = runtime.onStartup.addListener.mock.calls;
+  const expired = { used: Date.now() - 8 * 24 * 60 * 60 * 1000, chars: 10, site: 'https://github.com' };
+  storage.local.get = vi.fn(async () => ({ 'galley:outlines': { stale: expired, fresh: { ...expired, used: Date.now() } } }));
+  storage.local.set = vi.fn(async () => undefined);
+  storage.local.remove = vi.fn(async () => undefined);
+  onStartup();
+  await vi.waitFor(() => expect(storage.local.remove).toHaveBeenCalledExactlyOnceWith(['galley:outlines:stale']));
+  expect(storage.local.set).toHaveBeenCalledExactlyOnceWith({ 'galley:outlines': { fresh: expect.any(Object) } });
+  storage.local.get.mockRejectedValueOnce(new Error('unavailable'));
+  expect(() => onStartup()).not.toThrow();
+  await vi.waitFor(() => expect(storage.local.get).toHaveBeenCalledTimes(2));
+});
+
 it('leaves messages it does not own to other listeners', () => {
   expect(listener({ type: 'something-else' }, sender(), vi.fn())).toBe(false);
   expect(listener(undefined, sender(), vi.fn())).toBe(false);
