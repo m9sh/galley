@@ -24,7 +24,7 @@
     "site": "npm run build:site && node scripts/serve-site.mjs",
     "test:site": "node e2e/site.mjs",
     "test:pages": "node --test scripts/pages-*.test.mjs",
-    "test:scripts": "node --test scripts/tidy.test.mjs scripts/structure.test.mjs scripts/firefox-lint.test.mjs",
+    "test:scripts": "node --test scripts/tidy.test.mjs scripts/structure.test.mjs scripts/firefox-lint.test.mjs scripts/dependencies.test.mjs",
     "test:docs": "node --test scripts/docs.test.mjs",
     "docs:check": "node scripts/docs.mjs",
     "docs:index": "node scripts/docs.mjs --write",
