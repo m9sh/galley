@@ -97,6 +97,7 @@ The [user guide](docs/GUIDE.md) covers every setting, token and platform detail.
 | <kbd>V</kbd> | Mark the file viewed |
 | <kbd>C</kbd> | Change marks on / off |
 | <kbd>A</kbd> | Changed parts / whole files |
+| <kbd>U</kbd> | Only what changed since you last looked / the whole review |
 | <kbd>L</kbd> · <kbd>D</kbd> | Next layout · comfortable / compact |
 | <kbd>+</kbd> <kbd>−</kbd> <kbd>0</kbd> | Larger / smaller / default text |
 | <kbd>,</kbd> · <kbd>?</kbd> | Settings · these shortcuts |

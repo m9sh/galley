@@ -67,6 +67,41 @@ export interface ReviewOverview {
   url: string;
 }
 
+/** A file that differs between an earlier head of a review and its head now. */
+export interface SinceFile {
+  path: string;
+  /** Where it was at the earlier head, when it moved since. */
+  oldPath: string;
+  status: DocStatus;
+}
+
+/**
+ * How a review compares with an earlier head of itself (RFC 0039). Only `changes` can be shown as a comparison: the other
+ * answers say why not, so a missing comparison is never mistaken for "nothing changed".
+ */
+export type ReviewSince =
+  | {
+      state: 'changes';
+      commit: string;
+      /** Every file that differs; empty when the heads hold the same files. */
+      files: SinceFile[];
+      /** One document as it was at the earlier head; empty when it was not there yet. */
+      read(doc: DocRef): Promise<string>;
+    }
+  /** The branch was rewritten since: the earlier head is not part of its history, so there is no honest "since". */
+  | { state: 'rewritten'; commit: string }
+  /** The platform no longer has the earlier head. */
+  | { state: 'unavailable'; commit: string }
+  /** The platform listed only some of the files that differ. */
+  | { state: 'incomplete'; commit: string };
+
+/** The heads a review has been at, for comparing one with another. */
+interface ReviewHistory {
+  /** The commit the review is at now. */
+  head: string;
+  since(commit: string): Promise<ReviewSince>;
+}
+
 /** Everything the reader needs about one pull/merge request. */
 export interface ReviewSource {
   title: string;
@@ -93,6 +128,8 @@ export interface ReviewSource {
   overview?: ReviewOverview;
   /** The repository's own docs at the review's base or head, opened over the review (Project library). */
   project?: ReviewProject;
+  /** Its earlier heads, to show what changed since the reviewer last looked (RFC 0039). */
+  history?: ReviewHistory;
 }
 
 /**

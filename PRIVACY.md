@@ -62,6 +62,8 @@ Like any extension storage, remembered outlines can be read by someone with acce
 
 **Reading position.** So you can pick up where you left off, Galley remembers which file you were reading in a review and how far into it, for your 50 most recent reviews. It keeps only a fingerprint of the review's address, a fingerprint of the file's path and a scroll offset, never the address or path themselves, in extension storage (local storage in the demo), on your device.
 
+**Changes since you last looked.** So Galley can show what changed after your last visit, it remembers, for your 50 most recent reviews, the commit you marked as reviewed and the last two commits you opened the reader at. It keeps only commit ids under a fingerprint of the review's address, never the address, a path or any text, in extension storage (local storage in the demo), on your device. The comparison itself is asked of GitHub or GitLab each time and is not kept. Marking a version reviewed is local: it does not approve the review, mark files Viewed or send anything.
+
 **Preferences.** Your page-button choice, theme, typeface, text size, display mode, paragraph filter, code-files option, file order, folding and external-images choice are stored in your browser's extension storage.
 
 **Sites you enable.** If you enable Galley on a self-hosted GitLab or GitHub Enterprise site, your browser records that permission for that one domain. You can disable it in the Galley popup or in your browser's extension settings.

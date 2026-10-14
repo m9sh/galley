@@ -40,6 +40,9 @@ Readability is a must, for every document: the guide, README, privacy text, ADRs
 | Changed parts / Whole files | The exact Context choices in the reader |
 | Marked / Clean | The exact Change marks choices in the reader |
 | Viewed | File review progress, saved locally or synced with GitHub when a token is available |
+| Changes since you last looked | The card, marks and view for what changed in a review since an earlier head |
+| Mark as reviewed / Unmark | The reviewer's own note, kept on the device, that a version is reviewed. It does not approve the review or mark files Viewed |
+| Show only what changed / Show the whole review | The exact choices for reading a review's changes since an earlier head, or all of it |
 | Remember project outlines on this device / Forget remembered outlines | The optional setting that keeps each document's title, headings and links (never its text) for a week, and the control that removes them |
 
 Use actual control labels in help text. Calls to action should say what happens: **Add to Chrome**, **Try the live demo**, **Save token**.

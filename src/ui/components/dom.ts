@@ -47,8 +47,8 @@ export function button(label: string, act: string, className = 'mr-btn mr-outlin
   return b;
 }
 
-/** Change kinds colour the dot; `own` is the reader's own (a hint of the accent), `unverified` a guess (a hollow dot). */
-export type ChipKind = 'added' | 'modified' | 'removed' | 'moved' | 'own' | 'unverified';
+/** Change kinds colour the dot; `own` is the reader's own and `updated` is new since they last looked (a hint of the accent), `unverified` a guess (a hollow dot). */
+export type ChipKind = 'added' | 'modified' | 'removed' | 'moved' | 'own' | 'updated' | 'unverified';
 
 /** A fact as a chip: a dot and a word, never colour alone. */
 export function chip(kind: ChipKind | null, text: string): HTMLElement {

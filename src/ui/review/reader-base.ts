@@ -14,7 +14,18 @@ import type { RenderedBlock, RenderedDoc } from '../rendering/render.ts';
 import { ReviewSearch, type SearchMatch, type SearchScope, type SearchTarget } from './search.ts';
 import { DEFAULT_SETTINGS, loadSettings, type Settings } from '../preferences/settings.ts';
 import { PaletteCarousel } from '../components/settings-sheet.ts';
-import { type ChipTarget, type Draft, type Editor, type Hit, type ReplyEditor, type SearchAt, TEMPLATE, type View } from './reader-shared.ts';
+import {
+  type ChipTarget,
+  type Draft,
+  type Editor,
+  type Hit,
+  type ReplyEditor,
+  type RevisionState,
+  type SearchAt,
+  type Shown,
+  TEMPLATE,
+  type View,
+} from './reader-shared.ts';
 
 /** The review reader's state: every field, and the constructor. The layers above it (reader-documents.ts up to reader.ts) add the behaviour, one responsibility each; a method of a higher layer that this one calls is declared abstract at the end. */
 export abstract class ReaderBase {
@@ -95,7 +106,11 @@ export abstract class ReaderBase {
   protected readonly replyEditors = new Map<Thread, ReplyEditor>();
   protected readonly editorOf = new WeakMap<Element, Editor>();
   protected drafts: Draft[] = [];
-  protected readonly moves = new MoveFinder();
+  protected moves = new MoveFinder();
+  /** The review's earlier heads, once known (RFC 0039); drawn above and below the documents. */
+  protected revisions: RevisionState | null = null;
+  /** Documents as they were at the head being compared with, read once each while only what changed since is shown. */
+  protected readonly earlier = new Map<DocRef, Promise<string>>();
   /** The files in the platform's order; `views` follow the File order setting. */
   protected listed: DocRef[] = [];
   protected orderedBy: Settings['order'] | null = null;
@@ -399,6 +414,13 @@ export abstract class ReaderBase {
   protected abstract updateFileButton(): void;
   protected abstract loadThreads(): Promise<void>;
   protected abstract initLocalViewed(doc: DocRef, contents: DocContents): Promise<void>;
+  protected abstract initRevisions(): Promise<void>;
+  protected abstract shown(view: View, contents: DocContents): Promise<Shown>;
+  protected abstract sinceActive(): boolean;
+  protected abstract leftOut(doc: DocRef): boolean;
+  protected abstract markUpdated(view: View): void;
+  protected abstract updatedSince(doc: DocRef): string | null;
+  protected abstract drawRevisions(): void;
   protected abstract updateViewed(): void;
   protected abstract applyCodeView(view: View): void;
   protected abstract attachThreads(view: View): void;

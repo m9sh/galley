@@ -71,9 +71,9 @@
   color: var(--del);
 }
 
-/* Not changes: the reader's own carries a hint of the accent, as their threads do; a guess Galley has
-   not checked has a hollow dot. */
-.mr-chip.is-own .mr-dot {
+/* Not changes: the reader's own, and what is new since they last looked, carry a hint of the accent, as their
+   threads do; a guess Galley has not checked has a hollow dot. */
+.mr-chip:is(.is-own, .is-updated) .mr-dot {
   color: var(--accent);
 }
 
