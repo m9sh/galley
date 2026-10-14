@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.19.0](https://github.com/m9sh/galley/compare/v0.18.0...v0.19.0) (2026-10-14)
+
+
+### Features
+
+* **reader:** read each document once, and remember outlines on request ([8a55b61](https://github.com/m9sh/galley/commit/8a55b61161f42d774f455308ca90a1dce93dea25))
+
 ## [0.18.0](https://github.com/m9sh/galley/compare/v0.17.0...v0.18.0) (2026-10-14)
 
 
