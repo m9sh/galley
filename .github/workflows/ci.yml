@@ -65,6 +65,8 @@ jobs:
         run: npm run test:coverage
       - name: Pages preview lifecycle
         run: npm run test:pages
+      - name: Maintenance scripts
+        run: npm run test:scripts
       - name: Coverage per folder
         if: ${{ !cancelled() && matrix.node == 22 && hashFiles('coverage/coverage-summary.json') != '' }}
         run: node scripts/coverage-summary.mjs >> "$GITHUB_STEP_SUMMARY"

@@ -10,7 +10,7 @@ import { outlineDocument } from './markdown.ts';
  */
 
 export const NOTE_KINDS = ['idea', 'question', 'assumption', 'experiment', 'alternative'] as const;
-export type NoteKind = (typeof NOTE_KINDS)[number];
+type NoteKind = (typeof NOTE_KINDS)[number];
 export const NOTE_NAMES: Record<NoteKind, string> = {
   idea: 'Idea',
   question: 'Question',

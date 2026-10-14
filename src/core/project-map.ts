@@ -150,44 +150,6 @@ export function reviewMap(index: ProjectIndex, corrections: Corrections, changed
   return { ...model, places, connections };
 }
 
-export interface MapRegion {
-  folder: string;
-  places: MapPlace[];
-}
-
-export interface RegionReference {
-  from: string;
-  to: string;
-  /** The actual source connections represented by this count; containment adds none. */
-  connections: MapConnection[];
-}
-
-/** Overview regions are literal folders. Counts between them are document references, not dependencies. */
-export function mapOverview(model: ProjectMapModel): { regions: MapRegion[]; references: RegionReference[] } {
-  const groups = new Map<string, MapPlace[]>();
-  const folders = new Map<string, string>();
-  for (const place of model.places) {
-    const group = groups.get(place.folder) ?? [];
-    group.push(place);
-    groups.set(place.folder, group);
-    folders.set(place.id, place.folder);
-  }
-  const references = new Map<string, RegionReference>();
-  for (const connection of model.connections) {
-    const from = folders.get(connection.from)!;
-    const to = folders.get(connection.to)!;
-    if (from === to) continue;
-    const key = pair(from, to);
-    const reference = references.get(key) ?? { from, to, connections: [] };
-    reference.connections.push(connection);
-    references.set(key, reference);
-  }
-  return {
-    regions: [...groups].sort(([a], [b]) => compare(a, b)).map(([folder, places]) => ({ folder, places })),
-    references: [...references.values()].sort((a, b) => compare(pair(a.from, a.to), pair(b.from, b.to))),
-  };
-}
-
 export interface MapPosition {
   place: MapPlace;
   lane: 'here' | 'incoming' | 'outgoing';
@@ -196,7 +158,7 @@ export interface MapPosition {
   quiet?: boolean;
 }
 
-export interface MapNeighbourhood {
+interface MapNeighbourhood {
   places: MapPosition[];
   connections: MapConnection[];
   hidden: number;

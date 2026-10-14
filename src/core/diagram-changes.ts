@@ -5,7 +5,7 @@
  * Nothing here runs Mermaid: the reader draws the result in its sandboxed frame like any other diagram.
  */
 
-export interface DiagramChanges {
+interface DiagramChanges {
   /** The new version's source, with change classes and edge ids, and what it removed added back. */
   code: string;
   added: number;

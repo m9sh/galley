@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
 import { headersOf, jsonResponse, mockFetch } from '../testing/http.ts';
-import { directApi } from './github-api.ts';
+import { directApi } from '../testing/github.ts';
 import { githubViewed } from './github-viewed.ts';
 import { getToken, setToken } from './tokens.ts';
 import { HttpError } from './http.ts';

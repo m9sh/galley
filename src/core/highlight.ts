@@ -3,7 +3,7 @@ import type { Op } from './worddiff.ts';
 /** Containers whose whitespace-only text children must never receive inline markup. */
 const STRUCTURAL = new Set(['TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'UL', 'OL', 'DL', 'COLGROUP']);
 
-export function textNodes(root: Node): Text[] {
+function textNodes(root: Node): Text[] {
   const out: Text[] = [];
   const walk = (node: Node) => {
     for (let c = node.firstChild; c; c = c.nextSibling) {

@@ -1,0 +1,13 @@
+{
+  // The build, release and maintenance scripts are plain JavaScript. They are checked for mistakes such as a
+  // misspelt name or a wrong argument, without the strictness the typed source uses.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false
+  },
+  "include": ["scripts/**/*.mjs"]
+}

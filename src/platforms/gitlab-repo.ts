@@ -21,7 +21,7 @@ function explain(err: unknown): Error {
 }
 
 /** Where a GitLab project lives: its site, any sub-path install, and its path or id. */
-export interface GitLabProject {
+interface GitLabProject {
   origin: string;
   prefix: string;
   projectPath: string;

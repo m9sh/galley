@@ -13,7 +13,7 @@ Humans and agents share the same documentation. This file is the short version; 
 ## Commands
 
 ```bash
-npm install              # Node 22.12+; also enables the pre-push hook (npm ci --ignore-scripts in CI and sandboxes)
+npm install              # Node 22.12+ (.nvmrc); also enables the pre-push hook (npm ci --ignore-scripts in CI and sandboxes)
 npm run check            # types, Biome lint and format, unit tests at 100% coverage, Pages tests, docs check: run before every push
 npm test                 # unit tests only; npx vitest run --project core (or ui, platforms…) for one folder
 npm run test:e2e         # builds the demo, drives the real reader in Chrome; CHROME_PATH=/path/to/chrome if needed
@@ -22,6 +22,8 @@ npm run demo             # the reader on a sample review at http://localhost:417
 npm run format           # fix formatting; npm run lint:fix for safe lint fixes
 npm run docs:index       # regenerate ADR and RFC indexes after adding or editing one
 npm run build            # dist/chrome and dist/firefox
+npm run clean            # remove everything generated: dist/, coverage/, reports/, demo/build/ (--dry-run lists it first)
+npm run branches:prune   # list local branches whose pull request was merged; add -- --delete to remove them
 ```
 
 ## Rules that are never negotiable
@@ -67,5 +69,5 @@ Task-specific instructions live in `.claude/skills/` (also reachable as `.agents
 
 - Chrome or Chromium is needed for `npm run test:e2e`, `npm run screenshots`, `npm run test:site` and `npm run store-assets`. Set `CHROME_PATH` when it is not in a standard place (for example `/opt/pw-browsers/chromium` in Claude Code cloud sessions).
 - The pre-push hook runs `npm run check` on each pushed commit in a temporary worktree; a failure blocks the push. Fix the cause rather than using `--no-verify`.
-- `reports/`, `coverage/` and `dist/` are generated and ignored.
+- `reports/`, `coverage/` and `dist/` are generated and ignored; `npm run clean` removes them. Put one-off captures in `reports/`, never in `docs/`: an image in `docs/` that no document links to fails `npm run docs:check`.
 - The demo (`demo/`) never contacts GitHub or GitLab; use it for anything visual.

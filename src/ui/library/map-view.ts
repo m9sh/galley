@@ -59,7 +59,7 @@ export interface DocumentMapState {
   review?: ReviewCentre;
 }
 
-export interface ReviewCentre {
+interface ReviewCentre {
   chapters: Array<{
     title: string;
     paths: string[];

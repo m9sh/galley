@@ -26,7 +26,7 @@ export interface DocOpening {
   canContinue?: boolean;
 }
 
-export interface ReviewLibraryHost {
+interface ReviewLibraryHost {
   /** The review reader's root, which holds the sheet. */
   root: HTMLElement;
   /** Show the library on the first sheet, under the Chapters | Library switch. */

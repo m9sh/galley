@@ -35,7 +35,7 @@ export function external(label: string, href: string, className = ''): HTMLAncho
 const ORIGIN_CHIPS: Record<Origin, ChipKind | null> = { documented: null, declared: null, reader: 'own', suggested: 'unverified' };
 
 /** Where something comes from, as a chip: the reader's own carry the accent, guesses a hollow dot. */
-export function originChip(origin: Origin): HTMLElement {
+function originChip(origin: Origin): HTMLElement {
   return chip(ORIGIN_CHIPS[origin], ORIGIN_NAMES[origin]);
 }
 
@@ -68,13 +68,13 @@ function select(name: string, values: Array<[string, string]>, chosen: string): 
 }
 
 /** How the reader reaches a piece of evidence: a listed document opens here, anything else on the platform. */
-export interface EvidenceLinks {
+interface EvidenceLinks {
   isDocument(path: string): boolean;
   /** The file on the platform at the commit read, at this line. */
   fileAt(path: string, line: number): string;
 }
 
-export function evidenceList(evidence: Evidence[], links: EvidenceLinks): HTMLElement {
+function evidenceList(evidence: Evidence[], links: EvidenceLinks): HTMLElement {
   const list = h('ul', 'mr-repo-evidence');
   for (const item of evidence) {
     const li = h('li');
@@ -92,7 +92,7 @@ export function evidenceList(evidence: Evidence[], links: EvidenceLinks): HTMLEl
 
 // ---------------------------------------------------------------- lenses
 
-export const LENSES: Array<['documents' | LensName, string]> = [
+const LENSES: Array<['documents' | LensName, string]> = [
   ['documents', 'Documents'],
   ['architecture', 'Architecture'],
   ['infrastructure', 'Infrastructure'],
@@ -152,7 +152,7 @@ export function configStatus(config: ConfigState): HTMLElement {
   return box;
 }
 
-export interface LensOptions {
+interface LensOptions {
   lens: LensName;
   model: LensModel;
   focus: string | null;
@@ -335,7 +335,7 @@ export function lensView(options: LensOptions): HTMLElement {
 
 // ---------------------------------------------------------------- notes
 
-export interface NotesOptions {
+interface NotesOptions {
   notes: Note[];
   state: string;
   dirty: boolean;
@@ -567,7 +567,7 @@ export function notesView(options: NotesOptions): HTMLElement {
 
 // ---------------------------------------------------------------- export
 
-export interface ExportOptions {
+interface ExportOptions {
   format: 'markdown' | 'mermaid';
   text: string;
   /** Every note, with whether it is included. */

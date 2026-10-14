@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { headersOf, jsonResponse, mockFetch } from '../testing/http.ts';
 import type { GitHubRepoContext } from './detect.ts';
-import { directApi } from './github-api.ts';
+import { directApi } from '../testing/github.ts';
 import { loadGitHubRepository } from './github-repo.ts';
 import { getToken, setToken } from './tokens.ts';
 

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
-import { diffUnits, similarity, summarize } from './blockdiff.ts';
+import { diffUnits, similarity } from './blockdiff.ts';
 import { parseDocument } from './markdown.ts';
 
 const kinds = (base: string, head: string) => diffUnits(parseDocument(base).units, parseDocument(head).units).map((c) => c.kind);
@@ -43,6 +43,7 @@ it('the sample RFC diff finds the edits a reviewer would expect', () => {
   expect(find('added', 'Commenting on a selected sentence'), 'new task list item').toBeTruthy();
   expect(find('added', '[!NOTE]'), 'new alert').toBeTruthy();
   expect(find('same', 'Building a new comment system'), 'unchanged list item').toBeTruthy();
-  const s = summarize(changes);
+  const count = (kind: string) => changes.filter((change) => change.kind === kind).length;
+  const s = { added: count('added'), removed: count('removed'), modified: count('modified') };
   expect(s.modified >= 8 && s.added >= 8 && s.removed >= 2, JSON.stringify(s)).toBeTruthy();
 });

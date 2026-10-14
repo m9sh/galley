@@ -1,8 +1,8 @@
-// Turns store/LISTING.md into store/submit-helper.html: the same fields, in dashboard order, each
+// Turns store/LISTING.md into dist/store/submit-helper.html: the same fields, in dashboard order, each
 // with a Copy button (code blocks) or click-to-copy (inline code), plus the file paths to upload.
-// The page is for you to keep open next to the Chrome Web Store dashboard; it is git-ignored.
+// The page is for you to keep open next to the Chrome Web Store dashboard; it is generated under dist/, which git ignores.
 //   npm run submit-helper
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import markdownit from 'markdown-it';
 
@@ -100,5 +100,6 @@ ${body}
 </html>
 `;
 
-await writeFile(`${root}store/submit-helper.html`, page);
-console.log('store/submit-helper.html written');
+await mkdir(`${root}dist/store`, { recursive: true });
+await writeFile(`${root}dist/store/submit-helper.html`, page);
+console.log('dist/store/submit-helper.html written');

@@ -10,7 +10,7 @@ export interface TreeEntry {
 }
 
 /** A Markdown document found in a repository listing. */
-export interface RepoDoc {
+interface RepoDoc {
   path: string;
   /** Bytes, when the listing says; oversized documents are left out of the map without reading them. */
   size?: number;
@@ -33,7 +33,7 @@ export type ConfigFormat = 'compose' | 'workflow' | 'gitlab-ci' | 'kubernetes' |
 /** Most configuration files listed for one repository. */
 export const MAX_CONFIGS = 60;
 /** Folders listed one by one for configuration when the whole tree was too large. */
-export const CONFIG_ROOTS = ['.github', 'k8s', 'kubernetes', 'deploy', 'deployments', 'infra', 'infrastructure', 'terraform', 'manifests'];
+const CONFIG_ROOTS = ['.github', 'k8s', 'kubernetes', 'deploy', 'deployments', 'infra', 'infrastructure', 'terraform', 'manifests'];
 const MAX_CONFIG_ROOTS = 4;
 
 /** The configuration format a path holds, by name and folder alone; the frame confirms it by reading. */
@@ -53,7 +53,7 @@ export function configFormat(path: string): ConfigFormat | null {
  * Folders where projects tend to keep specs, decisions and guides. They are listed first when a
  * repository is too large to list in full. A hint, not a convention: Markdown anywhere is found.
  */
-export const DOC_ROOTS = [
+const DOC_ROOTS = [
   'docs',
   'doc',
   'documentation',

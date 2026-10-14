@@ -4,14 +4,17 @@
 //   node scripts/build.mjs --zip     also write store-ready zips to dist/
 import { execFileSync } from 'node:child_process';
 import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as esbuild from 'esbuild';
+import { removeSupersededZips } from './dist-files.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const pkg = JSON.parse(await readFile(`${root}package.json`, 'utf8'));
 const watch = process.argv.includes('--watch');
 const zip = process.argv.includes('--zip');
 
+/** @type {import('esbuild').BuildOptions} */
 const common = {
   absWorkingDir: root,
   bundle: true,
@@ -160,13 +163,15 @@ async function assemble() {
       const file = `${root}dist/galley-${browser}-${pkg.version}.zip`;
       await rm(file, { force: true });
       execFileSync('zip', ['-qrX', file, '.'], { cwd: out });
+      await removeSupersededZips(`${root}dist`, basename(file));
     }
   }
   console.log(`Galley ${pkg.version} built → dist/chrome, dist/firefox${zip ? ' (+ zips)' : ''}`);
 }
 
 if (watch) {
-  let pending = 0;
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  let pending;
   const track = (name) => ({
     name: 'assemble',
     setup: (b) =>

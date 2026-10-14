@@ -1,4 +1,5 @@
-// Points git at the hooks in .githooks, so `git push` runs the same checks as CI first.
+// Points git at the hooks in .githooks, so `git push` runs the same checks as CI first, and has `git fetch`
+// drop remote-tracking branches that were deleted on GitHub.
 // `npm install` runs this through the `prepare` script. It does nothing in CI, which runs the checks
 // itself, or outside a git checkout (an unpacked source archive).
 import { execFileSync } from 'node:child_process';
@@ -12,4 +13,5 @@ if (!process.env.CI) {
     process.exit(0);
   }
   git('config', 'core.hooksPath', '.githooks');
+  git('config', 'fetch.prune', 'true');
 }

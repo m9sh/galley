@@ -31,7 +31,7 @@ export const KIND_SOURCES: Record<KindSource, string> = {
 
 /** Most documents read for the map in one pass, and how many at a time. */
 export const INDEX_BATCH = 150;
-export const INDEX_CONCURRENCY = 4;
+const INDEX_CONCURRENCY = 4;
 
 /** A Markdown link resolved against the repository. */
 export interface DocLink extends OutlineLink {
@@ -68,7 +68,7 @@ export interface Edge {
 }
 
 /** A link the map cannot follow: its document is not listed, or its section is not in the document. */
-export interface Problem {
+interface Problem {
   from: string;
   link: DocLink;
   kind: 'missing-doc' | 'missing-anchor';
@@ -206,7 +206,7 @@ const shaped =
     typeof value === 'object' && value !== null && Object.entries(shape).every(([key, check]) => check((value as Record<string, unknown>)[key]));
 
 /** Everything a stored reading must hold, checked before it is trusted: storage can be damaged or written by another version. */
-export const isStoredDoc: Check = shaped({
+const isStoredDoc: Check = shaped({
   path: text,
   title: text,
   kind: word(KIND_NAMES),

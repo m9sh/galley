@@ -12,7 +12,20 @@ npm run dev        # dev build in dist/dev with live reload; load it once via ch
 npm run demo       # or: try the reader on a sample merge request, no extension needed
 ```
 
-Node 22.12 or newer is required (22.12+, 24 or 26+). See [Develop in your own Chrome](#develop-in-your-own-chrome) for the dev loop.
+Node 22.12 or newer is required (22.12+, 24 or 26+); `.nvmrc` names the version CI tests first, so `nvm use` picks it. See [Develop in your own Chrome](#develop-in-your-own-chrome) for the dev loop.
+
+## Keeping the working copy clean
+
+Builds, tests and screenshot scripts write into folders that git ignores: `dist/`, `coverage/`, `reports/` and `demo/build/`. Two commands put the working copy back to what git tracks:
+
+```bash
+npm run clean             # remove those folders; add -- --dry-run to list them with their sizes first
+npm run branches:prune    # list local branches whose pull request was merged
+```
+
+GitHub deletes a branch after its pull request is squash-merged, but your local copy stays. `branches:prune` asks GitHub which pull requests were merged and lists a branch only when its latest commit is the one that was merged, so anything you added afterwards keeps it. Add `-- --delete` to remove the listed branches. `npm install` also sets `fetch.prune`, so `git fetch` forgets the remote branches that were deleted.
+
+Keep screenshots and other one-off captures in `reports/`. Images in `docs/` are for documents: put them in `docs/images/` and link them, because `npm run docs:check` fails on a picture that no document links to.
 
 ## Develop in your own Chrome
 

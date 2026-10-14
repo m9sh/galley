@@ -40,7 +40,7 @@ export interface SearchScope {
   failed: number;
 }
 
-export interface SearchOptions<T> {
+interface SearchOptions<T> {
   /** Where the popup and the results bar live. */
   root: HTMLElement;
   toggle: HTMLButtonElement;

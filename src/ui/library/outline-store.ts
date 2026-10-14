@@ -18,7 +18,7 @@ export const OUTLINE_PROJECT_CHARS = 1_000_000;
 /** The projects remembered: when each was last used, how much it holds and on which site. Small, so it can be read often. */
 export type Directory = Record<string, { used: number; chars: number; site: string }>;
 
-export interface Area {
+interface Area {
   get(keys: string[]): Promise<Record<string, unknown>>;
   set(items: Record<string, unknown>): Promise<void>;
   remove(keys: string[]): Promise<void>;

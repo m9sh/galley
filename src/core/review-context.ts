@@ -38,7 +38,7 @@ export interface ChapterAttachment {
   heading: string;
   title: string;
 }
-export interface ContextSnapshot {
+interface ContextSnapshot {
   commit: string;
   status: string;
   related: Map<string, ReviewRelated[]>;

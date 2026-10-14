@@ -5,7 +5,7 @@ import mermaid from 'mermaid';
 import { type DiagramPalette, isPalette } from '../rendering/diagram-palette.ts';
 import { listen, serve } from './sandbox-frame.ts';
 
-export interface DiagramRequest {
+interface DiagramRequest {
   id: number;
   code: string;
   dark: boolean;
@@ -65,7 +65,7 @@ export function chartColours(accent: string, dark: boolean, count = 12): string[
  * The page's figure style: shapes are cards on a soft canvas, lines are muted, labels are quiet, and
  * group titles are small capitals like the reader's own. Built only from validated hex colours.
  */
-export function diagramTheme(p: DiagramPalette, dark: boolean): { themeVariables: Record<string, string | boolean>; themeCSS: string } {
+function diagramTheme(p: DiagramPalette, dark: boolean): { themeVariables: Record<string, string | boolean>; themeCSS: string } {
   const canvas = p.code,
     card = dark ? p.soft : p.bg,
     ink = dark ? p.bg : '#ffffff';
@@ -177,7 +177,7 @@ export function diagramTheme(p: DiagramPalette, dark: boolean): { themeVariables
  * What a change did, in the page's change colours and never by colour alone: added shapes and links are drawn
  * heavier, edited ones heavier with words in italics, removed ones dashed with their words struck through.
  */
-export function changeCSS(colours: { add: string; mod: string; del: string }, canvas: string): string {
+function changeCSS(colours: { add: string; mod: string; del: string }, canvas: string): string {
   const shapes = ':is(rect, polygon, circle, ellipse, path)';
   return `
     .node.galleyAdded ${shapes} { stroke: ${colours.add}; stroke-width: 2.5px; }
