@@ -22490,7 +22490,15 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
         sheet: this.sheet,
         claim: () => this.claimSheet(),
         commit: this.source.commit
-      }), head.querySelector(".mr-lens-switch").after(this.mapView.tools), map2.replaceChildren(head, this.mapView.element), this.mapView.draw({ model: documentMap(this.index, this.corrections), focus: this.focus, here: this.path, changed: this.changed });
+      }), head.querySelector(".mr-lens-switch").after(this.mapView.tools), this.redrawPane(map2, head, this.mapView.element), this.mapView.draw({ model: documentMap(this.index, this.corrections), focus: this.focus, here: this.path, changed: this.changed });
+    }
+    /**
+     * Draw the map's pane anew, as reading more documents or loading notes does: what the reader typed stays, and the
+     * control that had focus keeps it, the same one moved or the one drawn in its place.
+     */
+    redrawPane(pane, ...children) {
+      let active = this.shadow.activeElement, focused = active instanceof HTMLElement && pane.contains(active) ? active : null, restore = typed(pane);
+      pane.replaceChildren(...children), restore(), focused && (focused.isConnected ? focused : twin(pane, focused))?.focus({ preventScroll: !0 });
     }
     /** A document in the map's sheet, rendered as the reader would, with diagrams as their source. */
     async preview(path) {
@@ -22593,8 +22601,9 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
       return { state, read, notes: notes2, files: this.listing.configs.files.length, commit: this.source.commit };
     }
     drawLens(lens) {
-      let map2 = this.q(".mr-repo-map"), source2 = this.source, model = buildLens(lens, this.lensInput()), restore = typed(map2);
-      map2.replaceChildren(
+      let map2 = this.q(".mr-repo-map"), source2 = this.source, model = buildLens(lens, this.lensInput());
+      this.redrawPane(
+        map2,
         this.mapHead(),
         lensView({
           lens,
@@ -22604,7 +22613,7 @@ ${settingsSheet("Set type, appearance and layout for comfortable reading.", [
           links: { isDocument: (path) => this.index.documentAt(path) === path, fileAt: (path, line) => `${source2.links.blob(path)}#L${line}` },
           reading: this.path ? { path: this.path, title: this.titleOf(this.path) } : null
         })
-      ), restore();
+      );
     }
     /**
      * Read the listed configuration files in the sandboxed frame, a few at a time, only when the reader
