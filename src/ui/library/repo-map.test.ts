@@ -5,6 +5,7 @@ import { MAX_DOCUMENT_CHARS } from '../../core/limits.ts';
 import { ReaderError } from '../../platforms/types.ts';
 import { deferred } from '../../testing/reader.ts';
 import { handbook, listing, repoHarness, repository, words } from '../../testing/repo.ts';
+import { openRepository } from './repo-reader.ts';
 
 const drawn = vi.hoisted(() => ({ renderDiagrams: vi.fn(), highlightCode: vi.fn(async () => {}) }));
 vi.mock('../rendering/diagrams.ts', async (original) => ({
@@ -15,8 +16,9 @@ vi.mock('../rendering/code.ts', async (original) => ({ ...(await original<typeof
 
 const ui = repoHarness();
 const decision = 'docs/adr/0001-use-markdown.md';
+/** From a document, Back to map, once the map has read every document. */
 const showMap = async () => {
-  ui.click('[data-view="map"]');
+  ui.click('[data-act="back-to-map"]');
   await vi.waitFor(() => expect(ui.q('.mr-map-status').textContent).toMatch(/^Built from all/));
 };
 const card = (id: string) => ui.all('.mr-pm-place').find((place) => place.dataset.id === id)!;
@@ -28,15 +30,16 @@ it('the map puts a document between what links to it and what it links to; choos
   await ui.open(repository(handbook, { start: { path: decision, folder: false } }));
   await showMap();
   expect(ui.q('.mr-repo-read').hidden).toBe(true);
-  expect(ui.q('[data-view="map"]').getAttribute('aria-pressed')).toBe('true');
+  expect(ui.q('[data-act="back-to-map"]').hidden).toBe(true);
   expect(ui.q('.mr-root').classList).toContain('is-map-space');
   expect(ui.text('.mr-map-status')).toBe('Built from all 3 documents at c0ffee1.');
   expect(words(centre())).toBe('ADR 1 Use Markdown docs/adr You are here');
   expect(centre().getAttribute('aria-label')).toBe('ADR 1: Use Markdown, Decision, docs/adr/0001-use-markdown.md, you are here');
-  expect(ui.all('.mr-pm-lane-head').map(words)).toStrictEqual(['Linked from 0', 'In focus', 'Links to 2']);
-  // Both were drawn as links before they were read; they link back, so they stay put with an arrowhead at each end.
-  expect(cards('outgoing')).toStrictEqual(['README.md', 'docs/specs/reading.md']);
-  expect(ui.text('[data-lane="incoming"] .mr-pm-empty')).toBe('Every document that links here is also one it links to.');
+  expect(ui.all('.mr-pm-lane-head').map(words)).toStrictEqual(['Linked from 2', 'In focus', 'Links to 0']);
+  // The map was drawn before anything was read: both were found linking here, and keep their place now that it is
+  // read and links back to them, with an arrowhead at each end.
+  expect(cards('incoming')).toStrictEqual(['README.md', 'docs/specs/reading.md']);
+  expect(ui.text('[data-lane="outgoing"] .mr-pm-empty')).toBe('Every document it links to also links here.');
   expect(ui.all('.mr-pm-edge').map((edge) => edge.querySelectorAll('.mr-pm-arrow').length)).toStrictEqual([2, 2]);
 
   // Choosing a place previews it in a sheet beside the map; the middle stays where it was.
@@ -44,7 +47,7 @@ it('the map puts a document between what links to it and what it links to; choos
   await vi.waitFor(() => expect(ui.q('.mr-pm-preview')).toBeTruthy());
   expect(ui.q('.mr-pm-sheet').hidden).toBe(false);
   expect(ui.q('.mr-pm-sheet').getAttribute('aria-label')).toBe('Document preview');
-  expect(ui.text('.mr-pm-sheet .mr-sheet-header')).toBe('Spec Read Close details Reading docs/specs/reading.md · c0ffee1 Preview Links 2');
+  expect(ui.text('.mr-pm-sheet .mr-sheet-header')).toBe('Spec Read Close Reading docs/specs/reading.md · c0ffee1 Preview Links 2');
   expect(ui.text('.mr-pm-preview')).toBe('Goals Read the decision.');
   expect(card('docs/specs/reading.md').getAttribute('aria-pressed')).toBe('true');
   expect(words(centre())).toBe('ADR 1 Use Markdown docs/adr You are here');
@@ -61,7 +64,7 @@ it('the map puts a document between what links to it and what it links to; choos
   expect(ui.q('.mr-root').classList).not.toContain('is-map-space');
 
   // Back on the map, everything is where the reader left it, and the document being read says so.
-  ui.click('[data-view="map"]');
+  ui.click('[data-act="back-to-map"]');
   expect(words(centre())).toBe('ADR 1 Use Markdown docs/adr');
   expect(words(card('docs/specs/reading.md'))).toBe('Spec Reading docs/specs You are here');
   expect(ui.q('.mr-pm-sheet').hidden).toBe(false);
@@ -137,23 +140,23 @@ it('a large repository is read for the map in bounded passes that can be stopped
     configs: { files: [], limits: [] },
   }));
   await ui.open(source);
-  ui.click('[data-view="map"]');
+  ui.click('[data-act="back-to-map"]');
   await vi.waitFor(() => expect(ui.text('.mr-map-status')).toContain('Index more'));
   expect(ui.text('.mr-map-status')).toBe(
-    `Built from ${INDEX_BATCH + 1} of 164 documents at c0ffee1. Links from the others are not shown yet. Index more 1 document could not be read. 2 documents are too large to read.`,
+    `Built from ${INDEX_BATCH} of 164 documents at c0ffee1. Links from the others are not shown yet. Index more 1 document could not be read. 2 documents are too large to read.`,
   );
-  // The first document it links to was drawn before it was read, and keeps its place on the right.
-  expect(ui.text('[data-lane="incoming"] .mr-pm-lane-head')).toBe(`Linked from ${INDEX_BATCH - 4}`);
-  expect(cards('outgoing')).toStrictEqual(['d000.md']);
+  // Every document read in the first pass links here, the first one it links to among them.
+  expect(ui.all('.mr-pm-lane-head').map(words)).toStrictEqual([`Linked from ${INDEX_BATCH - 4}`, 'In focus', 'Links to 0']);
+  expect(cards('incoming')).toContain('d000.md');
   // A lane shows its first eight; the rest are in List, kept to this neighbourhood.
   expect(cards('incoming')).toHaveLength(8);
   ui.press(`Show ${INDEX_BATCH - 12} more in List`, '.mr-pm button');
   expect(ui.q('.mr-pm-canvas').hidden).toBe(true);
   expect(ui.q('[data-act="pm-view-list"]').getAttribute('aria-pressed')).toBe('true');
-  expect(ui.text('.mr-pm-filter')).toBe(`${INDEX_BATCH - 3} documents connected to Top`);
+  expect(ui.text('.mr-pm-filter')).toBe(`${INDEX_BATCH - 4} documents connected to Top`);
   expect(ui.all('.mr-pm-list .mr-pm-place')).toHaveLength(100);
-  ui.press(`Show ${INDEX_BATCH - 103} more of ${INDEX_BATCH - 3}`);
-  expect(ui.all('.mr-pm-list .mr-pm-place')).toHaveLength(INDEX_BATCH - 3);
+  ui.press(`Show ${INDEX_BATCH - 104} more of ${INDEX_BATCH - 4}`);
+  expect(ui.all('.mr-pm-list .mr-pm-place')).toHaveLength(INDEX_BATCH - 4);
   ui.click('[data-act="pm-clear-near"]');
   expect(ui.all('.mr-pm-filter')).toHaveLength(0);
   expect(ui.shadow().activeElement).toBe(ui.q('.mr-pm-list .mr-pm-place'));
@@ -265,7 +268,12 @@ it('the reader can correct a document’s type, or a folder’s, and keep it wit
 
 it('the documents list is an outline of folders that searches titles, paths and headings', async () => {
   const files: Record<string, string> = { ...handbook, 'docs/adr/0002-other.md': '# ADR 2\n\n## Rollout plan' };
-  await ui.open(repository(files));
+  // The second decision is still being read for the map when the list is first searched.
+  const slow = deferred<string>();
+  const source = repository(files);
+  const load = source.load;
+  source.load = vi.fn((path: string) => (path === 'docs/adr/0002-other.md' ? slow.promise : load(path)));
+  await ui.open(source);
   ui.click('[data-act="docs"]');
   expect(ui.q('[data-act="docs"]').getAttribute('aria-expanded')).toBe('true');
   expect(ui.shadow().activeElement).toBe(ui.q('.mr-repo-search'));
@@ -280,11 +288,12 @@ it('the documents list is an outline of folders that searches titles, paths and 
   };
   search('reading');
   expect(ui.all('.mr-repo-results .mr-menu-item').map((b) => b.dataset.path)).toStrictEqual(['docs/specs/reading.md']);
-  expect(ui.text('.mr-repo-results')).toContain('Headings are searched in the 1 document Galley has read.');
+  expect(ui.text('.mr-repo-results')).toContain('Headings are searched in the 3 documents Galley has read.');
   search('nothing like this');
   expect(ui.text('.mr-repo-results')).toContain('No document or heading matches.');
   // After the map has read every document, headings are found too, and open at their section.
   ui.key('Escape');
+  slow.resolve(files['docs/adr/0002-other.md']);
   await showMap();
   ui.click('[data-act="docs"]');
   search('rollout');
@@ -325,23 +334,25 @@ it('the list says when the repository is still being listed, has no documents, o
   const pending = deferred<RepoDiscovery>();
   const source = repository(handbook, { start: { path: 'README.md', folder: false } });
   vi.mocked(source.discover).mockReturnValueOnce(pending.promise).mockRejectedValueOnce(new Error('offline'));
-  await ui.open(source);
+  const opening = ui.openMap(source);
+  await vi.waitFor(() => expect(source.discover).toHaveBeenCalled());
   ui.click('[data-act="docs"]');
   expect(ui.text('.mr-repo-outline')).toBe('Listing documents…');
   pending.reject(new Error('offline'));
+  await opening;
+  // The map says so too, with its own way to try again.
+  expect(ui.text('.mr-repo-map .mr-message')).toBe('Galley could not read this. offline Try again');
   await vi.waitFor(() => expect(ui.text('.mr-repo-outline')).toBe('Galley could not list this repository. Try again'));
-  ui.press('Try again');
+  ui.press('Try again', '.mr-repo-outline button');
   await vi.waitFor(() => expect(ui.text('.mr-repo-outline')).toBe('Galley could not list this repository. Try again'));
-  ui.press('Try again');
+  ui.press('Try again', '.mr-repo-outline button');
   await vi.waitFor(() => expect(ui.all('.mr-repo-outline .mr-menu-item')).toHaveLength(3));
   ui.close();
-  const empty = repository({}, { start: { path: 'README.md', folder: false } });
-  await ui.open(empty);
+  await ui.open(repository({}));
   ui.click('[data-act="docs"]');
   await vi.waitFor(() => expect(ui.text('.mr-repo-outline')).toBe('No Markdown documents at this commit.'));
   ui.key('Escape');
-  ui.click('[data-view="map"]');
-  await vi.waitFor(() => expect(ui.text('.mr-repo-map')).toContain('No Markdown documents at this commit.'));
+  expect(ui.text('.mr-repo-map .mr-message h2')).toBe('No documents here');
   expect(ui.text('.mr-map-status')).toBe('Built from all 0 documents at c0ffee1.');
 });
 
@@ -349,49 +360,91 @@ it('a listing that fails in the map can be tried again; the read view is where i
   const source = repository(handbook, { start: { path: decision, folder: false } });
   vi.mocked(source.discover).mockRejectedValueOnce(new ReaderError('GitHub API rate limit reached.', 'Wait a few minutes.'));
   await ui.open(source);
-  ui.click('[data-view="map"]');
-  await vi.waitFor(() => expect(ui.text('.mr-repo-map .mr-message')).toBe('GitHub API rate limit reached. Wait a few minutes. Try again'));
+  expect(ui.text('.mr-repo-map .mr-message')).toBe('GitHub API rate limit reached. Wait a few minutes. Try again');
   ui.press('Try again', '.mr-repo-map button');
-  await vi.waitFor(() => expect(words(centre())).toBe('ADR 1 Use Markdown docs/adr You are here'));
-  ui.click('[data-view="read"]');
+  await vi.waitFor(() => expect(words(centre())).toBe('ADR 1 Use Markdown docs/adr'));
+  ui.click('.mr-pm-sheet [data-act="open"]');
+  await ui.settled();
   expect(ui.text('.mr-lead')).toBe('ADR 1: Use Markdown');
-  // Leaving the map before the listing arrives keeps the reader in the document.
-  ui.close();
+  // Going back to the document before a newer commit's listing arrives keeps the reader in it.
+  const next = repository(handbook, { commit: 'beef0000beef0000beef0000beef0000beef0000', start: { path: decision, folder: false } });
   const pending = deferred<RepoDiscovery>();
-  const slow = repository(handbook, { start: { path: decision, folder: false } });
-  vi.mocked(slow.discover).mockReturnValueOnce(pending.promise);
-  await ui.open(slow);
-  ui.click('[data-view="map"]');
-  ui.click('[data-view="read"]');
+  vi.mocked(next.discover).mockReturnValueOnce(pending.promise);
+  vi.mocked(source.refresh).mockResolvedValueOnce(next);
+  ui.click('[data-act="refresh"]');
+  await vi.waitFor(() => expect(ui.text('.mr-repo-commit-label')).toBe('beef000'));
+  await ui.settled();
+  ui.click('[data-act="back-to-map"]');
+  ui.key('m');
   pending.reject(new Error('offline'));
   await pending.promise.catch(() => {});
   expect(ui.q('.mr-repo-map').hidden).toBe(true);
+  expect(ui.text('.mr-lead')).toBe('ADR 1: Use Markdown');
   const second = deferred<RepoDiscovery>();
-  vi.mocked(slow.discover).mockReturnValueOnce(second.promise);
-  ui.click('[data-view="map"]');
-  ui.click('[data-view="read"]');
+  vi.mocked(next.discover).mockReturnValueOnce(second.promise);
+  ui.click('[data-act="back-to-map"]');
+  ui.key('m');
   second.resolve(listing([decision]));
   await second.promise;
   expect(ui.q('.mr-repo-map').hidden).toBe(true);
-  // Without a document open, Read has nothing to show.
+  // A newer commit's map that cannot be listed says so, and can be tried again.
+  ui.close();
+  const third = repository(handbook, { start: { path: decision, folder: false } });
+  const later = repository(handbook, { commit: 'feed0000feed0000feed0000feed0000feed0000', start: { path: decision, folder: false } });
+  // Notes check their sections at the newer commit first, which asks for the listing too.
+  vi.mocked(later.discover)
+    .mockRejectedValueOnce(new ReaderError('Could not reach GitHub.', 'Try again in a moment.'))
+    .mockRejectedValueOnce(new ReaderError('Could not reach GitHub.', 'Try again in a moment.'));
+  vi.mocked(third.refresh).mockResolvedValueOnce(later);
+  await ui.open(third);
+  ui.click('[data-act="refresh"]');
+  await vi.waitFor(() => expect(ui.text('.mr-repo-commit-label')).toBe('feed000'));
+  await ui.settled();
+  ui.click('[data-act="back-to-map"]');
+  await vi.waitFor(() => expect(ui.text('.mr-repo-map .mr-message')).toBe('Could not reach GitHub. Try again in a moment. Try again'));
+  ui.press('Try again', '.mr-repo-map button');
+  await vi.waitFor(() => expect(words(centre())).toBe('ADR 1 Use Markdown docs/adr You are here'));
+  // With no document read, M has nothing to go back to.
   ui.close();
   await ui.open(repository({}));
-  ui.click('[data-view="read"]');
-  expect(ui.text('.mr-message h2')).toBe('No documents here');
+  ui.key('m');
+  expect(ui.q('.mr-repo-map').hidden).toBe(false);
 });
 
 it('backlinks below a document say how much has been read, and find more on request', async () => {
+  // The README, which links here, is still being read for the map when the decision is read.
+  const slow = deferred<string>();
   const source = repository(handbook, { start: { path: decision, folder: false } });
+  const load = source.load;
+  source.load = vi.fn((path: string) => (path === 'README.md' ? slow.promise : load(path)));
   await ui.open(source);
-  expect(ui.text('.mr-repo-backlinks')).toBe('Linked from Galley has read 1 in this repository. Find links to this document');
+  expect(ui.text('.mr-repo-backlinks')).toBe(
+    'Linked from Galley has read 2 of 3 documents in this repository. Reading Spec the decision in “Goals”, line 10 Reading documents…',
+  );
+  // Stopped on the map, the pass can be continued from the document.
+  ui.click('[data-act="back-to-map"]');
+  ui.press('Stop reading');
+  ui.key('m');
+  expect(ui.text('.mr-repo-backlinks')).toBe(
+    'Linked from Galley has read 2 of 3 documents in this repository. Reading Spec the decision in “Goals”, line 10 Find links to this document',
+  );
   ui.press('Find links to this document');
+  expect(ui.text('.mr-repo-backlinks')).toContain('Reading documents…');
+  slow.resolve(handbook['README.md']);
   await vi.waitFor(() => expect(ui.text('.mr-repo-backlinks')).toContain('Handbook'));
   expect(ui.text('.mr-repo-backlinks')).not.toContain('Galley has read');
   ui.close();
-  // A failed listing is reported without leaving the document.
+  // Opened at a document from a review, a listing that fails is reported without leaving the document.
   const failing = repository(handbook, { start: { path: decision, folder: false } });
-  vi.mocked(failing.discover).mockRejectedValueOnce(new ReaderError('Could not reach GitHub.', ''));
-  await ui.open(failing);
+  vi.mocked(failing.discover)
+    .mockRejectedValueOnce(new ReaderError('Could not reach GitHub.', ''))
+    .mockRejectedValueOnce(new ReaderError('Could not reach GitHub.', ''));
+  await ui.open(failing, {
+    review: { title: 'Review', ref: 'main', chapters: [{ title: 'Docs', paths: [decision] }], entry: { path: decision, key: 'doc', canContinue: false } },
+  });
+  await ui.settled();
+  await vi.waitFor(() => expect(failing.discover).toHaveBeenCalledOnce());
+  expect(ui.text('.mr-repo-backlinks')).toBe('Linked from Galley has read 1 in this repository. Find links to this document');
   ui.press('Find links to this document');
   await vi.waitFor(() => expect(ui.text('.mr-toast')).toBe('Could not reach GitHub.'));
   ui.press('Find links to this document');
@@ -401,15 +454,13 @@ it('backlinks below a document say how much has been read, and find more on requ
 it('backlinks show progress while documents are read, from the list or the reader', async () => {
   const slow = deferred<string>();
   const source = repository(handbook, { start: { path: 'README.md', folder: false } });
-  await ui.open(source);
-  ui.click('[data-act="docs"]');
-  await vi.waitFor(() => expect(ui.all('.mr-repo-outline .mr-menu-item')).toHaveLength(3));
-  ui.key('Escape');
-  expect(ui.text('.mr-repo-backlinks')).toBe('Linked from Galley has read 1 of 3 documents in this repository. Find links to this document');
   const load = source.load;
   source.load = vi.fn((path: string) => (path === 'docs/specs/reading.md' ? slow.promise : load(path)));
-  ui.press('Find links to this document');
-  expect(ui.text('.mr-repo-backlinks')).toContain('Reading documents…');
+  await ui.open(source);
+  expect(ui.text('.mr-repo-backlinks')).toBe(
+    'Linked from Galley has read 2 of 3 documents in this repository. ADR 1: Use Markdown Decision the README in “Context”, line 9 Reading documents…',
+  );
+  // Asking again while documents are read changes nothing; the links come when the pass ends.
   ui.press('Reading documents…');
   slow.resolve(handbook['docs/specs/reading.md']);
   await vi.waitFor(() => expect(ui.text('.mr-repo-backlinks')).toBe('Linked from ADR 1: Use Markdown Decision the README in “Context”, line 9'));
@@ -433,7 +484,7 @@ it('checking for a newer commit keeps the snapshot when nothing moved, and start
   vi.mocked(moved.refresh).mockResolvedValueOnce(again);
   ui.click('[data-act="refresh"]');
   await vi.waitFor(() => expect(ui.text('.mr-map-status')).toBe('Built from all 1 document at abcdef0.'));
-  ui.click('[data-view="read"]');
+  ui.key('m');
   await ui.settled();
   expect(ui.text('.mr-lead')).toBe('Third');
   // A failed check says why and can be tried again.
@@ -446,10 +497,10 @@ it('checking for a newer commit keeps the snapshot when nothing moved, and start
 it('a newer commit stops a pass reading for the map; a check answered after closing changes nothing', async () => {
   const slow = deferred<string>();
   const source = repository(handbook, { ref: null });
-  await ui.open(source);
   const load = source.load;
   source.load = vi.fn((path: string) => (path === decision ? slow.promise : load(path)));
-  ui.click('[data-view="map"]');
+  await ui.open(source);
+  ui.click('[data-act="back-to-map"]');
   await vi.waitFor(() => expect(ui.text('.mr-map-status')).toContain('Stop reading'));
   vi.mocked(source.refresh).mockResolvedValueOnce(repository(handbook, { commit: 'beef0000beef0000beef0000beef0000beef0000', ref: null }));
   ui.click('[data-act="refresh"]');
@@ -485,23 +536,22 @@ it('a commit page is pinned: there is nothing newer to check', async () => {
 it('a reader closed while documents are read for the map stops reading', async () => {
   const slow = deferred<string>();
   const source = repository();
+  const load = source.load;
+  source.load = vi.fn((path: string) => (path === decision ? slow.promise : load(path)));
   await ui.open(source);
-  source.load = vi.fn(() => slow.promise);
-  ui.click('[data-view="map"]');
+  ui.click('[data-act="back-to-map"]');
   await vi.waitFor(() => expect(ui.text('.mr-map-status')).toContain('Stop reading'));
   ui.close();
   slow.resolve('# Late');
   await slow.promise;
   expect(document.querySelector('#galley-repo-reader')).toBeNull();
-  // A map asked for before the repository arrived waits for it.
+  // Before the repository arrives, there is no map or list to open.
   const pending = deferred<ReturnType<typeof repository>>();
-  const { openRepository } = await import('./repo-reader.ts');
   const handle = openRepository(pending.promise);
-  const root = document.querySelector('#galley-repo-reader')!.shadowRoot!;
-  root.querySelector<HTMLElement>('[data-view="map"]')!.click();
-  root.querySelector<HTMLElement>('[data-act="docs"]')!.click();
-  expect(root.querySelector<HTMLElement>('.mr-repo-docs')!.hidden).toBe(true);
-  expect(root.querySelector<HTMLElement>('.mr-repo-map')!.hidden).toBe(true);
+  ui.key('m');
+  ui.key('/');
+  expect(ui.q('.mr-repo-docs').hidden).toBe(true);
+  expect(ui.q('.mr-repo-map').hidden).toBe(true);
   handle.close();
 });
 
@@ -509,9 +559,9 @@ it('the map can be closed while the listing is on its way', async () => {
   const pending = deferred<RepoDiscovery>();
   const source = repository(handbook, { start: { path: 'README.md', folder: false } });
   vi.mocked(source.discover).mockReturnValueOnce(pending.promise);
-  await ui.open(source);
-  ui.click('[data-view="map"]');
-  ui.close();
+  const handle = openRepository(source);
+  await vi.waitFor(() => expect(source.discover).toHaveBeenCalled());
+  handle.close();
   pending.resolve(listing(['README.md']));
   await pending.promise;
   expect(document.querySelector('#galley-repo-reader')).toBeNull();
@@ -542,7 +592,8 @@ it('a listing for an older commit is dropped when the reader has moved to a newe
   const pending = deferred<RepoDiscovery>();
   const source = repository(handbook, { start: { path: 'README.md', folder: false }, ref: null });
   vi.mocked(source.discover).mockReturnValueOnce(pending.promise);
-  await ui.open(source);
+  const opening = ui.openMap(source);
+  await vi.waitFor(() => expect(source.discover).toHaveBeenCalled());
   ui.click('[data-act="docs"]');
   ui.key('Escape');
   ui.click('[data-act="refresh"]');
@@ -550,20 +601,24 @@ it('a listing for an older commit is dropped when the reader has moved to a newe
   const moved = repository(handbook, { commit: 'beef0000beef0000beef0000beef0000beef0000', start: { path: 'README.md', folder: false } });
   vi.mocked(source.refresh).mockResolvedValueOnce(moved);
   ui.click('[data-act="refresh"]');
-  await vi.waitFor(() => expect(ui.text('.mr-repo-commit-label')).toBe('beef000'));
+  // The newer commit draws its own map.
+  await opening;
+  expect(ui.text('.mr-repo-commit-label')).toBe('beef000');
   pending.resolve(listing(['stale.md']));
   await pending.promise;
   ui.click('[data-act="docs"]');
   await vi.waitFor(() => expect(ui.all('.mr-repo-outline .mr-menu-item').map((b) => b.dataset.path)).toStrictEqual(Object.keys(handbook)));
+  // The opening answered late chooses nothing on the newer map.
+  expect(ui.q('.mr-pm-sheet').hidden).toBe(true);
 });
 
-it('a repository that had no documents starts again when a newer commit has some', async () => {
+it('a repository that had no documents shows its map when a newer commit has some', async () => {
   const source = repository({});
   await ui.open(source);
-  expect(ui.text('.mr-message h2')).toBe('No documents here');
+  expect(ui.text('.mr-repo-map .mr-message h2')).toBe('No documents here');
   vi.mocked(source.refresh).mockResolvedValueOnce(repository(handbook, { commit: 'beef0000beef0000beef0000beef0000beef0000' }));
   ui.click('[data-act="refresh"]');
-  await vi.waitFor(() => expect(ui.text('.mr-doc h1')).toBe('Handbook'));
+  await vi.waitFor(() => expect(words(centre())).toBe('Overview Handbook Top folder'));
 });
 
 it('the sheet previews a document as the reader would, diagrams as their source; links in it preview in place, and Escape closes it', async () => {
@@ -573,7 +628,7 @@ it('the sheet previews a document as the reader would, diagrams as their source;
   const load = source.load;
   source.load = vi.fn((path: string) => (path === 'b.md' ? later.b.promise : path === 'c.md' ? later.c.promise : load(path)));
   await ui.open(source);
-  ui.click('[data-view="map"]');
+  ui.click('[data-act="back-to-map"]');
   await vi.waitFor(() => expect(ui.text('.mr-map-status')).toContain('Stop reading'));
   ui.press('Stop reading');
   expect(cards('outgoing')).toStrictEqual(['b.md', 'c.md']);

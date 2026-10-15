@@ -8,8 +8,8 @@ import { LAYOUT_NAMES } from '../components/layout-controls.ts';
 import { loadImage } from '../rendering/render.ts';
 import { DEFAULT_SETTINGS, updateSettings, TEXT_SIZES, type Settings } from '../preferences/settings.ts';
 import { applyReadingControls, nextTab, selectTab } from '../components/settings-sheet.ts';
-import { type ReviewContext, SETTINGS_TABS, problem, safeDecode, session } from './repo-reader-shared.ts';
-import { RepoReaderLenses } from './repo-reader-lenses.ts';
+import { type Panel, type ReviewContext, SETTINGS_TABS, problem, safeDecode, session } from './repo-reader-shared.ts';
+import { RepoReaderPanels } from './repo-reader-panels.ts';
 
 export interface RepoReaderHandle {
   close(): void;
@@ -29,7 +29,7 @@ export function openRepository(
   );
   return { close: () => reader.close() };
 }
-class RepoReader extends RepoReaderLenses {
+class RepoReader extends RepoReaderPanels {
   // ---------------------------------------------------------------- chrome
 
   protected skeleton(): HTMLElement {
@@ -80,7 +80,7 @@ class RepoReader extends RepoReaderLenses {
     sheet.hidden = false;
     this.sheetOpener = opener;
     this.q(opener).setAttribute('aria-expanded', 'true');
-    for (const el of this.root.querySelectorAll<HTMLElement>('.mr-topbar, .mr-main, .mr-toc')) el.inert = true;
+    for (const el of this.root.querySelectorAll<HTMLElement>('.mr-topbar, .mr-main, .mr-toc, .mr-pm-sheet')) el.inert = true;
     sheet.querySelector<HTMLElement>('.mr-settings-heading .mr-icon-btn')!.focus();
   }
 
@@ -88,7 +88,7 @@ class RepoReader extends RepoReaderLenses {
     const sheet = this.openSheetEl();
     if (!sheet) return false;
     sheet.hidden = true;
-    for (const el of this.root.querySelectorAll<HTMLElement>('.mr-topbar, .mr-main, .mr-toc')) el.inert = false;
+    for (const el of this.root.querySelectorAll<HTMLElement>('.mr-topbar, .mr-main, .mr-toc, .mr-pm-sheet')) el.inert = false;
     const opener = this.q(this.sheetOpener);
     opener.setAttribute('aria-expanded', 'false');
     opener.focus({ preventScroll: true });
@@ -96,15 +96,10 @@ class RepoReader extends RepoReaderLenses {
   }
 
   protected closeMenus(): boolean {
-    let closed = false;
-    for (const [menu, control] of [
-      ['.mr-repo-docs', '[data-act="docs"]'],
-      ['.mr-repo-views', '[data-act="views"]'],
-    ]) {
-      if (!this.q(menu).hidden) closed = true;
-      this.q(menu).hidden = true;
-      this.q(control).setAttribute('aria-expanded', 'false');
-    }
+    const menu = this.q('.mr-repo-docs');
+    const closed = !menu.hidden;
+    menu.hidden = true;
+    this.q('[data-act="docs"]').setAttribute('aria-expanded', 'false');
     return closed;
   }
 
@@ -125,8 +120,8 @@ class RepoReader extends RepoReaderLenses {
     const target = e.target as Element;
     const link = target.closest<HTMLAnchorElement>('.mr-content a[data-mr-path]');
     if (link) {
-      if (link.closest('.mr-pm-sheet') && this.mapView!.previewLink(link, e)) return;
-      if (link.closest('.mr-doc-sheet') && this.reviewMap!.previewLink(link, e)) return;
+      // A link in a document previewed beside a map previews the document it points to.
+      if (link.closest('.mr-pm-sheet') && (this.view === 'review' ? this.reviewMap : this.mapView)!.previewLink(link, e)) return;
       this.follow(link, e);
       return;
     }
@@ -134,18 +129,6 @@ class RepoReader extends RepoReaderLenses {
     if (section) {
       e.preventDefault();
       this.showAnchor(safeDecode(section.getAttribute('href')!.slice(1)));
-      return;
-    }
-    const view = target.closest<HTMLElement>('[data-view]');
-    if (view) {
-      this.closeMenus();
-      if (view.dataset.view === 'map') void this.showMap();
-      else if (view.dataset.view === 'notes') this.showNotes();
-      else if (view.dataset.view === 'review') void this.showReview();
-      else if (view.dataset.view === 'chapters') this.showSequence();
-      else if (this.path && this.rendered?.content.isConnected) this.setView('read');
-      else if (this.path) void this.open(this.path, { push: false });
-      else this.start();
       return;
     }
     const el = target.closest<HTMLElement>('[data-act]');
@@ -183,31 +166,30 @@ class RepoReader extends RepoReaderLenses {
       case 'back':
         this.go(-1);
         return;
-      case 'forward':
-        this.go(1);
+      case 'back-to-map':
+        this.backToMap();
         return;
       case 'docs':
+        // Covering the page on a phone, the sheet gives way to the list.
+        if (this.sheet.isModal) this.closePanel();
         this.toggleDocs();
         return;
-      case 'views': {
-        const menu = this.q('.mr-repo-views');
-        const open = menu.hidden;
-        this.closeMenus();
-        if (open) {
-          menu.hidden = false;
-          el.setAttribute('aria-expanded', 'true');
-          menu.querySelector<HTMLElement>('[aria-pressed="true"]')!.focus();
-        }
+      case 'panel':
+        this.togglePanel(el.dataset.panel as Panel);
         return;
-      }
+      case 'panel-tab':
+        this.openPanel(el.dataset.panel as Panel);
+        return;
       case 'sequence':
-        this.showSequence();
+        this.openPanel('chapters');
         return;
       case 'sequence-add':
         this.addStop({ path: path!, anchor: el.dataset.anchor!, title: el.dataset.title! });
         return;
       case 'sequence-open': {
+        // Chapters give way to the document, as a review's chapters do; the route above it leads on.
         const stop = this.sequence.items[Number(el.dataset.at)];
+        this.closePanel();
         this.root.focus({ preventScroll: true });
         return void this.open(stop.path, { anchor: stop.anchor });
       }
@@ -222,10 +204,10 @@ class RepoReader extends RepoReaderLenses {
           at += step;
         }
         this.updateSequence();
-        this.showSequence();
-        const opens = this.q('.mr-repo-chapters').querySelectorAll<HTMLElement>('[data-act="sequence-open"]');
-        if (this.sequence.items.length) opens[Math.min(at, this.sequence.items.length - 1)].focus();
-        else this.q('.mr-repo-chapters [data-act="docs"]').focus();
+        this.drawPanel();
+        // Focus stays with the stop that moved, or goes to the stop now in the place of the one removed.
+        const opens = this.sheet.body.querySelectorAll<HTMLElement>('[data-act="sequence-open"]');
+        (this.sequence.items.length ? opens[Math.min(at, this.sequence.items.length - 1)] : this.sheet.root.element).focus();
         this.toast(el.dataset.act === 'sequence-remove' ? 'Removed from this chapter.' : 'Reading order updated.');
         return;
       }
@@ -248,6 +230,8 @@ class RepoReader extends RepoReaderLenses {
         return void this.refresh();
       case 'open':
         this.closeMenus();
+        // A link chosen in Chapters is read in full, as a stop is; Notes stay beside the document they are about.
+        if (this.panel === 'chapters' && el.closest('.mr-sheet')) this.closePanel();
         if (path === this.path && !el.dataset.anchor && this.view === 'read') return;
         return void this.open(path!, { anchor: el.dataset.anchor });
       case 'evidence':
@@ -271,8 +255,8 @@ class RepoReader extends RepoReaderLenses {
         this.stopIndexing();
         return;
       case 'retry-list':
-        if (this.source!.start.folder && !this.path) this.start();
-        else this.toggleDocs(true);
+        if (el.closest('.mr-repo-docs')) this.toggleDocs(true);
+        else void this.start();
         return;
       case 'heading':
         e.preventDefault();
@@ -296,12 +280,19 @@ class RepoReader extends RepoReaderLenses {
         this.closeZoom();
         return;
       // ---- map lenses
-      case 'lens':
-        this.lens = el.dataset.lens as 'documents' | LensName;
+      case 'lens': {
+        const lens = el.dataset.lens as 'review' | 'documents' | LensName;
+        // Both maps have the switch: focus goes to the one on the map now shown.
+        const focusLens = () => this.q(`.mr-main > :not([hidden]) [data-act="lens"][data-lens="${lens}"]`).focus();
+        if (lens === 'review') return void this.showReview().then(focusLens);
+        this.lens = lens;
         this.entityFocus = null;
+        // From This review, the Documents map and its lenses are the other map.
+        if (this.view === 'review') return void this.showMap().then(focusLens);
         this.drawMap();
-        this.q(`[data-act="lens"][data-lens="${this.lens}"]`).focus();
+        focusLens();
         return;
+      }
       case 'entity':
         this.entityFocus = id;
         this.drawMap();
@@ -332,6 +323,7 @@ class RepoReader extends RepoReaderLenses {
         });
         this.entityFocus = null;
         this.drawMap();
+        this.drawNotes();
         return;
       case 'remove-relation': {
         const { from, to, label } = el.dataset;
@@ -339,6 +331,7 @@ class RepoReader extends RepoReaderLenses {
           thinking.relations = thinking.relations.filter((relation) => relation.from !== from || relation.to !== to || relation.label !== label);
         });
         this.drawMap();
+        this.drawNotes();
         return;
       }
       case 'dismiss-since':
@@ -347,10 +340,11 @@ class RepoReader extends RepoReaderLenses {
         return;
       // ---- notes
       case 'view-notes':
-        this.showNotes();
+        this.openPanel('notes');
         return;
       case 'note-here':
-        this.showNotes();
+        // Notes open beside the document, with a new note about it.
+        this.openPanel('notes');
         this.q('form[data-act="add-note"] textarea').focus();
         return;
       case 'save-notes':
@@ -484,6 +478,7 @@ class RepoReader extends RepoReaderLenses {
             ];
         });
         this.drawMap();
+        this.drawNotes();
         this.q('[data-act="entity-kind"]').focus();
         return;
       }
@@ -526,19 +521,21 @@ class RepoReader extends RepoReaderLenses {
         this.root.focus({ preventScroll: true });
         return;
       }
-      const views = !this.q('.mr-repo-views').hidden;
       if (this.closeMenus()) {
-        this.q(views ? '[data-act="views"]' : '[data-act="docs"]').focus({ preventScroll: true });
+        this.q('[data-act="docs"]').focus({ preventScroll: true });
         return;
       }
-      if (this.mapView?.closeSheet() || this.reviewMap?.closeSheet()) return;
+      // The side sheet goes back a sheet, or closes.
+      if (this.sheet.onKey(e)) return;
       const attachment = this.shadow.querySelector<HTMLDetailsElement>('.mr-repo-read:not([hidden]) .mr-chapter-attachment[open]');
       if (attachment) {
         attachment.open = false;
         attachment.querySelector('summary')!.focus({ preventScroll: true });
         return;
       }
-      this.close();
+      // Reading, Esc goes back to the map; on the map it closes the reader.
+      if (!this.q('.mr-repo-back').hidden) this.backToMap();
+      else this.close();
       return;
     }
     const sheet = this.openSheetEl();
@@ -552,8 +549,8 @@ class RepoReader extends RepoReaderLenses {
       e.preventDefault();
       return;
     }
-    // Over the page on a phone, a sheet keeps Tab inside it.
-    if (this.mapSheet.onKey(e) || this.docSheet.onKey(e)) return;
+    // Over the page on a phone, the sheet keeps Tab inside it; with focus in it, arrows move between its rows.
+    if (this.sheet.onKey(e)) return;
     const target = e.composedPath()[0];
     const tab = target instanceof HTMLElement && target.matches('[data-settings-tab]') ? nextTab(SETTINGS_TABS, target.dataset.settingsTab!, e.key) : null;
     if (tab) {
@@ -570,8 +567,8 @@ class RepoReader extends RepoReaderLenses {
     }
     if (e.altKey || e.ctrlKey || e.metaKey) return;
     if ((this.view === 'review' ? this.reviewMap : this.mapView)?.onKey(e)) return;
-    // A phone's map sheet is modal too: shortcuts wait until it closes.
-    if (sheet || this.mapSheet.isModal || this.docSheet.isModal) return;
+    // A phone's sheet is modal too: shortcuts wait until it closes.
+    if (sheet || this.sheet.isModal) return;
     if (e.key === '/') {
       e.preventDefault();
       this.toggleDocs(true);
@@ -585,15 +582,15 @@ class RepoReader extends RepoReaderLenses {
       this.toast(`Layout: ${LAYOUT_NAMES[this.layouts.value]}`);
     } else if (e.key === 'c' || e.key === 'C') {
       e.preventDefault();
-      if (!this.review) this.showSequence();
+      if (!this.review) this.togglePanel('chapters');
     } else if (e.key === 'm' || e.key === 'M') {
       e.preventDefault();
-      if (this.view === 'map') this.q<HTMLElement>('[data-view="read"]').click();
-      else void this.showMap();
+      // M does what Back to map does while it is shown; on the map, it goes back to the document.
+      if (!this.q('.mr-repo-back').hidden) this.backToMap();
+      else this.resume();
     } else if (e.key === 'n' || e.key === 'N') {
       e.preventDefault();
-      if (this.view === 'notes') this.q<HTMLElement>('[data-view="read"]').click();
-      else this.showNotes();
+      this.togglePanel('notes');
     }
   }
 

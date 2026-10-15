@@ -285,8 +285,8 @@ it('the full library reads the document with its map and notes; the review and t
   open.click();
   await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-lead')?.textContent).toBe('Context'));
   expect(words(repoShadow()!.querySelector('.mr-review-route')!)).toBe('From the review chapter docs Continue chapter');
-  // This review says which chapter it came from, too.
-  repoShadow()!.querySelector<HTMLButtonElement>('[data-view="review"]')!.click();
+  // Back to map is This review, which says which chapter it came from, too.
+  repoShadow()!.querySelector<HTMLButtonElement>('[data-act="back-to-map"]')!.click();
   await vi.waitFor(() => expect(repoShadow()!.querySelector('.mr-repo-review .mr-review-route')).toBeTruthy());
   repoShadow()!.querySelector<HTMLButtonElement>('.mr-repo-return')!.click();
   expect(repoShadow()).toBe(null);
@@ -465,7 +465,7 @@ it('the full library leaves the review layout, paragraph, folds, Viewed and comm
   expect(before.layout).toBe('review');
   const full = inTop('.mr-docs-full');
   full.click();
-  await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-repo-review .mr-map-head .mr-title')?.textContent).toBe('This review'));
+  await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-repo-review [data-lens="review"]')?.getAttribute('aria-pressed')).toBe('true'));
   const library = repoShadow()!;
   expect(library.querySelector<HTMLElement>('.mr-root')!.dataset.layout).toBe('focus');
   library.querySelector<HTMLElement>('[data-setting="layout"] [data-value="wide"]')!.click();
@@ -495,7 +495,7 @@ it('a section added to a chapter in the full library shows in that chapter, open
   const library = repoShadow()!;
   // On This review's map, the document's sheet reads it in full.
   library.querySelector<HTMLButtonElement>('.mr-repo-review .mr-pm-place[data-id="docs/context.md"]')!.click();
-  library.querySelector<HTMLButtonElement>('.mr-doc-sheet [data-act="open"]')!.click();
+  library.querySelector<HTMLButtonElement>('.mr-pm-sheet [data-act="open"]')!.click();
   await vi.waitFor(() => expect(library.querySelector('.mr-lead')?.textContent).toBe('Context'));
   const form = library.querySelector<HTMLFormElement>('.mr-chapter-attachment form')!;
   form.querySelector<HTMLSelectElement>('[aria-label="Chapter for this document"]')!.value = 'docs:docs';
@@ -503,7 +503,7 @@ it('a section added to a chapter in the full library shows in that chapter, open
   form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
   expect(form.querySelector('[role="status"]')!.textContent).toBe('Added to docs.');
   // This review lists it under its chapter, as something the reader added, never as a link.
-  library.querySelector<HTMLButtonElement>('[data-view="review"]')!.click();
+  library.querySelector<HTMLButtonElement>('[data-act="back-to-map"]')!.click();
   library.querySelector<HTMLButtonElement>('.mr-repo-review [data-act="pm-view-list"]')!.click();
   expect(words(library.querySelector('.mr-pm-attachment')!)).toBe('Context — Choice Added by you · bead000');
   library.querySelector<HTMLButtonElement>('.mr-repo-return')!.click();
@@ -537,14 +537,13 @@ it('a whole document without a title can be added to a chapter, and opens in the
   await vi.waitFor(() => expect(footnote()).toMatch(/^Built from all/));
   inTop('.mr-docs-full').click();
   await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-review-status .mr-map-status')?.textContent).toMatch(/^Built from all/));
-  repoShadow()!.querySelector<HTMLButtonElement>('[data-view="read"]')!.click();
-  await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-lead')?.textContent).toBe('Handbook'));
   repoShadow()!.querySelector<HTMLButtonElement>('[data-act="docs"]')!.click();
   repoShadow()!.querySelector<HTMLButtonElement>('[data-act="open"][data-path="CONTEXT.md"]')!.click();
   await vi.waitFor(() => expect(repoShadow()?.querySelector('.mr-doc .mr-title')?.textContent).toBe('CONTEXT'));
   repoShadow()!
     .querySelector<HTMLFormElement>('.mr-chapter-attachment form')!
     .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  repoShadow()!.querySelector<HTMLButtonElement>('[data-act="back-to-map"]')!.click();
   repoShadow()!.querySelector<HTMLButtonElement>('.mr-repo-return')!.click();
   tab('chapters');
   chapter('docs:docs').click();

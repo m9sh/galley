@@ -11,6 +11,7 @@ import {
 import { ANCHOR_STATES, MAX_LINKS, MAX_NOTE_CHARS, NOTE_HEADINGS, NOTE_KINDS, NOTE_NAMES, type AnchorState, type Note } from '../../core/notes.ts';
 import { button, chip, h, option, selectField, setRow, switchButton, textField, type ChipKind, glyph } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
+import { sheetSection, type SheetContent } from '../components/sheet.ts';
 
 /**
  * The repository reader's project views, built from plain data with the reader's own components
@@ -95,12 +96,12 @@ const LENSES: Array<['documents' | LensName, string]> = [
   ['decisions', 'Decisions'],
 ];
 
-/** The map's views, as a segmented control. */
-export function lensSwitch(current: 'documents' | LensName): HTMLElement {
+/** What the map shows, as a segmented control; opened from a review, This review comes first. */
+export function lensSwitch(current: 'review' | 'documents' | LensName, review: boolean): HTMLElement {
   const group = h('div', 'mr-seg mr-lens-switch');
   group.setAttribute('role', 'group');
   group.setAttribute('aria-label', 'Map of');
-  for (const [lens, label] of LENSES) {
+  for (const [lens, label] of review ? [['review', 'This review'] as const, ...LENSES] : LENSES) {
     const b = button(label, 'lens', '');
     b.dataset.lens = lens;
     b.setAttribute('aria-pressed', String(lens === current));
@@ -469,29 +470,24 @@ function noteCard(note: Note, options: NotesOptions, groups: string[]): HTMLElem
   return card;
 }
 
-export function notesView(options: NotesOptions): HTMLElement {
-  const view = h('section', 'mr-notes');
-  view.setAttribute('aria-label', 'Your notes');
-  const head = h('header', 'mr-notes-head');
-  head.append(
-    h('h1', 'mr-title', 'Your notes'),
-    h('p', 'mr-subtitle', 'Private to this browser. Saved only when you choose Save, and shared only through an export you check first.'),
-  );
-  // Like a document's byline: the state on the left, the actions on the right.
-  const byline = h('div', 'mr-byline');
+/**
+ * Your notes, in the reader's sheet beside the map or the document they are about: whether they are saved and the ways
+ * to save, export or delete them under the title, then a new note, then the notes by kind.
+ */
+export function notesSheet(options: NotesOptions): Pick<SheetContent, 'description' | 'extra' | 'body'> {
+  const bar = h('div', 'mr-notes-bar');
   const state = h('span', 'mr-notes-state', options.state);
   state.setAttribute('role', 'status');
-  const meta = h('span', 'mr-file-meta');
-  meta.append(state);
-  const save = button('Save', 'save-notes', 'mr-btn mr-primary');
+  // Save is the one filled control, and only while there is something to save.
+  const save = button('Save', 'save-notes', 'mr-chapter-button mr-chapters-start');
   save.disabled = !options.dirty;
-  const exporting = button('Export…', 'export');
+  const exporting = button('Export…', 'export', 'mr-chapter-button');
   exporting.setAttribute('aria-haspopup', 'dialog');
   exporting.setAttribute('aria-expanded', 'false');
-  const actions = h('span', 'mr-file-actions mr-notes-actions');
-  actions.append(save, exporting, button('Delete all notes…', 'delete-notes'));
-  byline.append(meta, actions);
-  head.append(byline);
+  const actions = h('span', 'mr-notes-actions');
+  actions.append(save, exporting, button('Delete all notes…', 'delete-notes', 'mr-sheet-link'));
+  bar.append(state, actions);
+  const extra: Node[] = [bar];
   if (options.confirmDelete) {
     const confirm = composeActions(
       'Delete every note, proposal and type you set for this repository, here and in storage?',
@@ -501,14 +497,24 @@ export function notesView(options: NotesOptions): HTMLElement {
     confirm.classList.add('mr-notes-confirm');
     confirm.setAttribute('role', 'group');
     confirm.setAttribute('aria-label', 'Delete all notes');
-    head.append(confirm);
+    extra.push(confirm);
   }
   if (options.error) {
     const error = h('p', 'mr-repo-limit mr-notes-error', options.error);
     error.setAttribute('role', 'alert');
-    head.append(error);
+    extra.push(error);
   }
-  view.append(head);
+  const body: Node[] = [];
+  // An unsaved draft from an earlier visit is offered first, like a place to continue from.
+  if (options.recovery) {
+    const offer = h('div', 'mr-resume mr-notes-recover');
+    offer.setAttribute('role', 'status');
+    const discard = button('×', 'discard-draft', 'mr-resume-close');
+    discard.setAttribute('aria-label', 'Discard unsaved notes');
+    discard.title = 'Discard unsaved notes';
+    offer.append(h('span', 'mr-resume-text', `You have unsaved notes from ${options.recovery.at}.`), button('Recover', 'recover', 'mr-resume-go'), discard);
+    body.push(offer);
+  }
 
   const groups = [...new Set(options.notes.map((note) => note.group).filter(Boolean))];
   const form = h('form', 'mr-composer mr-note-composer');
@@ -526,39 +532,34 @@ export function notesView(options: NotesOptions): HTMLElement {
     setRow('About', selectField(about)),
     composeActions('', submit('Add note')),
   );
-  view.append(form);
+  body.push(form);
 
   if (!options.notes.length)
-    view.append(h('p', 'mr-repo-quiet', 'No notes yet. Ideas, questions, assumptions, next experiments and alternatives you add appear here.'));
+    body.push(h('p', 'mr-sheet-note', 'No notes yet. Ideas, questions, assumptions, next experiments and alternatives you add appear here.'));
   for (const kind of NOTE_KINDS) {
     const ofKind = options.notes.filter((note) => note.kind === kind);
     if (!ofKind.length) continue;
-    const section = h('section', 'mr-notes-kind');
-    section.append(h('h2', '', `${NOTE_HEADINGS[kind]} (${ofKind.length})`));
+    const cards: Node[] = [];
     if (kind === 'alternative') {
       // Alternatives that answer the same question sit side by side, to compare.
       for (const group of [...new Set(ofKind.map((note) => note.group))]) {
         const compare = h('div', 'mr-notes-compare');
-        compare.append(h('h3', '', group || 'Alternatives without a question'));
+        compare.append(h('h4', 'mr-sheet-subhead', group || 'Alternatives without a question'));
         const row = h('div', 'mr-notes-row');
         for (const note of ofKind.filter((other) => other.group === group)) row.append(noteCard(note, options, groups));
         compare.append(row);
-        section.append(compare);
+        cards.push(compare);
       }
-    } else for (const note of ofKind) section.append(noteCard(note, options, groups));
-    view.append(section);
+    } else for (const note of ofKind) cards.push(noteCard(note, options, groups));
+    const section = sheetSection(NOTE_HEADINGS[kind], cards, { count: ofKind.length });
+    section.classList.add('mr-notes-kind');
+    body.push(section);
   }
-  // An unsaved draft from an earlier visit is offered like a place to continue from: a quiet pill at the bottom.
-  if (options.recovery) {
-    const offer = h('div', 'mr-resume mr-notes-recover');
-    offer.setAttribute('role', 'status');
-    const discard = button('×', 'discard-draft', 'mr-resume-close');
-    discard.setAttribute('aria-label', 'Discard unsaved notes');
-    discard.title = 'Discard unsaved notes';
-    offer.append(h('span', 'mr-resume-text', `You have unsaved notes from ${options.recovery.at}.`), button('Recover', 'recover', 'mr-resume-go'), discard);
-    view.append(offer);
-  }
-  return view;
+  return {
+    description: 'Private to this browser. Saved only when you choose Save, and shared only through an export you check first.',
+    extra,
+    body,
+  };
 }
 
 // ---------------------------------------------------------------- export

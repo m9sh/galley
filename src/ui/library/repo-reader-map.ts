@@ -2,49 +2,84 @@ import { classify, DOC_KINDS, indexCoverage, KIND_NAMES, KIND_SOURCES, readForIn
 import { highlightCode } from '../rendering/code.ts';
 import { button, h, option, selectField, setRow, switchButton } from '../components/dom.ts';
 import { renderDocument, type RenderedDoc } from '../rendering/render.ts';
-import { lensSwitch } from './repo-views.ts';
+import { external, lensSwitch } from './repo-views.ts';
 import { recallOutlines, rememberOutlines, touchOutlines, type Remembered } from './outline-cache.ts';
 import { documentMap } from '../../core/project-map.ts';
 import { DocumentMap } from './map-view.ts';
-import { type View, folderOf, problem } from './repo-reader-shared.ts';
+import { twin } from '../components/sheet.ts';
+import { type View, folderOf, problem, shortSha, typed } from './repo-reader-shared.ts';
 import { RepoReaderReading } from './repo-reader-reading.ts';
 
-/** The Documents map: switching views, the pass that reads documents for the index, and the map with its details. */
+/** The maps, the library's front: switching between them and a document, the pass that reads documents for the index, and the map with its details. */
 export abstract class RepoReaderMap extends RepoReaderReading {
   // ---------------------------------------------------------------- map
 
   protected setView(view: View): void {
     if (view !== this.view) this.remember();
     this.view = view;
-    this.q('.mr-repo-read').hidden = view !== 'read';
+    const reading = view === 'read';
+    this.q('.mr-repo-read').hidden = !reading;
     this.q('.mr-repo-map').hidden = view !== 'map';
-    this.q('.mr-repo-thinking').hidden = view !== 'notes';
     this.q('.mr-repo-review').hidden = view !== 'review';
-    this.q('.mr-repo-chapters').hidden = view !== 'chapters';
-    // Each map's sheet keeps its place for the return to it; the map space is the two maps'.
+    // Each map's details keep their place for the return to it; the map space is the two maps'.
     if (view !== 'review') this.reviewMap?.park();
     if (view !== 'map') this.mapView?.park();
-    if (view !== 'map' && view !== 'review') this.root.classList.remove('is-map-space');
+    if (reading) this.root.classList.remove('is-map-space');
     // Focus never stays in a view that is hidden: it goes back to the reader.
     if (this.shadow.activeElement?.closest('[hidden]')) this.root.focus({ preventScroll: true });
-    this.q('.mr-toc').hidden = view !== 'read';
-    for (const b of this.shadow.querySelectorAll<HTMLElement>('[data-view]')) b.setAttribute('aria-pressed', String(b.dataset.view === view));
-    // One control names the view and opens the others.
-    const current = this.q(`.mr-repo-views [data-view="${view}"]`);
-    this.q('.mr-views-label').textContent = current.textContent;
-    this.q('.mr-views-icon').replaceChildren(current.querySelector('svg')!.cloneNode(true));
+    this.q('.mr-toc').hidden = !reading;
+    // Reading a document, the one way back is to the map, in place of Close (or Return to review) and the wordmark.
+    const back = reading && this.source !== null;
+    this.q('.mr-repo-back').hidden = !back;
+    for (const el of this.root.querySelectorAll<HTMLElement>('.mr-tb-left > :not(.mr-repo-back)')) el.hidden = back;
   }
 
-  protected async showMap(focus = this.focus ?? this.path): Promise<void> {
-    if (!this.source) return;
+  /**
+   * Open on the map, around the document the reader was opened at: a Markdown file, or a folder's README, else its
+   * first document, else the repository's README or first document. That document is previewed in the sheet beside it.
+   */
+  protected async start(): Promise<void> {
+    const source = this.source!;
+    this.setView('map');
+    // A newer commit read meanwhile has drawn its own map.
+    if (!(await this.listed('map', this.q('.mr-repo-map'), 'retry-list')) || this.source !== source) return;
+    const index = this.index!;
+    const { path, folder } = source.start;
+    const at = folder
+      ? (index.documentAt(path) ?? index.listed.find((doc) => !path || doc.startsWith(`${path}/`)) ?? index.documentAt('') ?? index.listed[0] ?? null)
+      : path;
+    // A document the listing left out cannot be on the map: it is read as it is.
+    if (at !== null && !index.documentAt(at)) return void this.open(at);
+    await this.showMap(at, true);
+  }
+
+  /** The Documents map, around `focus`; `select` previews that document in the sheet, as on opening. */
+  protected async showMap(focus = this.focus ?? this.path, select = false): Promise<void> {
     this.closeMenus();
+    this.front = 'map';
     this.setView('map');
     // Once listed, the map is drawn at once.
     if (!this.index && !(await this.listed('map', this.q('.mr-repo-map'), 'map'))) return;
     const index = this.index!;
     this.focus = focus && index.documentAt(focus) ? index.documentAt(focus) : (index.documentAt('') ?? index.listed[0] ?? null);
     this.drawMap();
+    if (select && this.mapView) this.mapView.select(this.focus!);
     this.autoIndex();
+  }
+
+  /** Back to map: the map the reader came from, as they left it. */
+  protected backToMap(): void {
+    if (this.front === 'review') void this.showReview();
+    else void this.showMap();
+  }
+
+  /** From the map back to the document, at the paragraph the reader left; nothing when no document has been read. */
+  protected resume(): void {
+    if (!this.path) return;
+    const place = this.history[this.at];
+    if (!this.rendered?.content.isConnected) return void this.open(this.path, { push: false, place });
+    this.setView('read');
+    this.restore(place);
   }
 
   /** The listing, for a view that needs it: a skeleton meanwhile, and a way to try again when it fails. */
@@ -180,9 +215,10 @@ export abstract class RepoReaderMap extends RepoReaderReading {
     return status;
   }
 
+  /** The map's top row: its name, what it shows (This review over a review, Documents, the lenses), and what was read. */
   protected mapHead(): HTMLElement {
     const head = h('header', 'mr-map-head');
-    head.append(h('h1', 'mr-title', 'Project map'), lensSwitch(this.lens), this.indexStatus());
+    head.append(h('h1', 'mr-title', 'Project map'), lensSwitch(this.lens, this.review !== null), this.indexStatus());
     return head;
   }
 
@@ -199,7 +235,14 @@ export abstract class RepoReaderMap extends RepoReaderReading {
     const since = this.sinceRefresh();
     if (since) head.append(since);
     if (!spatial) {
-      map.replaceChildren(head, h('p', 'mr-repo-quiet', 'No Markdown documents at this commit.'));
+      const source = this.source!;
+      const empty = h('div', 'mr-message');
+      empty.append(
+        h('h2', '', 'No documents here'),
+        h('p', '', `Galley found no Markdown files in ${source.name} at ${shortSha(source.commit)}.`),
+        external(`Open on ${source.platform}`, source.url, 'mr-btn mr-outline'),
+      );
+      map.replaceChildren(head, empty);
       return;
     }
     this.mapView ??= new DocumentMap({
@@ -209,12 +252,26 @@ export abstract class RepoReaderMap extends RepoReaderReading {
       refocus: (path) => {
         this.focus = path;
       },
-      sheet: this.mapSheet,
+      sheet: this.sheet,
+      claim: () => this.claimSheet(),
       commit: this.source!.commit,
     });
     head.querySelector('.mr-lens-switch')!.after(this.mapView.tools);
-    map.replaceChildren(head, this.mapView.element);
+    this.redrawPane(map, head, this.mapView.element);
     this.mapView.draw({ model: documentMap(this.index!, this.corrections), focus: this.focus!, here: this.path, changed: this.changed });
+  }
+
+  /**
+   * Draw the map's pane anew, as reading more documents or loading notes does: what the reader typed stays, and the
+   * control that had focus keeps it, the same one moved or the one drawn in its place.
+   */
+  protected redrawPane(pane: HTMLElement, ...children: Node[]): void {
+    const active = this.shadow.activeElement;
+    const focused = active instanceof HTMLElement && pane.contains(active) ? active : null;
+    const restore = typed(pane);
+    pane.replaceChildren(...children);
+    restore();
+    if (focused) (focused.isConnected ? focused : twin(pane, focused))?.focus({ preventScroll: true });
   }
 
   /** A document in the map's sheet, rendered as the reader would, with diagrams as their source. */
@@ -327,6 +384,7 @@ export abstract class RepoReaderMap extends RepoReaderReading {
     this.applyCorrections();
     this.drawMap();
     this.buildOutline();
+    this.drawNotes();
   }
 
   /** The types the reader set, from their notes. */

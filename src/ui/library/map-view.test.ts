@@ -781,3 +781,32 @@ it('around a review a phone keeps short lanes and a shorter middle, counting the
   alone.press('[data-act="pm-view-list"]');
   expect(alone.all('.mr-pm-list .mr-pm-folder').map((head) => head.textContent)).toStrictEqual(['Code13 files']);
 });
+
+it('the library can choose a place as the reader would, give the sheet to something else, and take it back', () => {
+  placed();
+  const claim = vi.fn();
+  const ui = mount({ model: graph(neighbours, before) }, { claim });
+  // Chosen for the reader on a wide screen, a place's details open beside the map; the library is told first.
+  ui.map.select('b.md');
+  expect(claim).toHaveBeenCalledOnce();
+  expect(ui.sheet.isOpen).toBe(true);
+  expect(ui.card('b.md').getAttribute('aria-pressed')).toBe('true');
+  // Given up to the library's own panel, the details stay chosen but are no longer drawn or closed by the map.
+  ui.map.release();
+  ui.map.draw(ui.state);
+  expect(claim).toHaveBeenCalledOnce();
+  expect(ui.map.closeSheet()).toBe(false);
+  expect(ui.sheet.isOpen).toBe(true);
+  ui.map.park();
+  expect(ui.sheet.isOpen).toBe(true);
+  ui.map.destroy();
+  expect(ui.sheet.isOpen).toBe(true);
+  ui.sheet.hide();
+  // On a phone, where the sheet would cover the map, the place is only chosen.
+  Object.defineProperty(media, 'matches', { value: true, configurable: true });
+  const phone = mount({ model: graph(neighbours, before) }, { claim });
+  phone.map.select('d.md');
+  expect(phone.sheet.isOpen).toBe(false);
+  expect(phone.card('d.md').getAttribute('aria-pressed')).toBe('true');
+  expect(claim).toHaveBeenCalledOnce();
+});

@@ -1036,13 +1036,12 @@ export async function captureProjectMaps(browser, demoUrl, screenshots) {
     for (const width of [1440, 390]) {
       await page.setViewport({ width, height: width === 390 ? 844 : 1000 });
       await page.goto(`${demoUrl}/?${kind === 'current' ? 'repo=docs/architecture/overview.md' : 'atlas'}`, { waitUntil: 'networkidle0' });
-      if (kind === 'current') {
-        await page.waitForFunction(() => document.querySelector('#galley-repo-reader')?.shadowRoot.querySelector('.mr-content'));
-        await page.keyboard.press('m');
+      // The extension opens on its map, around the document it was opened at.
+      if (kind === 'current')
         await page.waitForFunction(() =>
-          /^Built from all 9/.test(document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-map-status')?.textContent ?? ''),
+          /^Built from all 9/.test(document.querySelector('#galley-repo-reader')?.shadowRoot.querySelector('.mr-map-status')?.textContent ?? ''),
         );
-      } else await page.waitForFunction(() => document.querySelector('#galley-map-prototype')?.shadowRoot.querySelector('.mr-atlas-place'));
+      else await page.waitForFunction(() => document.querySelector('#galley-map-prototype')?.shadowRoot.querySelector('.mr-atlas-place'));
       await page.evaluate(() => document.fonts.ready);
       await settle();
       await page.screenshot({ path: join(screenshots, `map-${kind}-${width}.png`) });

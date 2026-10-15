@@ -128,14 +128,34 @@ export function repoHarness() {
     (shadow().activeElement ?? q('.mr-root')).dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, composed: true, cancelable: true, ...options }));
   /** Waits until the document is shown: no loading skeleton left in the reading column. */
   const settled = () => vi.waitFor(() => expect(shadow().querySelector('.mr-doc .mr-skeleton')).toBeNull());
+  /**
+   * Opens the reader as Read the project does, on the map, and waits until the map is drawn, says why it is not, or
+   * a document the map cannot show is read instead. Opened from a review, it starts at the review, and nothing waits.
+   */
+  async function openMap(source: RepositorySource | Promise<RepositorySource>, options?: Parameters<typeof openRepository>[1]) {
+    const opened = openRepository(source, options);
+    handle = opened;
+    if (!options?.review)
+      await vi.waitFor(() =>
+        expect(
+          shadow().querySelector('.mr-repo-map .mr-map-head, .mr-repo-map .mr-message, .mr-repo-read:not([hidden]) .mr-doc > :not(.mr-skeleton)'),
+        ).not.toBeNull(),
+      );
+    return opened;
+  }
+  /** Opens the reader, then reads the document it opened at, as Read in the sheet beside the map does. */
   async function open(source: RepositorySource | Promise<RepositorySource>, options?: Parameters<typeof openRepository>[1]) {
-    handle = openRepository(source, options);
-    // Opened from a review, the reader starts at the review, with no document open yet.
-    if (!options?.review) await settled();
-    return handle;
+    const opened = await openMap(source, options);
+    const read = shadow().querySelector<HTMLElement>('.mr-pm-sheet:not([hidden]) [data-act="open"]');
+    if (read) {
+      read.click();
+      await settled();
+    }
+    return opened;
   }
   return {
     open,
+    openMap,
     settled,
     shadow,
     q,

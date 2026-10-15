@@ -4,11 +4,11 @@ import { configFormat } from '../../core/discovery.ts';
 import { anchorState, exportMarkdown, exportMermaid, MAX_NOTES, NOTE_NAMES, sectionText, type ExportContext, type Note } from '../../core/notes.ts';
 import { readConfiguration } from './configs.ts';
 import { button, h } from '../components/dom.ts';
-import { digestText, when } from './project-store.ts';
-import { configStatus, exportSheet, lensView, notesView, type ConfigState } from './repo-views.ts';
+import { digestText } from './project-store.ts';
+import { configStatus, exportSheet, lensSwitch, lensView, type ConfigState } from './repo-views.ts';
 import { reviewMap } from '../../core/project-map.ts';
 import { DocumentMap } from './map-view.ts';
-import { CONFIG_CONCURRENCY, MAX_ISSUE_URL, edgeKey, newId, plural, sectionKey, shortSha, typed } from './repo-reader-shared.ts';
+import { CONFIG_CONCURRENCY, MAX_ISSUE_URL, edgeKey, newId, plural, sectionKey, shortSha } from './repo-reader-shared.ts';
 import { RepoReaderMap } from './repo-reader-map.ts';
 
 /** The architecture, infrastructure and decision views, private notes, their export, and a review's project context. */
@@ -36,8 +36,8 @@ export abstract class RepoReaderLenses extends RepoReaderMap {
     const map = this.q('.mr-repo-map');
     const source = this.source!;
     const model = buildLens(lens, this.lensInput());
-    const restore = typed(map);
-    map.replaceChildren(
+    this.redrawPane(
+      map,
       this.mapHead(),
       lensView({
         lens,
@@ -48,7 +48,6 @@ export abstract class RepoReaderLenses extends RepoReaderMap {
         reading: this.path ? { path: this.path, title: this.titleOf(this.path) } : null,
       }),
     );
-    restore();
   }
 
   /**
@@ -90,12 +89,12 @@ export abstract class RepoReaderLenses extends RepoReaderMap {
     for (const box of this.shadow.querySelectorAll('.mr-lens-configs')) box.replaceWith(configStatus(this.configState()));
   }
 
-  /** Draw the current view again after its data changed, keeping what the reader is typing. */
+  /** Draw what is shown again after its data changed, keeping what the reader is typing: Notes, and the map or the documents list. */
   protected redraw(): void {
-    if (!this.index && this.view !== 'notes') return;
+    this.drawNotes();
+    if (!this.index) return;
     if (this.view === 'map') this.drawMap();
     else if (this.view === 'review') this.drawReview();
-    else if (this.view === 'notes') this.drawNotes();
     else this.buildOutline();
   }
 
@@ -156,6 +155,7 @@ export abstract class RepoReaderLenses extends RepoReaderMap {
     this.entityFocus = entity.id;
     form.reset();
     this.drawMap();
+    this.drawNotes();
     this.toast(`${name} added as your proposal. Save your notes to keep it.`);
   }
 
@@ -168,16 +168,10 @@ export abstract class RepoReaderLenses extends RepoReaderMap {
       if (!same) thinking.relations.push(relation);
     });
     this.drawMap();
+    this.drawNotes();
   }
 
   // ---------------------------------------------------------------- notes
-
-  protected showNotes(): void {
-    this.closeMenus();
-    this.setView('notes');
-    this.drawNotes();
-    void this.checkAnchors();
-  }
 
   /** What a new note can be about: the document being read, whole or one of its sections. */
   protected anchorOptions(): Map<string, { path: string; heading: string | null; label: string; text: string }> {
@@ -208,28 +202,6 @@ export abstract class RepoReaderLenses extends RepoReaderMap {
     return [...notes, ...entities.map((entity) => ({ id: entity.id, label: `${entity.name} (${entity.kind}, ${ORIGIN_NAMES[entity.origin].toLowerCase()})` }))];
   }
 
-  protected drawNotes(): void {
-    const notes = this.notes!;
-    const pane = this.q('.mr-repo-thinking');
-    const restore = typed(pane);
-    pane.replaceChildren(
-      notesView({
-        notes: notes.thinking.notes,
-        state: notes.state,
-        dirty: notes.dirty,
-        error: notes.error,
-        recovery: notes.offer ? { at: when(notes.offer.at) } : null,
-        confirmDelete: this.confirmDelete,
-        anchors: [...this.anchorOptions()].map(([value, option]) => ({ value, label: option.label })),
-        anchorStates: this.anchorStates,
-        targets: this.targets(),
-        editing: this.editing,
-        connecting: this.connecting,
-      }),
-    );
-    restore();
-  }
-
   /** Whether each note's section is still as it was when the note was written, at the commit read. */
   protected async checkAnchors(): Promise<void> {
     const source = this.source!;
@@ -256,8 +228,8 @@ export abstract class RepoReaderLenses extends RepoReaderMap {
       if (anchor && (anchor.commit === source.commit || sections.has(sectionKey(anchor))))
         this.anchorStates.set(note.id, anchorState(anchor, source.commit, sections.get(sectionKey(anchor)) ?? null));
     }
-    if (this.view === 'notes') this.drawNotes();
-    else if (this.view === 'map' && this.previous) this.drawMap();
+    this.drawNotes();
+    if (this.view === 'map' && this.previous) this.drawMap();
   }
 
   protected async addNote(form: HTMLFormElement): Promise<void> {
@@ -419,6 +391,7 @@ export abstract class RepoReaderLenses extends RepoReaderMap {
 
   protected async showReview(): Promise<void> {
     this.closeMenus();
+    this.front = 'review';
     this.setView('review');
     if (!this.index && !(await this.listed('review', this.q('.mr-repo-review'), 'show-review'))) return;
     this.drawReview();
@@ -453,13 +426,14 @@ export abstract class RepoReaderLenses extends RepoReaderMap {
         this.focus = path;
         void this.showMap();
       },
-      sheet: this.docSheet,
+      sheet: this.sheet,
+      claim: () => this.claimSheet(),
       commit: source.commit,
     });
     const head = h('header', 'mr-map-head');
     const at = h('p', 'mr-review-at', `${review.title} · ${review.ref} @ ${shortSha(source.commit)}`);
     at.title = 'The repository as this change leaves it';
-    head.append(h('h1', 'mr-title', 'This review'), at, this.reviewMap.tools, status);
+    head.append(h('h1', 'mr-title', 'Project map'), lensSwitch('review', true), this.reviewMap.tools, at, status);
     const from = this.shadow.querySelector<HTMLElement>('.mr-repo-read > .mr-review-route')?.cloneNode(true) as HTMLElement | undefined;
     if (from) head.append(from);
     this.q('.mr-repo-review').replaceChildren(head, this.reviewMap.element);

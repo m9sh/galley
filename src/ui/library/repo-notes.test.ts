@@ -1,5 +1,6 @@
 import { expect, it, vi } from 'vitest';
 import { emptyThinking, MAX_LINKS, MAX_NOTES, type Note } from '../../core/notes.ts';
+import { ReaderError } from '../../platforms/types.ts';
 import { handbook, repoHarness, repository, words } from '../../testing/repo.ts';
 import { deferred } from '../../testing/reader.ts';
 import { ProjectNotes, projectKey } from './project-store.ts';
@@ -30,7 +31,13 @@ async function addNote(text: string, options: { kind?: Note['kind']; anchor?: st
 }
 const notes = () => ui.all('aside.mr-note').map(words);
 const card = (text: string) => ui.all('aside.mr-note').find((note) => note.querySelector('.mr-note-text')!.textContent === text)!;
-const showNotes = () => ui.click('[data-view="notes"]');
+/** Opens Notes in the sheet, unless it shows them already. */
+const showNotes = () => {
+  if (ui.q('.mr-tb-right [data-panel="notes"]').getAttribute('aria-expanded') !== 'true') ui.click('.mr-tb-right [data-panel="notes"]');
+};
+/** The sheet's Notes, open beside the map or the document. */
+const notesOpen = () => !ui.q('.mr-pm-sheet').hidden && ui.q('.mr-pm-sheet .mr-sheet-layer').getAttribute('aria-label') === 'Notes';
+const kinds = () => ui.all('.mr-notes-kind .mr-sheet-section-head').map(words);
 /** Includes a note in the open export, or leaves it out again, by its text. */
 const include = (text: string) =>
   ui
@@ -43,14 +50,20 @@ const share = '.mr-repo-export section[aria-label="Share it as an issue"]';
 it('notes are private and start empty; a note from a document is about it, or one of its sections', async () => {
   await ui.open(repository(handbook, { start: { path: spec, folder: false } }));
   ui.press('Add a note', '.mr-byline button');
-  expect(ui.q('.mr-repo-thinking').hidden).toBe(false);
-  expect(ui.q('[data-view="notes"]').getAttribute('aria-pressed')).toBe('true');
+  // Notes open beside the document they are about.
+  expect(notesOpen()).toBe(true);
+  expect(ui.q('.mr-repo-read').hidden).toBe(false);
+  expect(ui.q('.mr-tb-right [data-panel="notes"]').getAttribute('aria-expanded')).toBe('true');
+  expect(ui.q('.mr-pm-sheet .mr-sheet-tab[data-panel="notes"]').getAttribute('aria-pressed')).toBe('true');
   expect(ui.shadow().activeElement).toBe(field('text'));
-  expect(words(ui.q('.mr-notes-head'))).toBe(
-    'Your notes Private to this browser. Saved only when you choose Save, and shared only through an export you check first. Nothing saved yet Save Export… Delete all notes…',
+  expect(ui.text('.mr-pm-sheet .mr-sheet-description')).toBe(
+    'Private to this browser. Saved only when you choose Save, and shared only through an export you check first.',
   );
+  expect(ui.text('.mr-notes-bar')).toBe('Nothing saved yet Save Export… Delete all notes…');
   expect(ui.q<HTMLButtonElement>('[data-act="save-notes"]').disabled).toBe(true);
-  expect(ui.text('.mr-notes > .mr-repo-quiet')).toBe('No notes yet. Ideas, questions, assumptions, next experiments and alternatives you add appear here.');
+  expect(ui.text('.mr-pm-sheet .mr-sheet-body > .mr-sheet-note')).toBe(
+    'No notes yet. Ideas, questions, assumptions, next experiments and alternatives you add appear here.',
+  );
   // Only alternatives are asked which question they answer, and the choice survives the notes being drawn again.
   const question = () => form().querySelector<HTMLElement>('.mr-note-group')!;
   const kind = () => field<HTMLSelectElement>('kind');
@@ -84,23 +97,26 @@ it('notes are private and start empty; a note from a document is about it, or on
   // A note is the reader's own, like their own threads in a review.
   expect(ui.q('aside.mr-note').classList).toContain('is-own');
   expect(ui.q('aside.mr-note').getAttribute('aria-label')).toBe('Question: Why read twice?');
-  expect(ui.text('.mr-notes-kind h2')).toBe('Questions (1)');
+  expect(kinds()).toStrictEqual(['Questions 1']);
   expect(ui.text('.mr-notes-state')).toBe('Unsaved changes');
   expect(ui.q<HTMLButtonElement>('[data-act="save-notes"]').disabled).toBe(false);
   expect(field<HTMLTextAreaElement>('text').value).toBe('');
   expect(ui.shadow().activeElement).toBe(field('text'));
 
-  // The note leads back to what it is about.
-  ui.press('Reading § Goals', '.mr-note-about button');
+  // The note leads back to what it is about, and stays beside it.
+  const about = ui.all('.mr-note-about button').find((button) => button.textContent === 'Reading § Goals')!;
+  about.focus();
+  about.click();
   await ui.settled();
   expect(ui.q('.mr-repo-read').hidden).toBe(false);
   expect(ui.q('#user-content-goals').classList).toContain('mr-flash');
-  // Focus left in the notes went back to the reader. N opens the notes, and N again goes back to reading.
-  expect(ui.shadow().activeElement).toBe(ui.q('.mr-root'));
+  expect(notesOpen()).toBe(true);
+  // N closes the notes, and N again opens them.
   ui.key('n');
-  expect(ui.q('.mr-repo-thinking').hidden).toBe(false);
+  expect(ui.q('.mr-pm-sheet').hidden).toBe(true);
+  expect(ui.q('.mr-tb-right [data-panel="notes"]').getAttribute('aria-expanded')).toBe('false');
   ui.key('N');
-  expect(ui.q('.mr-repo-read').hidden).toBe(false);
+  expect(notesOpen()).toBe(true);
 });
 
 it('Save keeps notes in this browser; until then they are a draft, offered again next time', async () => {
@@ -108,7 +124,7 @@ it('Save keeps notes in this browser; until then they are a draft, offered again
   showNotes();
   await addNote('Try a stream');
   expect(await stored()).toBe(null);
-  ui.press('Save', '.mr-notes-head button');
+  ui.press('Save', '.mr-notes-bar button');
   await vi.waitFor(() => expect(ui.text('.mr-toast')).toBe('Notes saved in this browser.'));
   expect(ui.text('.mr-notes-state')).toMatch(/^Saved [A-Z][a-z]{2} \d+, \d{4}/);
   expect((await stored()).saved.thinking.notes.map((n: Note) => n.text)).toStrictEqual(['Try a stream']);
@@ -127,9 +143,9 @@ it('Save keeps notes in this browser; until then they are a draft, offered again
   expect(ui.all('aside.mr-note .mr-thread-author').map((author) => author.textContent)).toStrictEqual(['Idea']);
   ui.press('Recover');
   expect(ui.text('.mr-toast')).toBe('Your unsaved notes are back. Save to keep them.');
-  expect(ui.text('.mr-notes-kind:last-of-type h2')).toBe('Next experiments (1)');
+  expect(kinds().at(-1)).toBe('Next experiments 1');
   expect(ui.text('.mr-notes-state')).toBe('Unsaved changes');
-  ui.press('Save', '.mr-notes-head button');
+  ui.press('Save', '.mr-notes-bar button');
   await vi.waitFor(async () => expect((await stored()).draft).toBe(null));
   expect((await stored()).saved.thinking.notes).toHaveLength(2);
 });
@@ -158,8 +174,8 @@ it('notes can be edited, deleted and tentatively connected; alternatives to the 
   await addNote('Stream events', { kind: 'alternative', group: 'Queue or stream?' });
   await addNote('Do nothing', { kind: 'alternative' });
   await addNote('Who reads it?', { kind: 'question' });
-  expect(ui.all('.mr-notes-kind > h2').map((h) => h.textContent)).toStrictEqual(['Questions (1)', 'Alternatives (3)']);
-  expect(ui.all('.mr-notes-compare').map((c) => [c.querySelector('h3')!.textContent, c.querySelectorAll('.mr-note').length])).toStrictEqual([
+  expect(kinds()).toStrictEqual(['Questions 1', 'Alternatives 3']);
+  expect(ui.all('.mr-notes-compare').map((c) => [c.querySelector('h4')!.textContent, c.querySelectorAll('.mr-note').length])).toStrictEqual([
     ['Queue or stream?', 2],
     ['Alternatives without a question', 1],
   ]);
@@ -235,6 +251,7 @@ it('after a refresh, notes about a section that changed ask to be reconfirmed, a
   // The guide cannot be read at the new commit: its notes say nothing rather than guess.
   vi.mocked(next.load).mockImplementation(async (path) => {
     if (path === 'guide.md') throw new Error('offline');
+    if (!(path in after)) throw new ReaderError('This document is not in the repository at this commit.', 'It was moved or removed.');
     return after[path];
   });
   const source = repository(before, { refresh: vi.fn(async () => next) });
@@ -272,11 +289,12 @@ it('after a refresh, notes about a section that changed ask to be reconfirmed, a
   expect(state('About Old')).toBe('About Old · The section is gone at this commit: detach the note from it, or delete the note Detach');
 
   // The map says so too, and leads back here.
-  ui.click('[data-view="map"]');
+  ui.key('n');
+  ui.click('[data-act="back-to-map"]');
   await vi.waitFor(() => expect(ui.q('.mr-map-since')).toBeTruthy());
   expect(words(ui.q('.mr-map-since'))).toContain('3 of your notes are about a section that changed or is gone. Look at them');
   ui.press('Look at them');
-  expect(ui.q('.mr-repo-thinking').hidden).toBe(false);
+  expect(notesOpen()).toBe(true);
 
   (card('Goals are vague').querySelector('[data-act="reconfirm"]') as HTMLElement).click();
   await vi.waitFor(() => expect(ui.text('.mr-toast')).toBe('Reconfirmed at beef000. Save your notes to keep it.'));
@@ -289,7 +307,7 @@ it('deleting every note asks first, and removes them here and from storage', asy
   await ui.open(repository());
   showNotes();
   await addNote('Try a stream');
-  ui.press('Save', '.mr-notes-head button');
+  ui.press('Save', '.mr-notes-bar button');
   await vi.waitFor(async () => expect(await stored()).not.toBe(null));
   ui.press('Delete all notes…');
   expect(words(ui.q('.mr-notes-confirm'))).toBe(
@@ -321,20 +339,20 @@ it('storage that refuses a write says so, and the notes stay open and unsaved', 
   await ui.open(repository());
   showNotes();
   await addNote('Try a stream');
-  ui.press('Save', '.mr-notes-head button');
-  await vi.waitFor(() => expect(ui.q('.mr-notes-head > .mr-repo-limit')).toBeTruthy());
-  expect(ui.text('.mr-notes-head > .mr-repo-limit')).toBe('Galley could not use this browser’s storage: QUOTA_BYTES quota exceeded');
+  ui.press('Save', '.mr-notes-bar button');
+  await vi.waitFor(() => expect(ui.q('.mr-pm-sheet .mr-notes-error')).toBeTruthy());
+  expect(ui.q('.mr-pm-sheet .mr-notes-error').getAttribute('role')).toBe('alert');
+  expect(ui.text('.mr-pm-sheet .mr-notes-error')).toBe('Galley could not use this browser’s storage: QUOTA_BYTES quota exceeded');
   expect(ui.text('.mr-notes-state')).toBe('Unsaved changes');
   ui.press('Delete all notes…');
   ui.click('[data-act="confirm-delete-notes"]');
-  await vi.waitFor(() => expect(ui.text('.mr-notes-head > .mr-repo-limit')).toBe('Galley could not use this browser’s storage: storage is gone'));
+  await vi.waitFor(() => expect(ui.text('.mr-pm-sheet .mr-notes-error')).toBe('Galley could not use this browser’s storage: storage is gone'));
   expect(notes()).toHaveLength(1);
   vi.unstubAllGlobals();
 });
 
 it('types the reader sets, and the components they propose, are kept with their notes and come back next time', async () => {
-  await ui.open(repository(handbook, { start: { path: 'docs/adr/0001-use-markdown.md', folder: false } }));
-  ui.click('[data-view="map"]');
+  await ui.openMap(repository(handbook, { start: { path: 'docs/adr/0001-use-markdown.md', folder: false } }));
   await vi.waitFor(() => expect(ui.q('.mr-map-status').textContent).toMatch(/^Built from all/));
   ui.click('.mr-pm-place[data-lane="here"]');
   ui.click('.mr-pm-tab[data-tab="links"]');
@@ -347,12 +365,11 @@ it('types the reader sets, and the components they propose, are kept with their 
   propose.requestSubmit();
   showNotes();
   expect(ui.text('.mr-notes-state')).toBe('Unsaved changes');
-  ui.press('Save', '.mr-notes-head button');
+  ui.press('Save', '.mr-notes-bar button');
   await vi.waitFor(async () => expect(await stored()).not.toBe(null));
   ui.close();
 
-  await ui.open(repository(handbook, { start: { path: 'docs/adr/0001-use-markdown.md', folder: false } }));
-  ui.click('[data-view="map"]');
+  await ui.openMap(repository(handbook, { start: { path: 'docs/adr/0001-use-markdown.md', folder: false } }));
   await vi.waitFor(() => expect(ui.q('.mr-pm-place[data-lane="here"]')?.getAttribute('aria-label')).toContain(', Runbook,'));
   ui.click('.mr-pm-place[data-lane="here"]');
   ui.click('.mr-pm-tab[data-tab="links"]');
@@ -370,12 +387,11 @@ it('types the reader sets, and the components they propose, are kept with their 
   expect(words(card('Renderer owns layout').querySelector('.mr-note-links')!)).toBe(
     'Tentatively connected to Renderer (Component, proposed by you) Disconnect',
   );
-  // Removing the component removes the connection.
-  ui.click('[data-view="map"]');
+  // Removing the component, on the map beside the notes, removes the connection there and then.
   ui.click('[data-act="lens"][data-lens="architecture"]');
   ui.press('Renderer', '.mr-lens-list .mr-lens-entity');
   ui.press('Remove this proposal');
-  showNotes();
+  expect(notesOpen()).toBe(true);
   expect(card('Renderer owns layout').querySelector('.mr-note-links')).toBe(null);
 });
 
@@ -394,7 +410,7 @@ it('a repository keeps at most 500 notes, and says so', async () => {
   localStorage.setItem(await projectKey(id), JSON.stringify({ saved: { at: 1, thinking: { ...emptyThinking(), notes: many } }, draft: null }));
   await ui.open(repository());
   showNotes();
-  await vi.waitFor(() => expect(ui.text('.mr-notes-kind h2')).toBe(`Ideas (${MAX_NOTES})`));
+  await vi.waitFor(() => expect(kinds()).toStrictEqual([`Ideas ${MAX_NOTES}`]));
   expect(card('Idea 0').querySelector('[data-act="connect"]')).toBe(null);
   expect(card('Idea 1').querySelector('[data-act="connect"]')).not.toBe(null);
   field<HTMLTextAreaElement>('text').value = 'One more';
@@ -497,7 +513,7 @@ it('export shows exactly what leaves: only chosen notes, as Markdown or Mermaid,
   ui.press('Export…');
   ui.key('Escape');
   expect(ui.q('.mr-repo-export').hidden).toBe(true);
-  expect(ui.q('.mr-repo-thinking').hidden).toBe(false);
+  expect(notesOpen()).toBe(true);
   vi.unstubAllGlobals();
 });
 
@@ -518,7 +534,7 @@ it('answers that arrive after the reader closed, or after the commit moved, chan
   showNotes();
   await addNote('About the goals', { anchor: 'Reading § Goals' });
   // A save still running when the reader closes is finished quietly.
-  ui.press('Save', '.mr-notes-head button');
+  ui.press('Save', '.mr-notes-bar button');
   ui.close();
   await vi.waitFor(async () => expect(await stored()).not.toBe(null));
 
@@ -608,5 +624,17 @@ it('notes that storage returns after the reader closed are not drawn into it', a
   expect(document.querySelector('#galley-repo-reader')).toBe(null);
   // Nothing was written either: there were no changes to keep.
   expect(set).not.toHaveBeenCalled();
+  vi.unstubAllGlobals();
+});
+
+it('notes opened before they have loaded are drawn once they arrive', async () => {
+  const answer = deferred<Record<string, unknown>>();
+  vi.stubGlobal('chrome', { storage: { local: { get: vi.fn(() => answer.promise), set: vi.fn(async () => {}), remove: vi.fn(async () => {}) } } });
+  await ui.open(repository());
+  showNotes();
+  expect(notes()).toStrictEqual([]);
+  const saved = { ...emptyThinking(), notes: [{ id: 'n1', kind: 'idea', text: 'Loaded late', group: '', anchor: null, links: [], created: 1, updated: 1 }] };
+  answer.resolve({ [await projectKey(id)]: { saved: { at: 1, thinking: saved }, draft: null } });
+  await vi.waitFor(() => expect(notes()).toStrictEqual(['Idea Loaded late Connect… Edit Delete']));
   vi.unstubAllGlobals();
 });

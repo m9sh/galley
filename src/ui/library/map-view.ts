@@ -24,9 +24,9 @@ export class DocumentMap extends DocumentMapSheet {
     if (moved) this.fit();
   }
 
-  /** The reader is closing, or reading a new commit: stop watching the window, and close the sheet. */
+  /** The reader is closing, or reading a new commit: stop watching the window, and close the details. */
   destroy(): void {
-    this.host.sheet.hide();
+    this.park();
     this.observer.disconnect();
     this.mobile.removeEventListener('change', this.onMobile);
     this.previewVersion++;
@@ -35,6 +35,23 @@ export class DocumentMap extends DocumentMapSheet {
   /** Put keyboard focus on the document in the middle, after the library moved it there. */
   focusCentre(): void {
     this.focusPlace(this.state.focus);
+  }
+
+  /**
+   * Show a document's details, as choosing it would: the library opens on the document it starts at. On a phone, where
+   * the sheet would cover the map, the document is only chosen.
+   */
+  select(id: string): void {
+    if (this.mobile.matches) {
+      this.selected = id;
+      this.mark();
+    } else this.open(id, 'preview');
+  }
+
+  /** The library shows something else in the sheet: the details give it up without closing it, and the place stays chosen. */
+  release(): void {
+    this.sheetOpen = false;
+    this.connection = null;
   }
 
   /** Close, the backdrop or Escape close the details sheet while the map is shown; focus goes back to the place it was about. */
@@ -47,9 +64,9 @@ export class DocumentMap extends DocumentMapSheet {
     return true;
   }
 
-  /** The map is put away: its sheet goes with it, and comes back as it was when the map is drawn again. */
+  /** The map is put away: its details go with it, and come back as they were when the map is drawn again. */
   park(): void {
-    this.host.sheet.hide();
+    if (this.sheetOpen) this.host.sheet.hide();
   }
 
   /** A link in a preview previews the document it points to in the same sheet; anything else the library follows. */

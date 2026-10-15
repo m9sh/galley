@@ -126,6 +126,7 @@ export abstract class DocumentMapSheet extends DocumentMapDrawing {
     this.previewVersion++;
     // Closing keeps the contents, so the sheet slides away whole; a map put away keeps its sheet for the return.
     if (!this.sheetOpen || !this.element.isConnected || this.element.closest('[hidden]')) return;
+    this.host.claim?.();
     const { sheet } = this.host;
     const body = sheet.body;
     for (const name of ['id', 'role', 'aria-labelledby']) body.removeAttribute(name);

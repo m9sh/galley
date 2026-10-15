@@ -5,6 +5,8 @@
   max-width: 1160px;
   margin: 0 auto;
   font-family: var(--sans);
+  /* The lenses stack by the width they have, which the sheet beside them can take. */
+  container-type: inline-size;
 }
 
 .mr-repo-map[hidden],

@@ -2,7 +2,7 @@ import { expect, it, vi } from 'vitest';
 import { MAX_DOCUMENT_CHARS } from '../../core/limits.ts';
 import { ReaderError } from '../../platforms/types.ts';
 import { deferred } from '../../testing/reader.ts';
-import { handbook, repoHarness, repository, words } from '../../testing/repo.ts';
+import { handbook, listing, repoHarness, repository, words } from '../../testing/repo.ts';
 import { openRepository } from './repo-reader.ts';
 
 // Diagrams and code are drawn in sandboxed frames; here drawing is instant.
@@ -57,9 +57,9 @@ it('layout can be chosen before a document loads and while reading a map, withou
   expect(ui.scroll).not.toHaveBeenCalled();
   pending.resolve(repository());
   await pending.promise;
-  await ui.settled();
+  // It opens on the map, where there is no reading position to keep.
+  await vi.waitFor(() => expect(ui.q('.mr-repo-map .mr-map-head')).toBeTruthy());
   expect(ui.q('.mr-root').dataset.layout).toBe('balanced');
-  ui.key('m');
   ui.scroll.mockClear();
   ui.key('l');
   expect(ui.q('.mr-root').dataset.layout).toBe('wide');
@@ -85,15 +85,24 @@ it('a repository opens at its README, read at one commit, with nothing from a re
   expect(document.documentElement.style.overflow).toBe('hidden');
 });
 
-it('a Markdown file page opens that document at once, without listing the repository', async () => {
+it('a Markdown file page opens the map at that document, previewed beside it; Read reads it in full', async () => {
   const source = repository(handbook, { start: { path: 'docs/specs/reading.md', folder: false }, ref: null });
-  await ui.open(source);
-  expect(source.discover).not.toHaveBeenCalled();
+  await ui.openMap(source);
+  expect(ui.q('.mr-pm-place.is-focus').dataset.id).toBe('docs/specs/reading.md');
+  expect(ui.text('.mr-pm-sheet .mr-sheet-title')).toBe('Reading');
+  expect(ui.q('.mr-pm-tab[data-tab="preview"]').getAttribute('aria-selected')).toBe('true');
+  ui.click('.mr-pm-sheet [data-act="open"]');
+  await ui.settled();
   expect(ui.text('.mr-lead')).toBe('Reading');
   expect(ui.text('.mr-subtitle')).toBe('How documents are read');
   expect(ui.text('.mr-repo-at')).toBe('docs/specs/reading.md · default branch @ c0ffee1');
-  expect(ui.text('.mr-repo-backlinks')).toContain('Galley has read 1 in this repository.');
   expect(ui.q('[data-act="refresh"]').getAttribute('aria-label')).toBe('Reading default branch at c0ffee1. Check for a newer commit');
+  ui.close();
+  // A document the listing left out cannot be on the map: it is read at once.
+  await ui.openMap(repository(handbook, { start: { path: 'docs/specs/reading.md', folder: false }, discover: vi.fn(async () => listing(['README.md'])) }));
+  await ui.settled();
+  expect(ui.q('.mr-repo-map').hidden).toBe(true);
+  expect(ui.text('.mr-lead')).toBe('Reading');
 });
 
 it('a folder opens at its README, else its first document, else the repository’s README or first document', async () => {
@@ -118,17 +127,16 @@ it('a folder opens at its README, else its first document, else the repository�
 
 it('says so when a repository has no documents, or could not be listed, and lists it again on request', async () => {
   await ui.open(repository({}));
-  expect(ui.text('.mr-message h2')).toBe('No documents here');
+  expect(ui.text('.mr-repo-map .mr-message h2')).toBe('No documents here');
   expect(ui.text('.mr-message p')).toBe('Galley found no Markdown files in acme/handbook at c0ffee1.');
   expect(ui.q<HTMLAnchorElement>('.mr-message a').href).toBe('https://github.com/acme/handbook/tree/c0ffee1');
   ui.close();
   const source = repository();
   vi.mocked(source.discover).mockRejectedValueOnce(new ReaderError('GitHub could not find this repository.', 'Add a token.'));
   await ui.open(source);
-  expect(ui.text('.mr-message')).toContain('GitHub could not find this repository. Add a token.');
+  expect(ui.text('.mr-repo-map .mr-message')).toContain('GitHub could not find this repository. Add a token.');
   ui.press('Try again');
-  await ui.settled();
-  await vi.waitFor(() => expect(ui.text('.mr-doc h1')).toBe('Handbook'));
+  await vi.waitFor(() => expect(ui.text('.mr-pm-sheet .mr-sheet-title')).toBe('Handbook'));
 });
 
 it('explains a repository that could not be opened, with token help when a token would help', async () => {
@@ -174,8 +182,9 @@ it('links within the repository open here at the same commit; Back and Forward r
   ui.press('the decision', '.mr-content a');
   await ui.settled();
   expect(ui.text('.mr-lead')).toBe('ADR 1: Use Markdown');
-  expect(ui.q<HTMLButtonElement>('[data-act="back"]').disabled).toBe(false);
-  expect(ui.q<HTMLButtonElement>('[data-act="forward"]').disabled).toBe(true);
+  // The top bar's one way back is to the map; Alt+← and Alt+→ go through the documents read.
+  expect(ui.q('[data-act="back-to-map"]').hidden).toBe(false);
+  expect(ui.q('.mr-tb-left [data-act="close"]').hidden).toBe(true);
   // Scrolled down: the second paragraph is the first one in view, 120px under the top.
   const root = ui.q('.mr-root');
   root.scrollTop = 500;
@@ -193,7 +202,7 @@ it('links within the repository open here at the same commit; Back and Forward r
   ui.bounds(restored, 420);
   // Restoring puts that paragraph back where it was: scrolled by its distance from where it sat.
   expect(ui.scroll).toHaveBeenCalled();
-  ui.click('[data-act="forward"]');
+  ui.key('ArrowRight', { altKey: true });
   await ui.settled();
   expect(ui.text('.mr-lead')).toBe('Reading');
   ui.key('ArrowRight', { altKey: true });
@@ -295,7 +304,8 @@ it('documents too large for the reader, and documents that fail to load, explain
 it('a document left before it loads is never shown, and a failed load is tried again next time', async () => {
   const slow = deferred<string>();
   const failing = deferred<string>();
-  const source = repository(handbook, { start: { path: 'README.md', folder: false } });
+  // Only the README is listed, so the map reads nothing else ahead of the reader.
+  const source = repository(handbook, { start: { path: 'README.md', folder: false }, discover: vi.fn(async () => listing(['README.md'])) });
   await ui.open(source);
   vi.mocked(source.load).mockReturnValueOnce(failing.promise);
   ui.press('the decision', '.mr-content a');
@@ -327,14 +337,18 @@ it('a document without a title is named by its file, or by the title its front m
 });
 
 it('a failure without advice, or that is not an error at all, still says what happened', async () => {
-  const source = repository(handbook, { start: { path: 'README.md', folder: false } });
-  vi.mocked(source.load).mockRejectedValueOnce(new ReaderError('Could not reach GitHub.', ''));
+  const source = repository(handbook, { start: { path: 'README.md', folder: false }, discover: vi.fn(async () => listing(['README.md'])) });
   await ui.open(source);
+  vi.mocked(source.load).mockRejectedValueOnce(new ReaderError('Could not reach GitHub.', ''));
+  ui.press('the decision', '.mr-content a');
+  await ui.settled();
   expect(ui.all('.mr-message p')).toHaveLength(0);
   expect(ui.text('.mr-message h2')).toBe('Could not reach GitHub.');
-  ui.close();
+  ui.key('ArrowLeft', { altKey: true });
+  await ui.settled();
   vi.mocked(source.load).mockRejectedValueOnce('reset');
-  await ui.open(source);
+  ui.key('ArrowRight', { altKey: true });
+  await ui.settled();
   expect(ui.text('.mr-message')).toContain('Galley could not read this. reset');
 });
 
@@ -523,7 +537,7 @@ it('an out-of-range saved text size falls back to the default', async () => {
   await vi.waitFor(() => expect(ui.text('.mr-text-size')).toBe('20 px'));
 });
 
-it('keys: Esc closes menus then the reader, / finds a document, M switches to the map; page shortcuts never fire', async () => {
+it('keys: Esc closes menus, goes back to the map, then closes the reader; / finds a document, M goes between the map and the document; page shortcuts never fire', async () => {
   const onClose = vi.fn();
   await ui.open(repository(), { onClose });
   const page = vi.fn();
@@ -539,6 +553,9 @@ it('keys: Esc closes menus then the reader, / finds a document, M switches to th
   expect(ui.shadow().activeElement).toBe(ui.q('[data-act="docs"]'));
   ui.key('M');
   await vi.waitFor(() => expect(ui.q('.mr-repo-map').hidden).toBe(false));
+  // Back on the map, Close and the wordmark lead the top bar again.
+  expect(ui.q('[data-act="back-to-map"]').hidden).toBe(true);
+  expect(ui.q('.mr-tb-left [data-act="close"]').hidden).toBe(false);
   ui.key('m');
   expect(ui.q('.mr-repo-read').hidden).toBe(false);
   ui.key('m', { ctrlKey: true });
@@ -550,6 +567,13 @@ it('keys: Esc closes menus then the reader, / finds a document, M switches to th
   outside.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
   expect(onClose).not.toHaveBeenCalled();
   document.body.dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape', bubbles: true }));
+  // Reading, Esc goes back to the map as it was left, the README's details beside it; there it closes them, then the reader.
+  ui.key('Escape');
+  expect(ui.q('.mr-repo-map').hidden).toBe(false);
+  expect(ui.q('.mr-pm-sheet').hidden).toBe(false);
+  ui.key('Escape');
+  expect(ui.q('.mr-pm-sheet').hidden).toBe(true);
+  expect(onClose).not.toHaveBeenCalled();
   ui.key('Escape');
   expect(onClose).toHaveBeenCalledOnce();
   expect(page).not.toHaveBeenCalledWith(expect.objectContaining({ key: '/' }));
@@ -570,4 +594,24 @@ it('scrolling moves the progress bar and quiets the top bar', async () => {
   root.dispatchEvent(new Event('scroll'));
   expect(ui.q('.mr-progress > div').style.transform).toBe('scaleX(0)');
   expect(ui.q('.mr-topbar').classList).not.toContain('is-scrolled');
+});
+
+it('a wide window keeps the wide layout until the sheet beside the page leaves it too little room, keeping the paragraph read', async () => {
+  await ui.open(repository());
+  const root = ui.q('.mr-root');
+  let width = 1440;
+  Object.defineProperty(root, 'offsetWidth', { configurable: true, get: () => width });
+  vi.stubGlobal('innerWidth', 1440);
+  window.dispatchEvent(new Event('resize'));
+  expect(root.classList).not.toContain('is-narrowed');
+  // Chapters beside the document leave it 835 pixels: narrower than the wide layout needs.
+  width = 835;
+  ui.scroll.mockClear();
+  ui.click('.mr-tb-right [data-panel="chapters"]');
+  expect(root.classList).toContain('is-narrowed');
+  expect(ui.scroll).toHaveBeenCalled();
+  width = 1440;
+  ui.click('.mr-tb-right [data-panel="chapters"]');
+  expect(root.classList).not.toContain('is-narrowed');
+  vi.stubGlobal('innerWidth', 1024);
 });

@@ -53,7 +53,7 @@
 
 /* ------------------------------------------------------------------ narrow screens */
 
-@media (max-width: 960px) {
+@container (max-width: 960px) {
   .mr-map-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 28px;
@@ -71,10 +71,10 @@
 }
 
 @media (max-width: 760px) {
-  /* Phones keep Back and a readable document name; view choices move into its menu. */
+  /* Phones keep the way back and a readable document name: Chapters, Notes and the commit become their icons. */
   .mr-repo-commit-label,
   .mr-repo-commit:disabled,
-  .mr-repo-history [data-act="forward"] {
+  .mr-repo-panel > span {
     display: none;
   }
 
@@ -84,21 +84,24 @@
     justify-content: center;
   }
 
-  .mr-views-pick {
-    display: none;
-  }
-  .mr-repo-menu-views {
-    display: flex;
-    flex-wrap: wrap;
-    margin: 8px 16px;
-    gap: 6px;
-  }
-  .mr-repo-menu-views button {
+  .mr-repo .mr-repo-panel {
+    justify-content: center;
+    min-width: 44px;
     min-height: 44px;
-    gap: 6px;
+    padding: 0;
   }
-  .mr-repo-menu-views .mr-icon {
+
+  .mr-repo .mr-repo-back {
+    min-height: 44px;
+    padding-right: 10px;
+  }
+
+  .mr-repo-back .mr-label-long {
     display: none;
+  }
+
+  .mr-repo-back .mr-label-short {
+    display: inline;
   }
 
   .mr-repo .mr-brand {

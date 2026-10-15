@@ -103,7 +103,7 @@ The [user guide](docs/GUIDE.md) covers every setting, token and platform detail.
 | <kbd>,</kbd> · <kbd>?</kbd> | Settings · these shortcuts |
 | <kbd>Esc</kbd> | Close the innermost thing, and finally the reader. Drafts are kept. |
 
-Reading Project library: <kbd>Alt</kbd> <kbd>←</kbd> <kbd>→</kbd> back and forward, <kbd>/</kbd> find a document, <kbd>L</kbd> next reading layout, <kbd>M</kbd> map, <kbd>N</kbd> notes, <kbd>,</kbd> settings, <kbd>?</kbd> these keys.
+Reading Project library: <kbd>Alt</kbd> <kbd>←</kbd> <kbd>→</kbd> back and forward, <kbd>/</kbd> find a document, <kbd>L</kbd> next reading layout, <kbd>M</kbd> map or document, <kbd>C</kbd> chapters, <kbd>N</kbd> notes, <kbd>,</kbd> settings, <kbd>?</kbd> these keys.
 
 ## FAQ
 

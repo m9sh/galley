@@ -176,7 +176,7 @@ export async function checkChapterContext(browser, demoUrl, screenshots) {
         bylineWidth: s.querySelector('.mr-repo-at').getBoundingClientRect().width,
         nameWidth: s.querySelector('.mr-file-name').getBoundingClientRect().width,
         overflow: root.scrollWidth > root.clientWidth + 1,
-        returnButtons: [...s.querySelectorAll('.mr-repo-return')]
+        returnButtons: [...s.querySelectorAll('.mr-repo-return, .mr-repo-back')]
           .filter((el) => el.getClientRects().length)
           .map((el) => ({ name: el.textContent, height: el.getBoundingClientRect().height })),
         returnInBar: s.querySelector('.mr-topbar .mr-repo-return[data-act="close"]') !== null,
@@ -186,17 +186,11 @@ export async function checkChapterContext(browser, demoUrl, screenshots) {
     if (width <= 390) {
       assert.ok(geometry.bylineWidth >= width - 64, `Document metadata is squeezed at ${width}: ${geometry.bylineWidth}`);
       assert.ok(geometry.nameWidth >= 100, `Document name is squeezed at ${width}: ${geometry.nameWidth}`);
-      await click('[data-act="docs"]');
-      assert.equal(
-        await inspect(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-repo-menu-views').getBoundingClientRect().height > 0),
-        true,
-      );
-      await click('.mr-repo-menu-views [data-view="map"]');
-      await page.waitForFunction(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-repo-map').hidden === false);
-      await click('[data-act="docs"]');
-      await click('.mr-repo-menu-views [data-view="read"]');
+      // Back to map and M go between the map and the document on a phone too.
+      await click('[data-act="back-to-map"]');
+      await page.waitForFunction(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-repo-review').hidden === false);
+      await page.keyboard.press('m');
       assert.equal(await inspect(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-repo-read').hidden), false);
-      assert.equal(await inspect(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-repo-docs').hidden), true);
       assert.ok(
         geometry.returnButtons.every((button) => button.height >= 44),
         `Return controls need 44px: ${JSON.stringify(geometry.returnButtons)}`,
@@ -204,7 +198,7 @@ export async function checkChapterContext(browser, demoUrl, screenshots) {
     }
     // This review is the Documents map around what the review changes: what links in, every changed file chapter by
     // chapter (those nothing links to as quiet chips), and where they lead.
-    await click('[data-view="review"]');
+    await click('[data-act="back-to-map"]');
     await page.waitForFunction(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-repo-review .mr-pm-place'));
     const reviewMap = await inspect(() => {
       const s = document.querySelector('#galley-repo-reader').shadowRoot;
@@ -221,13 +215,15 @@ export async function checkChapterContext(browser, demoUrl, screenshots) {
     assert.equal(reviewMap.overflow, false, `This review runs sideways at ${width}`);
     assert.equal(reviewMap.space, true);
     await page.screenshot({ path: join(screenshots, `chapter-context-review-map-${width}.png`) });
-    await click('[data-view="read"]');
+    await page.keyboard.press('m');
     // Return to review leads the top bar; Escape comes back to the sheet, on what opened the library.
     assert.equal(geometry.returnInBar, true);
     await inspect(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-root').focus());
-    // Escape closes the innermost layer first: the open Add to chapter, then the library.
+    // Escape closes the innermost layer first: the open Add to chapter, then the document for This review, then the library.
     await page.keyboard.press('Escape');
     assert.equal(await inspect(() => document.querySelector('#galley-repo-reader')?.shadowRoot.querySelector('.mr-chapter-attachment').open), false);
+    await page.keyboard.press('Escape');
+    assert.equal(await inspect(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-repo-review').hidden), false);
     await page.keyboard.press('Escape');
     assert.equal(await inspect(() => document.querySelector('#galley-repo-reader')), null);
     const returned = await review((s) => ({

@@ -19,7 +19,7 @@ import type { DocumentMap } from './map-view.ts';
 import { Sheet } from '../components/sheet.ts';
 import { DEFAULT_SETTINGS, loadSettings, type Settings } from '../preferences/settings.ts';
 import { PaletteCarousel } from '../components/settings-sheet.ts';
-import { type Place, type ReviewContext, TEMPLATE, type View } from './repo-reader-shared.ts';
+import { type Panel, type Place, type ReviewContext, TEMPLATE, type View } from './repo-reader-shared.ts';
 
 /** The repository reader's state: every field, and the constructor. The layers above it (repo-reader-source.ts up to repo-reader.ts) add the behaviour, one responsibility each; a method of a higher layer that this one calls is declared abstract at the end. */
 export abstract class RepoReaderBase {
@@ -53,14 +53,22 @@ export abstract class RepoReaderBase {
   protected path: string | null = null;
   protected rendered: RenderedDoc | null = null;
   protected view: View = 'read';
+  /** The map the reader opened on and comes back to: the Documents map, or This review over a review. */
+  protected front: 'map' | 'review';
   /** The middle of the Documents map: kept while the reader goes off to read, moved only on purpose (ADR 0030). */
   protected focus: string | null = null;
   /** The Documents map, with its own camera and selection; drawn anew for a new commit. */
   protected mapView: DocumentMap | null = null;
-  /** The reader's sheets (components/sheet.ts): a place chosen on the Documents map, and one chosen in This review. */
-  protected readonly mapSheet: Sheet;
-  protected readonly docSheet: Sheet;
-  /** This review on the same map, around what the review changes, with its own camera, selection and sheet. */
+  /**
+   * The reader's one sheet (components/sheet.ts), beside the map or the document: the details of a place chosen on
+   * a map, or Chapters or Notes.
+   */
+  protected readonly sheet: Sheet;
+  /** Chapters or Notes, while the sheet shows one of them; null while it shows a map's details, or is closed. */
+  protected panel: Panel | null = null;
+  /** What had focus when Chapters or Notes opened, for when the sheet closes. */
+  protected panelOpener: HTMLElement | null = null;
+  /** This review on the same map, around what the review changes, with its own camera and selection. */
   protected reviewMap: DocumentMap | null = null;
   /** The map's lens: documents and their links, or what configuration and decision records state. */
   protected lens: 'documents' | LensName = 'documents';
@@ -107,21 +115,16 @@ export abstract class RepoReaderBase {
     this.host.id = __GALLEY_DEV__ ? 'galley-repo-reader-dev' : 'galley-repo-reader';
     this.shadow.replaceChildren(markup(`<style>${css}${repoCss}</style>${TEMPLATE}`));
     this.root = this.q('.mr-root');
-    // Both maps' details sheets look the same (mr-map-sheet); each is told apart by its own class.
-    const sheet = (className: string, closeLabel: string, dismiss: () => void) => {
-      const made = new Sheet({
-        root: this.root,
-        className,
-        closeLabel,
-        parts: () => this.slidingParts(),
-        background: () => this.root.querySelectorAll<HTMLElement>('.mr-topbar, .mr-main'),
-        dismiss,
-      });
-      made.element.classList.add('mr-map-sheet');
-      return made;
-    };
-    this.mapSheet = sheet('mr-pm-sheet', 'Close details', () => this.mapView!.closeSheet());
-    this.docSheet = sheet('mr-doc-sheet', 'Close details', () => this.reviewMap!.closeSheet());
+    this.front = review ? 'review' : 'map';
+    this.sheet = new Sheet({
+      root: this.root,
+      className: 'mr-pm-sheet',
+      closeLabel: 'Close',
+      parts: () => this.slidingParts(),
+      background: () => this.root.querySelectorAll<HTMLElement>('.mr-topbar, .mr-main'),
+      dismiss: () => this.dismissSheet(),
+      reflow: (change) => this.reflow(change),
+    });
     this.q('.mr-doc').append(this.skeleton());
     this.prevOverflow = document.documentElement.style.overflow;
     this.prevFocus = document.activeElement;
@@ -132,10 +135,10 @@ export abstract class RepoReaderBase {
     this.root.addEventListener('change', (e) => this.onChange(e));
     this.root.addEventListener('submit', (e) => this.onSubmit(e));
     if (review) {
-      // Opened over a review, the way back to it leads the top bar, in place of Close and the wordmark.
+      // Opened over a review, the way back to it leads the top bar, in place of Close and the wordmark; the review
+      // has its own chapters.
       this.root.classList.add('is-over-review');
-      this.q('[data-view="review"]').hidden = false;
-      this.q('[data-view="chapters"]').hidden = true;
+      this.q('[data-panel="chapters"]').hidden = true;
       const chapter = review.chapters.find((chapter) => chapter.id !== undefined && chapter.id === review.entry?.chapter);
       const back = button('', 'close', 'mr-btn mr-repo-return');
       back.replaceChildren(glyph(icons.chevronLeft));
@@ -146,12 +149,6 @@ export abstract class RepoReaderBase {
       if (chapter) this.q('.mr-repo-read').prepend(this.continueBar(chapter.title, review.entry!.canContinue));
       this.q('.mr-tb-left > [data-act="close"]').replaceWith(back);
     }
-    // Phones put view choices in the document menu, leaving the top bar for the reading title.
-    const views = this.q('.mr-repo-views').cloneNode(true) as HTMLElement;
-    views.className = 'mr-seg mr-repo-menu-views';
-    views.hidden = false;
-    views.setAttribute('aria-label', 'Library view');
-    this.q('.mr-repo-docs').prepend(views);
     this.root.addEventListener('scroll', () => this.onScroll(), { passive: true });
     this.q('.mr-palette-track').addEventListener('scroll', () => this.palettes.update(), { passive: true });
     this.q('.mr-repo-search').addEventListener('input', (e) => {
@@ -160,6 +157,7 @@ export abstract class RepoReaderBase {
     });
     for (const type of ['keydown', 'keyup', 'keypress']) window.addEventListener(type, this.shield, true);
     this.dark.addEventListener('change', this.onSchemeChange);
+    window.addEventListener('resize', this.onResize);
     this.applySettings();
     void loadSettings().then((settings) => {
       this.settings = settings;
@@ -176,6 +174,12 @@ export abstract class RepoReaderBase {
   };
 
   protected readonly onSchemeChange = () => this.applySettings();
+  protected readonly onResize = () => this.fitWidth();
+
+  /** A wide window keeps the wide layout unless the sheet beside the page leaves it less room than that needs, as in a review. */
+  protected fitWidth(): void {
+    this.root.classList.toggle('is-narrowed', innerWidth >= 1280 && this.root.offsetWidth < 1280);
+  }
   // Methods of the layers above, called from here.
   protected abstract slidingParts(): NodeListOf<HTMLElement>;
   protected abstract skeleton(): HTMLElement;
@@ -184,6 +188,7 @@ export abstract class RepoReaderBase {
   protected abstract onSubmit(e: SubmitEvent): void;
   protected abstract continueBar(title: string, enabled: boolean): HTMLElement;
   protected abstract onScroll(): void;
+  protected abstract reflow(change: () => void): void;
   protected abstract buildOutline(): void;
   protected abstract applySettings(): void;
   protected abstract applyCorrections(): void;
@@ -199,14 +204,18 @@ export abstract class RepoReaderBase {
     },
   ): Promise<void>;
   protected abstract autoIndex(): void;
+  protected abstract start(): Promise<void>;
   protected abstract showReview(): Promise<void>;
   protected abstract message(title: string, body: string, extra?: Node[]): void;
   protected abstract publishContext(): Map<string, import('../../core/review-context.ts').ReviewRelated[]>;
   protected abstract updateBacklinks(): void;
   protected abstract toast(text: string): void;
   protected abstract updateSequence(): void;
-  protected abstract showMap(focus?: string | null): Promise<void>;
-  protected abstract showSequence(): void;
+  protected abstract showMap(focus?: string | null, select?: boolean): Promise<void>;
+  protected abstract dismissSheet(): void;
+  protected abstract claimSheet(): void;
+  protected abstract openPanel(panel: Panel): void;
+  protected abstract drawPanel(): void;
   protected abstract drawNotes(): void;
   protected abstract setView(view: View): void;
   protected abstract drawDiagrams(): void;

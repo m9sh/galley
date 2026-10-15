@@ -284,6 +284,18 @@
     text-align: left;
   }
 
+  /* What the map shows can be one choice too many for a phone: the switch scrolls sideways, not the page. */
+  .is-map-space .mr-lens-switch {
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .is-map-space .mr-lens-switch > button {
+    flex: none;
+  }
+
   .is-map-space .mr-map-status > .mr-repo-limit {
     text-align: left;
   }
