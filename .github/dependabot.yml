@@ -11,6 +11,13 @@ updates:
       prefix: build
       include: scope
     groups:
+      # Packages that are one release train arrive as one pull request. @babel/parser is a runtime dependency and
+      # @babel/types a development one (spec-frame.ts types the parser's syntax tree with it), so the development
+      # group below would split them, and a major of one without the other fails the type check. A package joins the
+      # first group it matches, which is why this one comes first. scripts/dependencies.test.mjs checks all of this.
+      babel:
+        patterns:
+          - "@babel/*"
       development:
         dependency-type: development
     ignore:

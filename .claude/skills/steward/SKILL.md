@@ -55,3 +55,5 @@ Small, clear requests (renames, a test, copy fixes): do them and push. Larger or
 
 - **release-please** (`chore(main): release X.Y.Z`): generated; do not push to it. The maintainer merges it to release.
 - **Dependabot:** titles are already `build(deps)` or `ci(deps)`. Check the changelog of the dependency, run `npm run check` and `npm run test:e2e`; a new runtime dependency licence must stay permissive.
+  - **Packages that move together share a group** in `.github/dependabot.yml`, because Dependabot splits runtime and development dependencies into different pull requests. Today that is `@babel/*`: the parser (runtime) and its types (development) must be on one major, and `scripts/dependencies.test.mjs` fails with the reason when they are not.
+  - **A bump that fails the type check in code that did not change** often has half a pair. Look for the other half, bump both in one pull request, and add the pair to the group and to that test, rather than pinning one.
