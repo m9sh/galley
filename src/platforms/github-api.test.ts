@@ -3,6 +3,7 @@ import { headersOf, mockFetch } from '../testing/http.ts';
 import { directApi } from '../testing/github.ts';
 import { allowedRequest, backgroundApi, fetchGitHub } from './github-api.ts';
 import { HttpError } from './http.ts';
+import { ReaderError } from './types.ts';
 import { MARK_VIEWED, VIEWED_FILES_QUERY } from './github-queries.ts';
 
 const page = 'https://github.com/acme/docs/pull/12/files';
@@ -131,14 +132,35 @@ it('content scripts reach GitHub only through the background worker, which answe
   await expect(worker.request(`${api}/pulls/12`)).rejects.toMatchObject({ status: 404 });
 });
 
-it('treats a refusal or a missing background worker as GitHub being unreachable', async () => {
+it('says what went wrong when the worker refuses a request or cannot be reached, and keeps an uncertain write uncertain', async () => {
   const sendMessage = vi.fn();
   vi.stubGlobal('chrome', { runtime: { sendMessage } });
   const worker = backgroundApi();
+  // Refused before anything was sent: not a network problem, so it must not read as one.
   sendMessage.mockResolvedValueOnce({ error: 'Galley does not make this request.' });
-  await expect(worker.request(`${api}/contents/secret.md`)).rejects.toEqual(new HttpError(0, `${api}/contents/secret.md`, null));
+  const refused = await worker.request(`${api}/contents/secret.md`).catch((error) => error);
+  expect(refused).toBeInstanceOf(ReaderError);
+  expect(refused.message).toBe('Galley could not ask GitHub for this page.');
+  expect(refused.hint).toBe('Reload the page and open the reader again. The worker said: Galley does not make this request.');
+  // A refused write was never made either, so it is certain too.
+  sendMessage.mockResolvedValueOnce({ error: 'Refused.' });
+  await expect(worker.request(`${api}/pulls/12/comments`, { method: 'POST', body: { body: 'Hi' } })).rejects.toBeInstanceOf(ReaderError);
+  // No worker to answer: a read can only be tried again from a page that reaches the worker.
   sendMessage.mockRejectedValue(new Error('Extension context invalidated.'));
   expect(await worker.hasToken()).toBe(false);
+  const lost = await worker.request(`${api}/pulls/12`).catch((error) => error);
+  expect(lost).toBeInstanceOf(ReaderError);
+  expect(lost.message).toBe('Galley could not reach its background worker.');
+  sendMessage.mockResolvedValue(undefined);
+  await expect(worker.request(`${api}/pulls/12`)).rejects.toBeInstanceOf(ReaderError);
+  // A write that got no answer may have been made: it stays status 0, which the reader says it cannot confirm (ADR 0008).
+  await expect(worker.request(`${api}/pulls/12/comments`, { method: 'POST', body: { body: 'Hi' } })).rejects.toEqual(
+    new HttpError(0, `${api}/pulls/12/comments`, null),
+  );
+  sendMessage.mockRejectedValue(new Error('port closed'));
+  await expect(worker.request(`${api}/pulls/12/comments`, { method: 'POST', body: { body: 'Hi' } })).rejects.toMatchObject({ status: 0 });
+  // A network failure in the worker's own request still reads as GitHub being unreachable.
+  sendMessage.mockResolvedValue({ status: 0, body: '', headers: {} });
   await expect(worker.request(`${api}/pulls/12`)).rejects.toMatchObject({ status: 0 });
 });
 

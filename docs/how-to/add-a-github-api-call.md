@@ -10,7 +10,7 @@ GitHub calls that need the reviewer's token go through the background worker, wh
 
 ## Steps
 
-1. **Allow it** in `allowedRequest()` (`src/platforms/github-api.ts`). Match the method, the exact path shape, and tie it to the pull request in the tab (`owner`, `repo`, `number` from the page). For GraphQL, add the operation text to `GRAPHQL_OPERATIONS` in `src/platforms/github-queries.ts` and check its variables.
+1. **Allow it** in `allowedRequest()` (`src/platforms/github-api.ts`). Match the method, the exact path shape, and tie it to the pull request the tab is on now (`owner`, `repo`, `number` from the page; the worker takes the page from the tab's own address, [ADR 0035](../adr/0035-judge-worker-requests-against-the-tabs-current-page.md)). For GraphQL, add the operation text to `GRAPHQL_OPERATIONS` in `src/platforms/github-queries.ts` and check its variables.
 2. **Call it** from the adapter (`src/platforms/github.ts` or a sibling module) through the `GitHubApi` passed in, never with `fetch` directly when a token may be needed. Reads go through `readWithRetry()`; writes never retry.
 3. **Explain failures** with `ReaderError(message, hint)`: rate limits, SSO, missing permissions (`needsToken`), not found.
 4. **Expose it** to the reader through `ReviewSource` (`src/platforms/types.ts`) if the reader needs it, as an optional member so GitLab and the demo keep working.
