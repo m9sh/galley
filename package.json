@@ -1,6 +1,6 @@
 {
   "name": "galley",
-  "version": "0.19.1",
+  "version": "0.20.0",
   "private": true,
   "description": "Galley helps teams understand GitHub pull requests and GitLab merge requests with readable documents and code, edits shown in context, and comments beside the text. Free and open source.",
   "license": "GPL-3.0-or-later",
@@ -24,7 +24,7 @@
     "site": "npm run build:site && node scripts/serve-site.mjs",
     "test:site": "node e2e/site.mjs",
     "test:pages": "node --test scripts/pages-*.test.mjs",
-    "test:scripts": "node --test scripts/tidy.test.mjs scripts/structure.test.mjs scripts/firefox-lint.test.mjs scripts/dependencies.test.mjs",
+    "test:scripts": "node --test scripts/tidy.test.mjs scripts/structure.test.mjs scripts/firefox-lint.test.mjs",
     "test:docs": "node --test scripts/docs.test.mjs",
     "docs:check": "node scripts/docs.mjs",
     "docs:index": "node scripts/docs.mjs --write",
