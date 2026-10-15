@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.21.0](https://github.com/m9sh/galley/compare/v0.20.0...v0.21.0) (2026-10-15)
+
+
+### Features
+
+* **reader:** open the project library on its map, with Chapters and Notes in its sheet ([8dc1c8b](https://github.com/m9sh/galley/commit/8dc1c8be39b2ebe11fc07943cd53da3a06dfc96a))
+* **reader:** open the project library on its map, with Chapters and Notes in its sheet ([8de7c63](https://github.com/m9sh/galley/commit/8de7c636f12e2ec1bd74afccad92ee85e43252d1))
+
+
+### Bug Fixes
+
+* **reader:** keep focus on the map's controls when its view is drawn again ([ad5edbc](https://github.com/m9sh/galley/commit/ad5edbc2142d2d868314dbacea68477facef9758))
+
 ## [0.20.0](https://github.com/m9sh/galley/compare/v0.19.1...v0.20.0) (2026-10-15)
 
 
