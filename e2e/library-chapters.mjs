@@ -22,22 +22,30 @@ export async function checkLibraryChapters(browser, demoUrl, screenshots) {
     await page.setViewport({ width: 1440, height: 1000 });
     await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
     await page.goto(`${demoUrl}/?repo=docs/architecture/overview.md`, { waitUntil: 'networkidle0' });
+    // It opens on the map, the document previewed beside it; Read reads it in full.
+    await page.waitForFunction(() => document.querySelector('#galley-repo-reader')?.shadowRoot.querySelector('.mr-pm-sheet:not([hidden]) [data-act="open"]'));
+    await click('.mr-pm-sheet [data-act="open"]');
     await settled();
     await click('.mr-chapter-attachment summary');
     await click('.mr-chapter-attachment button[type="submit"]');
-    await click('[data-view="chapters"]');
-    await click('[data-act="sequence-add"][data-path="docs/adr/0003-queue-for-reviews.md"]');
+    // Chapters open in the sheet beside the document.
+    await click('.mr-tb-right [data-panel="chapters"]');
+    await click('.mr-pm-sheet [data-act="sequence-add"][data-path="docs/adr/0003-queue-for-reviews.md"]');
     const selections = await inspect(() => {
       const s = document.querySelector('#galley-repo-reader').shadowRoot;
-      return { titles: [...s.querySelectorAll('.mr-sequence-title')].map((el) => el.textContent), proof: s.querySelector('.mr-sequence-links').textContent };
+      return {
+        titles: [...s.querySelectorAll('.mr-pm-sheet .mr-path .mr-sheet-row-title')].map((el) => el.textContent),
+        proof: s.querySelector('.mr-pm-sheet [aria-label="Links from this document"]').textContent,
+      };
     });
-    assert.deepEqual(selections.titles, ['Architecture overview', 'ADR 0003']);
+    assert.equal(selections.titles[0], 'Architecture overview');
+    assert.match(selections.titles[1], /^ADR 0003/);
     assert.match(selections.proof, /docs\/adr\/0003-queue-for-reviews.md · line 14/);
-    await click('.mr-repo-chapters [data-act="docs"]');
+    await click('.mr-pm-sheet [data-act="docs"]');
     await page.waitForFunction(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelectorAll('.mr-repo-outline .mr-menu-item').length === 9);
     await click('.mr-repo-outline [data-act="sequence-add"][data-path="README.md"]');
     await page.keyboard.press('Escape');
-    await click('[data-act="sequence-open"][data-at="1"]');
+    await click('.mr-pm-sheet [data-act="sequence-open"][data-at="1"]');
     await settled();
     assert.equal(
       await inspect(() => {
@@ -55,16 +63,23 @@ export async function checkLibraryChapters(browser, demoUrl, screenshots) {
     await page.waitForFunction(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-toast').hidden);
     for (const width of [1440, 390, 320]) {
       await page.setViewport({ width, height: width < 760 ? 844 : 1000 });
-      const overview = await inspect(() => {
+      // On a phone the list closes the sheet over the page: Chapters open it again.
+      await inspect(() => {
+        const open = document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-tb-right [data-panel="chapters"]');
+        if (open.getAttribute('aria-expanded') !== 'true') open.click();
+      });
+      const overview = await inspect((phone) => {
         const s = document.querySelector('#galley-repo-reader').shadowRoot;
         const root = s.querySelector('.mr-root');
-        const buttons = [...s.querySelectorAll('.mr-repo-chapters button')].filter((el) => el.getClientRects().length);
+        // Every control on a phone is a full touch target; beside the page, the stops, their order and Add are, as in a review's chapters.
+        const scope = phone ? '.mr-pm-sheet button' : '.mr-pm-sheet :is(.mr-sheet-row, .mr-seq-controls button, .mr-seq-add)';
+        const buttons = [...s.querySelectorAll(scope)].filter((el) => el.getClientRects().length);
         return {
           overflow: root.scrollWidth > innerWidth,
           heights: buttons.map((el) => el.getBoundingClientRect().height),
-          current: s.querySelectorAll('.mr-repo-chapters [aria-current="step"]').length,
+          current: s.querySelectorAll('.mr-pm-sheet [aria-current="step"]').length,
         };
-      });
+      }, width < 760);
       assert.equal(overview.overflow, false, `Chapter overview must fit at ${width}px (${appearance})`);
       assert.ok(
         overview.heights.every((height) => height >= 44),
@@ -72,7 +87,7 @@ export async function checkLibraryChapters(browser, demoUrl, screenshots) {
       );
       assert.equal(overview.current, 1);
       await page.screenshot({ path: join(screenshots, `library-chapter-${width}-${appearance}.png`) });
-      await click('.mr-repo-chapters [data-act="docs"]');
+      await click('.mr-pm-sheet [data-act="docs"]');
       const menu = await inspect(() => {
         const s = document.querySelector('#galley-repo-reader').shadowRoot;
         const names = [...s.querySelectorAll('.mr-repo-outline .mr-menu-name')];
@@ -104,7 +119,11 @@ export async function checkLibraryChapters(browser, demoUrl, screenshots) {
       );
     }
     // Navigate a heading, switch layout, and use Back to restore the same paragraph.
-    await click('[data-act="sequence-open"][data-at="3"]');
+    await inspect(() => {
+      const open = document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-tb-right [data-panel="chapters"]');
+      if (open.getAttribute('aria-expanded') !== 'true') open.click();
+    });
+    await click('.mr-pm-sheet [data-act="sequence-open"][data-at="3"]');
     await settled();
     const at = await inspect(() => {
       const s = document.querySelector('#galley-repo-reader').shadowRoot;

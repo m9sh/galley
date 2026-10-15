@@ -8,12 +8,14 @@ import { keyGroups, READING_SECTIONS, settingsSheet, type Shortcuts } from '../c
 
 /**
  * The repository reader: a project's docs read at one commit, with the same typography, sanitiser and
- * diagrams as the review reader, and none of its review operations. Its views share one index: Read,
- * a document with its contents and the documents that link to it; Map, one document's neighbourhood
- * of links as a map or a list (map-view.ts), or what configuration and decision records state, with the
- * evidence for each; Notes, the
- * reader's own thinking; and, when opened from a review, This review. History lasts as long as the
- * reader is open; notes, proposals and types are kept only when the reader saves them (ADR 0028).
+ * diagrams as the review reader, and none of its review operations. It opens on the map, its front: one
+ * document's neighbourhood of links as a map or a list (map-view.ts), with that document previewed in the
+ * sheet beside it, or what configuration and decision records state, with the evidence for each; opened
+ * from a review, This review, the same map around what the review changes. Read opens a document in
+ * full, with its contents and the documents that link to it, and Back to map returns. Chapters, the
+ * reader's own path through the project, and Notes, their own thinking, open in the same sheet beside the
+ * map or the document. History lasts as long as the reader is open; notes, proposals and types are kept
+ * only when the reader saves them (ADR 0028).
  */
 
 export const WORDS_PER_MINUTE = 230;
@@ -32,17 +34,17 @@ export const SHORTCUTS: Shortcuts = [
     'Move through the library',
     [
       [['/'], 'Find a document or heading'],
-      [['Alt', '←'], 'Back to where you were'],
+      [['Alt', '←'], 'Back to the document before'],
       [['Alt', '→'], 'Forward again'],
     ],
   ],
   [
     'Views',
     [
-      [['C'], 'Open library chapters (standalone reading)'],
-      [['M'], 'Open the map, or go back to reading'],
+      [['M'], 'Back to the map, or to the document you were reading'],
+      [['C'], 'Open or close Chapters (standalone reading)'],
+      [['N'], 'Open or close your notes'],
       [['L'], 'Next reading layout'],
-      [['N'], 'Open your notes, or go back to reading'],
     ],
   ],
   [
@@ -50,7 +52,7 @@ export const SHORTCUTS: Shortcuts = [
     [
       [[','], 'Open settings'],
       [['?'], 'Show these shortcuts'],
-      [['Esc'], 'Close what is open, then the reader'],
+      [['Esc'], 'Close what is open, then go back to the map, then close the reader'],
     ],
   ],
 ];
@@ -63,16 +65,14 @@ export const TEMPLATE = `
     <div class="mr-tb-left">
       <button class="mr-btn mr-icon-btn" data-act="close" title="Close reader (Esc)" aria-label="Close reader (Esc)">${icons.close}</button>
       <span class="mr-brand">galley${__GALLEY_DEV__ ? '<span class="mr-dev">dev</span>' : ''}</span>
-      <span class="mr-repo-history">
-        <button class="mr-btn mr-icon-btn" data-act="back" title="Back (Alt+←)" aria-label="Back" disabled>${icons.chevronLeft}</button>
-        <button class="mr-btn mr-icon-btn" data-act="forward" title="Forward (Alt+→)" aria-label="Forward" disabled>${icons.chevronRight}</button>
-      </span>
+      <button class="mr-btn mr-repo-back" data-act="back-to-map" title="Back to map (Esc)" aria-label="Back to map (Esc)" hidden>${icons.chevronLeft}<span class="mr-label-long">Back to map</span><span class="mr-label-short">Map</span></button>
     </div>
     <div class="mr-tb-center">
       <button class="mr-btn mr-file-btn" data-act="docs" aria-haspopup="dialog" aria-expanded="false" title="Project library (/)"><span class="mr-file-name">Project library</span>${icons.chevronDown}</button>
     </div>
     <div class="mr-tb-right">
-      <div class="mr-views-pick"><button class="mr-btn mr-views-btn" data-act="views" aria-haspopup="true" aria-expanded="false" title="Change the view"><span class="mr-views-icon">${icons.book}</span><span class="mr-views-label">Read</span>${icons.chevronDown}</button><div class="mr-repo-views" role="group" aria-label="View" hidden><button data-view="review" aria-pressed="false" aria-label="This review" hidden>${icons.review}<span>This review</span></button><button data-view="chapters" aria-pressed="false" aria-label="Library chapters" data-key="C">${icons.book}<span>Chapters</span></button><button data-view="read" aria-pressed="true" aria-label="Read">${icons.book}<span>Read</span></button><button data-view="map" aria-pressed="false" aria-label="Map" title="Map (M)" data-key="M">${icons.map}<span>Map</span></button><button data-view="notes" aria-pressed="false" aria-label="Notes" title="Your notes (N)" data-key="N">${icons.note}<span>Notes</span></button></div></div>
+      <button class="mr-btn mr-repo-panel" data-act="panel" data-panel="chapters" aria-haspopup="dialog" aria-expanded="false" aria-label="Chapters" title="Your path through the project (C)">${icons.book}<span>Chapters</span></button>
+      <button class="mr-btn mr-repo-panel" data-act="panel" data-panel="notes" aria-haspopup="dialog" aria-expanded="false" aria-label="Notes" title="Your notes (N)">${icons.note}<span>Notes</span></button>
       <button class="mr-btn mr-repo-commit" data-act="refresh" hidden>${icons.refresh}<span class="mr-repo-commit-label"></span></button>
       <button class="mr-btn mr-icon-btn" data-act="settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings" aria-label="Reading settings">${icons.settings}</button>
     </div>
@@ -107,9 +107,7 @@ ${settingsSheet('Set type, appearance and layout for comfortable reading.', [
   <main class="mr-main">
     <article class="mr-article mr-repo-read"><div class="mr-doc"></div></article>
     <section class="mr-repo-map" aria-label="Project map" hidden></section>
-    <div class="mr-repo-thinking" hidden></div>
     <div class="mr-repo-review" hidden></div>
-    <div class="mr-repo-chapters" hidden></div>
   </main>
   <div class="mr-settings mr-repo-export" hidden>
     <div class="mr-settings-backdrop" data-act="close-export"></div>
@@ -177,7 +175,10 @@ export interface Place {
   anchor?: string;
 }
 
-export type View = 'read' | 'map' | 'notes' | 'review' | 'chapters';
+/** A document read in full, or one of the maps: the Documents map (and its lenses), or This review. */
+export type View = 'read' | 'map' | 'review';
+/** What the library shows in the sheet besides a map's details. */
+export type Panel = 'chapters' | 'notes';
 
 /** The review a repository reader was opened from (RFC 0049, Phase 5): its title, its head and its chapters. */
 export interface ReviewContext {

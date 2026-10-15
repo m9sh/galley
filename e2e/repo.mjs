@@ -42,6 +42,33 @@ export async function checkRepository(browser, demoUrl, screenshots) {
   });
   assert.deepEqual(launcher, { label: 'Read the project', count: 'none' });
   await inspect(() => document.querySelector('#galley-launcher').shadowRoot.querySelector('.launch').click());
+  // It opens on the map, around the README, which is previewed in the sheet beside the map.
+  await page.waitForFunction(() => document.querySelector('#galley-repo-reader')?.shadowRoot.querySelector('.mr-pm-sheet .mr-pm-preview'));
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  const front = await inspect(() => {
+    const s = document.querySelector('#galley-repo-reader').shadowRoot;
+    const sheet = s.querySelector('.mr-pm-sheet').getBoundingClientRect();
+    const canvas = s.querySelector('.mr-pm-canvas').getBoundingClientRect();
+    return {
+      middle: s.querySelector('.mr-pm-place[data-lane="here"] strong').textContent,
+      title: s.querySelector('.mr-pm-sheet .mr-sheet-title').textContent,
+      squeezed: Math.round(canvas.right) <= Math.round(sheet.left),
+      top: [...s.querySelectorAll('.mr-tb-right > button:not([hidden])')].map((b) => b.getAttribute('aria-label')),
+      back: s.querySelector('[data-act="back-to-map"]').hidden,
+      overflow: s.querySelector('.mr-root').scrollWidth > innerWidth,
+    };
+  });
+  assert.deepEqual(front, {
+    middle: 'Acme Handbook',
+    title: 'Acme Handbook',
+    squeezed: true,
+    top: ['Chapters', 'Notes', 'Reading main at 4f2c9e1. Check for a newer commit', 'Reading settings'],
+    back: true,
+    overflow: false,
+  });
+  await page.screenshot({ path: join(screenshots, 'repo-start-desktop.png') });
+  // Read opens it in full, with Back to map as the top bar's way back.
+  await click('.mr-pm-sheet [data-act="open"]');
   await settled();
   assert.equal(await title(), 'Acme Handbook');
   const snapshot = await inspect(() => {
@@ -131,10 +158,10 @@ export async function checkRepository(browser, demoUrl, screenshots) {
     return {
       toc: [...s.querySelectorAll('.mr-toc a')].map((a) => a.textContent),
       tocLeftOfText: toc.right <= article.left,
-      back: s.querySelector('[data-act="back"]').disabled,
+      back: !s.querySelector('[data-act="back-to-map"]').hidden,
     };
   });
-  assert.deepEqual(overview, { toc: ['Receiving changes', 'Rendering', 'Operating it'], tocLeftOfText: true, back: false });
+  assert.deepEqual(overview, { toc: ['Receiving changes', 'Rendering', 'Operating it'], tocLeftOfText: true, back: true });
   await page.screenshot({ path: join(screenshots, 'repo-read-desktop.png') });
 
   // A shorter window leaves room below the bookmark: a document's end can clamp any scroll position.
@@ -283,14 +310,18 @@ export async function checkRepository(browser, demoUrl, screenshots) {
       stacked: s.querySelector('.mr-pm').classList.contains('is-stacked'),
       order: lane('incoming').bottom <= lane('here').top && lane('here').bottom <= lane('outgoing').top,
       name: s.querySelector('.mr-file-name').getBoundingClientRect().width,
-      forward: getComputedStyle(s.querySelector('[data-act="forward"]')).display,
+      // Chapters and Notes are their icons on a phone, each a full touch target.
+      panels: [...s.querySelectorAll('.mr-repo-panel')].map((b) => Math.min(b.getBoundingClientRect().width, b.getBoundingClientRect().height)),
     };
   });
   assert.equal(phone.overflow, false);
   assert.equal(phone.stacked, true);
   assert.equal(phone.order, true);
   assert.ok(phone.name > 60, `The document name needs room on a phone, had ${phone.name}px`);
-  assert.equal(phone.forward, 'none');
+  assert.ok(
+    phone.panels.every((size) => size >= 44),
+    `Chapters and Notes need 44px targets: ${phone.panels}`,
+  );
   await page.screenshot({ path: join(screenshots, 'repo-map-mobile.png') });
   await click('.mr-pm-place[data-lane="here"]');
   const sheet = await inspect(() => {
@@ -336,8 +367,12 @@ export async function checkRepository(browser, demoUrl, screenshots) {
   });
   await page.screenshot({ path: join(screenshots, 'repo-architecture-desktop.png') });
 
-  // Notes: written here, kept only when saved, and shown as the reader's own.
+  // Notes: in the sheet beside the map, kept only when saved, and shown as the reader's own.
   await page.keyboard.press('n');
+  assert.equal(
+    await inspect(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-pm-sheet .mr-sheet-layer').getAttribute('aria-label')),
+    'Notes',
+  );
   await inspect(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('form[data-act="add-note"] textarea').focus());
   await page.keyboard.type('Why a queue and not direct calls?');
   await click('form[data-act="add-note"] button[type="submit"]');
@@ -380,6 +415,9 @@ export async function checkRepository(browser, demoUrl, screenshots) {
   await page.keyboard.press('Escape');
   assert.equal(await inspect(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-repo-export').hidden), true);
 
+  // Esc closes the notes, then, on the map, the reader.
+  await page.keyboard.press('Escape');
+  assert.equal(await inspect(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-pm-sheet').hidden), true);
   await page.keyboard.press('Escape');
   assert.equal(await inspect(() => document.querySelector('#galley-repo-reader')), null);
   assert.deepEqual(errors, []);

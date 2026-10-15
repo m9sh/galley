@@ -1,5 +1,6 @@
-import { button, chip, h, glyph } from '../components/dom.ts';
+import { button, h, glyph } from '../components/dom.ts';
 import { icons } from '../components/icons.ts';
+import { sheetRow, sheetSection, type SheetContent } from '../components/sheet.ts';
 
 export interface ReadingStop {
   path: string;
@@ -46,65 +47,119 @@ function withIcon(control: HTMLButtonElement, icon: string, at: 'afterbegin' | '
   return control;
 }
 
-/** The reader's own path through the project: numbered stops in their order, each a click from being read. */
-export function sequenceView(items: ReadingStop[], current: number, commit: string): HTMLElement {
-  const view = h('section', 'mr-library-chapters');
-  const actions = h('div', 'mr-seq-actions');
-  if (items.length) actions.append(withIcon(action('Read chapter', 'sequence-open', 0, 'mr-btn mr-primary mr-seq-start'), icons.book));
-  actions.append(button('Browse all documents', 'docs', 'mr-btn mr-outline'));
-  const head = h('header', 'mr-seq-head');
-  head.append(
-    h('h1', 'mr-title', 'Library chapters'),
-    h('p', 'mr-subtitle', 'Choose a path through the project. Add documents or headings, then put them in the order you want to read.'),
-    actions,
+/** A link written in the document being read, which Chapters offers to add. */
+export interface SequenceLink {
+  path: string;
+  anchor: string;
+  title: string;
+  line: number;
+  /** Already a stop: it says so, and choosing it again only says it is there. */
+  added: boolean;
+}
+
+/** A row's mark, decorative: the words say the same. */
+function mark(svg: string): HTMLElement {
+  const box = h('span', 'mr-sheet-icon');
+  box.replaceChildren(glyph(svg));
+  return box;
+}
+
+/**
+ * Chapters, in the reader's sheet, shown as the review's chapters are: the way in, the stops as a numbered path, each a
+ * click from being read with its order beside it, then the links of the document being read, each Add away.
+ */
+export function sequenceSheet(options: {
+  items: ReadingStop[];
+  current: number;
+  commit: string;
+  /** The document being read, whose links are offered; null before one is read. */
+  from: string | null;
+  links: SequenceLink[];
+}): Pick<SheetContent, 'description' | 'extra' | 'body' | 'keys'> {
+  const { items, current } = options;
+  // Where the reader is along the path, and the way in; an empty path says so in its section instead.
+  const status = h('div', 'mr-chapters-status');
+  status.append(
+    h('p', 'mr-chapters-progress', current < 0 ? `${items.length} ${items.length === 1 ? 'stop' : 'stops'}` : `Stop ${current + 1} of ${items.length}`),
+    withIcon(action('Read chapter', 'sequence-open', 0, 'mr-chapter-button mr-chapters-start'), icons.book),
   );
-  const card = h('section', 'mr-seq-card');
-  card.setAttribute('aria-label', 'Your reading sequence');
-  const top = h('header', 'mr-seq-card-head');
-  top.append(h('h2', '', 'Your reading sequence'), chip('own', 'Added by you'));
-  card.append(top);
-  if (items.length) {
-    const list = h('ol', 'mr-seq-stops');
-    items.forEach((item, at) => {
-      const row = h('li', `mr-seq-stop${at === current ? ' is-current' : ''}`);
-      const open = action('', 'sequence-open', at, 'mr-seq-open');
-      const text = h('span', 'mr-seq-text');
-      text.append(h('span', 'mr-sequence-title', item.title), h('small', '', `${item.path}${item.anchor ? ` · § ${item.anchor}` : ''}`));
-      open.append(h('span', 'mr-seq-number', String(at + 1)), text);
-      if (at === current) {
-        open.setAttribute('aria-current', 'step');
-        open.append(h('span', 'mr-seq-here', 'You are here'));
-      }
-      const controls = h('div', 'mr-seq-controls');
-      for (const [label, act, icon, disabled] of [
-        ['Earlier', 'sequence-earlier', icons.up, at === 0],
-        ['Later', 'sequence-later', icons.down, at === items.length - 1],
-        ['Remove', 'sequence-remove', icons.close, false],
-      ] as const) {
-        const b = withIcon(action('', act, at, 'mr-btn mr-icon-btn'), icon);
-        b.disabled = disabled;
-        b.title = label;
-        b.setAttribute(
-          'aria-label',
-          `${label === 'Remove' ? 'Remove' : 'Move'} ${item.title}${label === 'Remove' ? ' from this chapter' : ` ${label.toLowerCase()}`}`,
-        );
-        controls.append(b);
-      }
-      row.append(open, controls);
-      list.append(row);
+  const stops = h('div', 'mr-sheet-rows mr-path');
+  items.forEach((item, at) => {
+    const row = sheetRow({
+      title: item.title,
+      meta: `${item.path}${item.anchor ? ` · § ${item.anchor}` : ''}`,
+      lead: h('span', 'mr-sheet-num', String(at + 1)),
+      end: at === current ? 'You are here' : '',
     });
-    card.append(list);
-  } else {
-    const empty = h('div', 'mr-seq-empty');
-    empty.append(h('p', 'mr-seq-empty-title', 'No documents yet'), h('p', '', 'Use Add beside a document or a link, or Add to chapter while reading.'));
-    card.append(empty);
+    row.dataset.act = 'sequence-open';
+    row.dataset.at = String(at);
+    if (at === current) {
+      row.setAttribute('aria-current', 'step');
+      row.classList.add('is-current');
+    }
+    const controls = h('div', 'mr-seq-controls');
+    for (const [label, act, icon, disabled] of [
+      ['Earlier', 'sequence-earlier', icons.up, at === 0],
+      ['Later', 'sequence-later', icons.down, at === items.length - 1],
+      ['Remove', 'sequence-remove', icons.close, false],
+    ] as const) {
+      const b = withIcon(action('', act, at, 'mr-btn mr-icon-btn'), icon);
+      b.disabled = disabled;
+      b.title = label;
+      b.setAttribute(
+        'aria-label',
+        `${label === 'Remove' ? 'Remove' : 'Move'} ${item.title}${label === 'Remove' ? ' from this chapter' : ` ${label.toLowerCase()}`}`,
+      );
+      controls.append(b);
+    }
+    const stop = h('div', 'mr-sheet-row-with mr-seq-stop');
+    stop.append(row, controls);
+    stops.append(stop);
+  });
+  const all = button('All documents', 'docs', 'mr-sheet-link');
+  const body: Node[] = [
+    sheetSection(
+      'Your reading sequence',
+      items.length ? [stops] : [h('p', 'mr-sheet-note', 'No documents yet. Use Add beside a document or a link, or Add to chapter while reading.')],
+      { ...(items.length ? { count: items.length } : {}), actions: [all] },
+    ),
+  ];
+  if (options.links.length) {
+    const rows = options.links.map((link) => {
+      const row = sheetRow({ title: link.title, meta: `${link.path}${link.anchor ? `#${link.anchor}` : ''} · line ${link.line}`, lead: mark(icons.link) });
+      row.dataset.act = 'open';
+      row.dataset.path = link.path;
+      if (link.anchor) row.dataset.anchor = link.anchor;
+      const add = withIcon(
+        button(link.added ? 'Added' : 'Add', 'sequence-add', `mr-sheet-link mr-seq-add${link.added ? ' is-added' : ''}`),
+        link.added ? icons.check : icons.plus,
+      );
+      add.dataset.path = link.path;
+      add.dataset.anchor = link.anchor;
+      add.dataset.title = link.title;
+      add.setAttribute('aria-label', link.added ? `${link.title} is in your reading sequence` : `Add ${link.title} to your reading sequence`);
+      const item = h('div', 'mr-sheet-row-with');
+      item.append(row, add);
+      return item;
+    });
+    body.push(sheetSection('Links from this document', [h('p', 'mr-sheet-note', `In ${options.from}`), ...rows], { count: rows.length }));
   }
-  view.append(
-    head,
-    card,
-    h('p', 'mr-seq-note', `Only for this session at ${commit}. Reading does not mark anything Viewed. A newer commit clears this sequence.`),
+  body.push(
+    h(
+      'p',
+      'mr-sheet-note mr-seq-note',
+      `Only for this session at ${options.commit}. Reading does not mark anything Viewed. A newer commit clears this sequence.`,
+    ),
   );
-  return view;
+  return {
+    description: 'Choose a path through the project. Add documents or headings, then put them in the order you want to read.',
+    extra: items.length ? [status] : [],
+    body,
+    keys: [
+      [['↑', '↓'], 'Move'],
+      [['↵'], 'Open'],
+    ],
+  };
 }
 
 /** While reading a stop: where it is in the sequence, the way back to it, and the stops either side. */

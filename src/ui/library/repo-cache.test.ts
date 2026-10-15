@@ -7,7 +7,7 @@ vi.mock('../rendering/code.ts', async (original) => ({ ...(await original<typeof
 
 const ui = repoHarness();
 const showMap = async () => {
-  ui.click('[data-view="map"]');
+  ui.click('[data-act="back-to-map"]');
   await vi.waitFor(() => expect(ui.q('.mr-map-status').textContent).toMatch(/^Built from all/));
 };
 const BEEF = 'beef0000beef0000beef0000beef0000beef0000';
@@ -43,7 +43,7 @@ it('after a refresh to a newer commit, only the documents whose content changed 
   source.load = vi.fn((path: string) => (path === 'broken.md' ? Promise.reject(new Error('500')) : load(path)));
   vi.mocked(next.load).mockImplementation(async (path) => (path === 'broken.md' ? Promise.reject(new Error('500')) : after[path]));
   await ui.open(source);
-  ui.click('[data-view="map"]');
+  ui.click('[data-act="back-to-map"]');
   await vi.waitFor(() => expect(ui.q('.mr-map-status').textContent).toMatch(/^Built from all/));
   expect(readPaths(source).sort()).toStrictEqual(['README.md', 'broken.md', 'guide.md', 'old.md']);
   ui.click('[data-act="refresh"]');
@@ -51,7 +51,7 @@ it('after a refresh to a newer commit, only the documents whose content changed 
   expect(readPaths(next).sort()).toStrictEqual(['broken.md', 'old.md']);
   // The map is the same as one built by reading everything.
   expect(ui.text('.mr-map-status')).toContain('1 document could not be read.');
-  ui.click('[data-view="read"]');
+  ui.key('m');
   await ui.settled();
   expect(ui.text('.mr-lead')).toBe('Handbook');
   // Reading a document again, or going back to it, never reads it twice at one commit.
@@ -132,7 +132,7 @@ it('a pass that reads only part of a large project keeps what was remembered of 
   for (let i = 0; i < INDEX_BATCH + 2; i++) files[`d${String(i).padStart(3, '0')}.md`] = `# Doc ${i}`;
   // The first visit reads everything, in two passes.
   await ui.open(hashed(files));
-  ui.click('[data-view="map"]');
+  ui.click('[data-act="back-to-map"]');
   await vi.waitFor(() => expect(ui.text('.mr-map-status')).toContain('Index more'));
   ui.press('Index more');
   await vi.waitFor(() => expect(ui.text('.mr-map-status')).toMatch(/^Built from all/));
@@ -142,14 +142,14 @@ it('a pass that reads only part of a large project keeps what was remembered of 
   const revised = { ...files, 'd000.md': '# Doc zero, revised' };
   const second = hashed(revised);
   await ui.open(second);
-  ui.click('[data-view="map"]');
+  ui.click('[data-act="back-to-map"]');
   await vi.waitFor(() => expect(ui.text('.mr-map-status')).toContain('Index more'));
   expect(readPaths(second).sort()).toStrictEqual(['README.md', 'd000.md']);
   ui.close();
   // ...and the documents beyond that pass were not forgotten for it.
   const third = hashed(revised);
   await ui.open(third);
-  ui.click('[data-view="map"]');
+  ui.click('[data-act="back-to-map"]');
   await vi.waitFor(() => expect(ui.text('.mr-map-status')).toContain('Index more'));
   ui.press('Index more');
   await vi.waitFor(() => expect(ui.text('.mr-map-status')).toMatch(/^Built from all/));
@@ -183,7 +183,7 @@ it('a document that could not be read, or whose listing gave no content hash, is
   const load = source.load;
   source.load = vi.fn((path: string) => (path === 'broken.md' ? Promise.reject(new Error('500')) : load(path)));
   await ui.open(source);
-  ui.click('[data-view="map"]');
+  ui.click('[data-act="back-to-map"]');
   await vi.waitFor(() => expect(ui.text('.mr-map-status')).toContain('1 document could not be read.'));
   await vi.waitFor(() => expect(Object.keys(localStorage).some((key) => key.startsWith('galley:outlines:'))).toBe(true));
   const record = JSON.parse(localStorage.getItem(Object.keys(localStorage).find((key) => key.startsWith('galley:outlines:'))!)!);

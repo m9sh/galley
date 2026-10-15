@@ -1,11 +1,10 @@
 import { chapterAttachment } from '../components/chapter-attachment.ts';
 import { classify, fileTitle, folderTree, KIND_NAMES, KIND_SOURCES, type DocKind, type Edge, type FolderNode, type KindSource } from '../../core/docindex.ts';
 import { highlightCode } from '../rendering/code.ts';
-import { button, chip, h, glyph } from '../components/dom.ts';
-import { icons } from '../components/icons.ts';
+import { button, chip, h } from '../components/dom.ts';
 import { renderDocument, type RenderedDoc } from '../rendering/render.ts';
 import { external } from './repo-views.ts';
-import { sequenceRoute, sequenceView, type ReadingStop } from './reading-sequence.ts';
+import { sequenceRoute, type ReadingStop, type SequenceLink } from './reading-sequence.ts';
 import { OPEN_OUTLINE, type Place, TOP, WORDS_PER_MINUTE, plural, problem, safeDecode, shortSha } from './repo-reader-shared.ts';
 import { RepoReaderSource } from './repo-reader-source.ts';
 
@@ -21,7 +20,6 @@ export abstract class RepoReaderReading extends RepoReaderSource {
       this.history.push({ path, block: -1, offset: 0, anchor: options.anchor });
       this.at = this.history.length - 1;
     }
-    this.updateHistory();
     this.setView('read');
     this.path = path;
     this.readingAnchor = options.place?.anchor ?? options.anchor ?? '';
@@ -62,6 +60,8 @@ export abstract class RepoReaderReading extends RepoReaderSource {
     this.rendered = r;
     this.q('.mr-file-name').textContent = r.title ?? fileTitle(path);
     this.q('.mr-doc').replaceChildren(this.article(path, r));
+    // Chapters and Notes beside it follow the document: its links, its place in the path, what a note can be about.
+    this.drawPanel();
     this.buildToc(r);
     this.drawDiagrams();
     void highlightCode(r.content);
@@ -129,16 +129,17 @@ export abstract class RepoReaderReading extends RepoReaderSource {
 
   protected addStop(stop: ReadingStop): void {
     this.remember();
-    const focused = this.shadow.activeElement instanceof HTMLElement && this.shadow.activeElement.dataset.act === 'sequence-add';
+    const active = this.shadow.activeElement;
+    // Where Add was: the documents list, or the sheet; it is drawn again there, and keeps focus.
+    const within = active instanceof HTMLElement && active.dataset.act === 'sequence-add' ? active.closest<HTMLElement>('.mr-repo-docs, .mr-sheet') : null;
     const added = this.sequence.add(stop);
     this.updateSequence();
     this.buildOutline();
-    if (this.view === 'chapters') this.drawSequence();
-    if (focused) {
-      [...this.shadow.querySelectorAll<HTMLElement>('[data-act="sequence-add"]')]
+    if (this.panel === 'chapters') this.drawPanel();
+    if (within)
+      [...within.querySelectorAll<HTMLElement>('[data-act="sequence-add"]')]
         .find((el) => el.dataset.path === stop.path && el.dataset.anchor === stop.anchor)!
         .focus();
-    }
     const place = this.history[this.at];
     if (place && this.rendered && this.view === 'read') this.restore(place);
     this.toast(added ? 'Added to your reading sequence.' : 'Already in your reading sequence.');
@@ -151,54 +152,21 @@ export abstract class RepoReaderReading extends RepoReaderSource {
     else this.q('.mr-repo-read').prepend(route);
   }
 
-  protected showSequence(): void {
-    if (!this.source) return;
-    this.closeMenus();
-    this.setView('chapters');
-    this.drawSequence();
-    this.root.scrollTo({ top: 0 });
-  }
-
-  protected drawSequence(): void {
-    const pane = this.q('.mr-repo-chapters');
-    pane.replaceChildren(sequenceView(this.sequence.items, this.sequence.current(this.path, this.readingAnchor), shortSha(this.source!.commit)));
-    // Only links written in the current document are offered. No index scan or folder inference.
-    if (this.path && this.read.has(this.path)) {
-      const doc = this.indexed(this.path, this.read.get(this.path)!);
-      const links = doc.links.filter((link) => link.path && link.path !== this.path && /\.(md|markdown|mdown|mkd|mdx)$/i.test(link.path));
-      if (links.length) {
-        const section = h('section', 'mr-sequence-links');
-        section.setAttribute('aria-label', 'Links from this document');
-        section.append(h('h2', '', 'Links from this document'), h('p', 'mr-seq-note', `In ${this.path} · ${plural(links.length, 'link')}`));
-        const list = h('ul', 'mr-seq-links');
-        for (const link of links) {
-          // A document already read goes by its own title; one not read yet by the words that link to it.
-          const title = this.index?.docs.get(link.path!)?.title ?? link.text;
-          const row = h('li', 'mr-sequence-link');
-          const text = h('div', 'mr-seq-text');
-          const evidence = button(`line ${link.line}`, 'evidence', 'mr-seq-line');
-          evidence.dataset.path = this.path;
-          evidence.dataset.line = String(link.line);
-          evidence.title = `Open ${this.path} at line ${link.line}`;
-          evidence.setAttribute('aria-label', `Source link, line ${link.line}`);
-          const where = h('small');
-          where.append(`${link.path}${link.anchor ? `#${link.anchor}` : ''} · `, evidence);
-          text.append(h('span', 'mr-seq-link-title', title), where);
-          // A stop already chosen says so; choosing it again only says it is there.
-          const added = this.sequence.items.some((item) => item.path === link.path && item.anchor === link.anchor);
-          const add = button(added ? 'Added' : 'Add', 'sequence-add', `mr-btn mr-outline mr-seq-add${added ? ' is-added' : ''}`);
-          add.prepend(glyph(added ? icons.check : icons.plus));
-          add.dataset.path = link.path!;
-          add.dataset.anchor = link.anchor;
-          add.dataset.title = title;
-          add.setAttribute('aria-label', added ? `${title} is in your reading sequence` : `Add ${title} to your reading sequence`);
-          row.append(text, add);
-          list.append(row);
-        }
-        section.append(list);
-        pane.append(section);
-      }
-    }
+  /** Links written in the document being read, to other documents: what Chapters offers to add. No index scan or folder inference. */
+  protected sequenceLinks(): SequenceLink[] {
+    const path = this.path;
+    const text = path === null ? undefined : this.read.get(path);
+    if (text === undefined) return [];
+    return this.indexed(path!, text)
+      .links.filter((link) => link.path && link.path !== path && /\.(md|markdown|mdown|mkd|mdx)$/i.test(link.path))
+      .map((link) => ({
+        path: link.path!,
+        anchor: link.anchor,
+        // A document already read goes by its own title; one not read yet by the words that link to it.
+        title: this.index?.docs.get(link.path!)?.title ?? link.text,
+        line: link.line,
+        added: this.sequence.items.some((item) => item.path === link.path && item.anchor === link.anchor),
+      }));
   }
 
   /** A document's type as a chip; one the reader set carries the accent, like everything else of theirs. */
@@ -289,6 +257,15 @@ export abstract class RepoReaderReading extends RepoReaderSource {
     place.anchor = this.readingAnchor;
   }
 
+  /** The sheet opens or closes beside the page: the page takes the width left, keeping the paragraph being read in place. */
+  protected reflow(change: () => void): void {
+    this.remember();
+    change();
+    this.fitWidth();
+    const place = this.history[this.at];
+    if (this.view === 'read' && place && this.rendered) this.restore(place);
+  }
+
   /** Reflow the article around the paragraph in view, without moving a map or notes view. */
   protected arrangeLayout(): void {
     this.remember();
@@ -334,11 +311,6 @@ export abstract class RepoReaderReading extends RepoReaderSource {
     this.remember();
     this.at += step;
     void this.open(next.path, { push: false, place: next });
-  }
-
-  protected updateHistory(): void {
-    this.q<HTMLButtonElement>('[data-act="back"]').disabled = this.at <= 0;
-    this.q<HTMLButtonElement>('[data-act="forward"]').disabled = this.at >= this.history.length - 1;
   }
 
   /** In-repository links open here at the same commit; everything else opens on the platform in a new tab. */

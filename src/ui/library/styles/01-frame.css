@@ -7,15 +7,21 @@
   --measure-max: 680px;
 }
 
-/* A library has article contents but no review-conversation column. Keep even margins around text. */
+/* A library has article contents but no review-conversation column. Keep even margins around text, in the page
+   the sheet leaves (--vw); a sheet that leaves less than a wide page narrows it, as in a review (is-narrowed). */
 @media (min-width: 1280px) {
-  .mr-root.mr-repo {
+  .mr-root.mr-repo:where(:not(.is-narrowed)) {
     --rail-min: 0px;
     --rail-max: 0px;
     --rail-gap: 0px;
     --shift: 0px;
-    --measure: min(var(--measure-max), calc(100vw - 2 * var(--edge) - 2 * (var(--toc-width) + var(--toc-gap))));
-    --text-left: calc((100vw - var(--measure)) / 2);
+    --measure: min(var(--measure-max), calc(var(--vw) - 2 * var(--edge) - 2 * (var(--toc-width) + var(--toc-gap))));
+    --text-left: calc((var(--vw) - var(--measure)) / 2);
+  }
+
+  /* Chapters, Notes, the commit and settings keep their width; the document's name gives way, still starting where the text does. */
+  .mr-root.mr-repo:where(:not(.is-narrowed)) .mr-topbar {
+    grid-template-columns: minmax(0, calc(var(--text-left) - 24px)) minmax(0, var(--measure)) minmax(max-content, 1fr);
   }
 }
 
@@ -37,20 +43,6 @@
 
 [data-value="wide"] .is-library.mr-layout-preview .t {
   flex-basis: 70%;
-}
-
-.mr-repo-history {
-  display: inline-flex;
-  gap: 2px;
-}
-
-.mr-repo-history .mr-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-.mr-repo-history .mr-btn:disabled:hover {
-  background: transparent;
 }
 
 /* The commit every document is read at: a quiet pill that checks for a newer one. */
@@ -76,79 +68,47 @@
   display: none;
 }
 
-/* One control names the view and opens the others in a small menu; phones list them in the document menu. */
-.mr-views-pick {
-  position: relative;
+/* Reading a document, the one way back to the map leads the top bar, in place of Close and the wordmark. */
+.mr-repo .mr-repo-back {
+  gap: 2px;
   margin-right: 4px;
-}
-
-.mr-repo .mr-views-btn {
-  gap: 6px;
-  padding: 0 8px 0 10px;
+  padding: 0 12px 0 6px;
+  border: 1px solid var(--rule);
   font: 500 13px / 1 var(--sans);
   white-space: nowrap;
 }
 
-.mr-repo .mr-views-btn[aria-expanded="true"],
-.mr-repo .mr-views-btn:hover {
+.mr-repo .mr-repo-back:hover {
   background: var(--soft);
 }
 
-.mr-views-btn .mr-icon,
-.mr-repo-views .mr-icon {
+.mr-repo-back .mr-icon {
   width: 16px;
   height: 16px;
 }
 
-.mr-views-icon {
-  display: inline-flex;
+.mr-repo-back .mr-label-short {
+  display: none;
 }
 
-.mr-views-pick > .mr-repo-views {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 30;
-  display: grid;
-  min-width: 210px;
-  padding: 6px;
-  border: 1px solid var(--rule);
-  border-radius: 14px;
-  background: var(--bg);
-  box-shadow: var(--shadow);
+/* Chapters and Notes open the sheet beside the map or the document; the one it shows is marked, like an open menu's. */
+.mr-repo .mr-repo-panel {
+  gap: 6px;
+  padding: 0 11px 0 9px;
+  font: 500 13px / 1 var(--sans);
+  white-space: nowrap;
 }
 
-.mr-views-pick > .mr-repo-views > button {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 38px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--fg);
-  font: 400 14px / 1 var(--sans);
-  text-align: left;
-  cursor: pointer;
+.mr-repo-panel .mr-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
 }
 
-.mr-views-pick > .mr-repo-views > button:hover {
+.mr-repo .mr-repo-panel[aria-expanded="true"] {
   background: var(--soft);
 }
 
-.mr-views-pick > .mr-repo-views > button[aria-pressed="true"] {
-  background: var(--selected-bg);
-}
-
-.mr-views-pick > .mr-repo-views > button[data-key]::after {
-  content: attr(data-key);
-  margin-left: auto;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.mr-repo-menu-views {
-  display: none;
+.mr-repo .mr-repo-panel[aria-expanded="true"] .mr-icon {
+  color: var(--fg);
 }

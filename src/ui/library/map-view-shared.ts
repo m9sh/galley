@@ -30,6 +30,8 @@ export interface DocumentMapHost {
   refocus?(path: string): void;
   /** The library's sheet for details; Close asks the map to close it (closeSheet()). */
   sheet: Sheet;
+  /** The details are about to take the sheet from whatever the library showed in it, such as Notes. */
+  claim?(): void;
   /** Show its connections, from This review: the library opens its Documents map at the document. */
   explore?(path: string): void;
   /** The commit everything was read at. */

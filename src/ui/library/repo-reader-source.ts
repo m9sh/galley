@@ -37,7 +37,7 @@ export abstract class RepoReaderSource extends RepoReaderBase {
       if (this.closed) return;
       this.applyCorrections();
       this.redraw();
-      if (this.view === 'notes') void this.checkAnchors();
+      if (this.panel === 'notes') void this.checkAnchors();
     });
     // Opened from a review, the reader starts at what the review changes.
     if (this.review?.entry?.path) {
@@ -49,32 +49,7 @@ export abstract class RepoReaderSource extends RepoReaderBase {
         () => {},
       );
     } else if (this.review) void this.showReview();
-    else this.start();
-  }
-
-  /** The document the reader was opened at; a folder or the repository opens at its README, else its first document. */
-  protected start(): void {
-    const source = this.source!;
-    if (!source.start.folder) {
-      void this.open(source.start.path);
-      return;
-    }
-    void this.discover().then(
-      (found) => {
-        const folder = source.start.path;
-        const inside = found.docs.find((doc) => !folder || doc.path.startsWith(`${folder}/`));
-        const start = this.index!.documentAt(folder) ?? inside?.path ?? this.index!.documentAt('') ?? found.docs[0]?.path;
-        if (start) void this.open(start);
-        else
-          this.message('No documents here', `Galley found no Markdown files in ${source.name} at ${shortSha(source.commit)}.`, [
-            external(`Open on ${source.platform}`, source.url, 'mr-btn mr-outline'),
-          ]);
-      },
-      (err) => {
-        const { title, hint } = problem(err);
-        this.message(title, hint, [button('Try again', 'retry-list')]);
-      },
-    );
+    else void this.start();
   }
 
   showError(err: unknown): void {
@@ -104,6 +79,7 @@ export abstract class RepoReaderSource extends RepoReaderBase {
     this.notes?.flush();
     for (const type of ['keydown', 'keyup', 'keypress']) window.removeEventListener(type, this.shield, true);
     this.dark.removeEventListener('change', this.onSchemeChange);
+    window.removeEventListener('resize', this.onResize);
     clearTimeout(this.toastTimer);
     this.host.remove();
     document.documentElement.style.overflow = this.prevOverflow;
@@ -242,22 +218,20 @@ export abstract class RepoReaderSource extends RepoReaderBase {
     const hadSequence = this.sequence.items.length > 0;
     this.sequence.clear();
     this.updateSequence();
+    if (this.panel === 'chapters') this.drawPanel();
     this.showSnapshot();
     this.toast(
       `Now reading ${shortSha(next.commit)}. It was ${shortSha(before.commit)}.${hadSequence ? ' Your reading sequence was cleared for the new commit.' : ''}`,
     );
     this.anchorStates = new Map();
     void this.checkAnchors();
-    if (this.view !== 'read') {
+    if (this.view === 'read') await this.open(this.path!, { push: false });
+    else {
       // The document is read again at the new commit when the reader goes back to it.
       this.rendered = null;
       this.q('.mr-doc').replaceChildren(this.skeleton());
       if (this.view === 'map') await this.showMap();
-      else if (this.view === 'review') await this.showReview();
-      else if (this.view === 'chapters') this.showSequence();
-      else this.drawNotes();
-    } else if (this.path) await this.open(this.path, { push: false });
-    // Nothing was open, such as a repository without documents: start again at the new commit.
-    else this.start();
+      else await this.showReview();
+    }
   }
 }

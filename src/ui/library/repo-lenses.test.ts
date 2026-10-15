@@ -27,7 +27,7 @@ const shop: Record<string, string> = {
 };
 
 const showMap = async () => {
-  ui.click('[data-view="map"]');
+  ui.click('[data-act="back-to-map"]');
   await vi.waitFor(() => expect(ui.q('.mr-map-status').textContent).toMatch(/^Built from all/));
 };
 const lens = (name: string) => ui.click(`[data-act="lens"][data-lens="${name}"]`);
@@ -324,8 +324,9 @@ it('a proposal is about the document being read only when the reader keeps it so
   // Opened from a review, no document is open yet: the form offers none.
   await ui.open(repository(shop), { review: { title: 'Change', ref: 'topic', chapters: [] } });
   await vi.waitFor(() => expect(ui.q('.mr-review-status .mr-map-status').textContent).toMatch(/^Built from all/));
-  ui.click('[data-view="map"]');
+  // This review's map offers the lenses too; the lens chosen keeps focus.
   lens('architecture');
+  await vi.waitFor(() => expect(ui.shadow().activeElement).toBe(ui.q('[data-act="lens"][data-lens="architecture"]')));
   expect(ui.all('form[data-act="propose-entity"] [data-act="propose-about"]')).toHaveLength(0);
   const name = () => ui.q<HTMLFormElement>('form[data-act="propose-entity"]').elements.namedItem('name') as HTMLInputElement;
   name().value = 'Queue';
@@ -335,9 +336,11 @@ it('a proposal is about the document being read only when the reader keeps it so
   expect(name().value).toBe('Queue');
   expect(ui.shadow().activeElement).toBe(name());
 
-  ui.click('[data-view="read"]');
+  ui.click('[data-act="docs"]');
+  ui.click('.mr-repo-outline .mr-menu-item[data-path="README.md"]');
   await ui.settled();
-  ui.click('[data-view="map"]');
+  // Back to map returns to the lens the reader left.
+  ui.click('[data-act="back-to-map"]');
   // Now a document is open: the form offers it, and keeps the name typed before.
   const form = ui.q<HTMLFormElement>('form[data-act="propose-entity"]');
   expect(name().value).toBe('Queue');

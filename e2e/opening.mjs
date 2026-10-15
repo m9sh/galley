@@ -162,6 +162,9 @@ export async function checkOpening(executablePath, screenshots) {
     console.log('Opening: repository page stays quiet.');
     await open(repository);
     console.log('Opening: repository action chosen.', requests);
+    // It opens on the map, the README previewed beside it; Read reads it in full.
+    await page.waitForFunction(() => document.querySelector('#galley-repo-reader')?.shadowRoot.querySelector('.mr-pm-sheet:not([hidden]) [data-act="open"]'));
+    await page.evaluate(() => document.querySelector('#galley-repo-reader').shadowRoot.querySelector('.mr-pm-sheet [data-act="open"]').click());
     await page.waitForFunction(() => document.querySelector('#galley-repo-reader')?.shadowRoot.querySelector('.mr-lead')?.textContent === 'A focused review');
     assert.equal(
       requests.some((path) => path.endsWith('/repository/tree')),
