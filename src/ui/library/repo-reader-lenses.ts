@@ -8,7 +8,7 @@ import { digestText } from './project-store.ts';
 import { configStatus, exportSheet, lensSwitch, lensView, type ConfigState } from './repo-views.ts';
 import { reviewMap } from '../../core/project-map.ts';
 import { DocumentMap } from './map-view.ts';
-import { CONFIG_CONCURRENCY, MAX_ISSUE_URL, edgeKey, newId, plural, sectionKey, shortSha, typed } from './repo-reader-shared.ts';
+import { CONFIG_CONCURRENCY, MAX_ISSUE_URL, edgeKey, newId, plural, sectionKey, shortSha } from './repo-reader-shared.ts';
 import { RepoReaderMap } from './repo-reader-map.ts';
 
 /** The architecture, infrastructure and decision views, private notes, their export, and a review's project context. */
@@ -36,8 +36,8 @@ export abstract class RepoReaderLenses extends RepoReaderMap {
     const map = this.q('.mr-repo-map');
     const source = this.source!;
     const model = buildLens(lens, this.lensInput());
-    const restore = typed(map);
-    map.replaceChildren(
+    this.redrawPane(
+      map,
       this.mapHead(),
       lensView({
         lens,
@@ -48,7 +48,6 @@ export abstract class RepoReaderLenses extends RepoReaderMap {
         reading: this.path ? { path: this.path, title: this.titleOf(this.path) } : null,
       }),
     );
-    restore();
   }
 
   /**

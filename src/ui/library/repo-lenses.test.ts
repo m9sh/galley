@@ -405,3 +405,18 @@ it('closing while configuration is read stops reading it', async () => {
   await vi.waitFor(() => expect(source.load).toHaveBeenCalledWith('docker-compose.yml'));
   expect(frame.read).toHaveBeenCalledTimes(1);
 });
+
+it('a lens chosen before the notes have loaded keeps focus when they arrive and the view is drawn again', async () => {
+  // Storage answers only when the test says so, as a slow device would.
+  const answer = deferred<Record<string, unknown>>();
+  vi.stubGlobal('chrome', { storage: { local: { get: vi.fn(() => answer.promise), set: vi.fn(async () => {}), remove: vi.fn(async () => {}) } } });
+  await ui.openMap(repository(shop));
+  ui.q('[data-act="lens"][data-lens="architecture"]').focus();
+  ui.click('[data-act="lens"][data-lens="architecture"]');
+  const chosen = ui.q('[data-act="lens"][data-lens="architecture"]');
+  expect(ui.shadow().activeElement).toBe(chosen);
+  answer.resolve({});
+  await vi.waitFor(() => expect(ui.q('[data-act="lens"][data-lens="architecture"]')).not.toBe(chosen));
+  expect(ui.shadow().activeElement).toBe(ui.q('[data-act="lens"][data-lens="architecture"]'));
+  vi.unstubAllGlobals();
+});

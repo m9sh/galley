@@ -6,7 +6,8 @@ import { external, lensSwitch } from './repo-views.ts';
 import { recallOutlines, rememberOutlines, touchOutlines, type Remembered } from './outline-cache.ts';
 import { documentMap } from '../../core/project-map.ts';
 import { DocumentMap } from './map-view.ts';
-import { type View, folderOf, problem, shortSha } from './repo-reader-shared.ts';
+import { twin } from '../components/sheet.ts';
+import { type View, folderOf, problem, shortSha, typed } from './repo-reader-shared.ts';
 import { RepoReaderReading } from './repo-reader-reading.ts';
 
 /** The maps, the library's front: switching between them and a document, the pass that reads documents for the index, and the map with its details. */
@@ -256,8 +257,21 @@ export abstract class RepoReaderMap extends RepoReaderReading {
       commit: this.source!.commit,
     });
     head.querySelector('.mr-lens-switch')!.after(this.mapView.tools);
-    map.replaceChildren(head, this.mapView.element);
+    this.redrawPane(map, head, this.mapView.element);
     this.mapView.draw({ model: documentMap(this.index!, this.corrections), focus: this.focus!, here: this.path, changed: this.changed });
+  }
+
+  /**
+   * Draw the map's pane anew, as reading more documents or loading notes does: what the reader typed stays, and the
+   * control that had focus keeps it, the same one moved or the one drawn in its place.
+   */
+  protected redrawPane(pane: HTMLElement, ...children: Node[]): void {
+    const active = this.shadow.activeElement;
+    const focused = active instanceof HTMLElement && pane.contains(active) ? active : null;
+    const restore = typed(pane);
+    pane.replaceChildren(...children);
+    restore();
+    if (focused) (focused.isConnected ? focused : twin(pane, focused))?.focus({ preventScroll: true });
   }
 
   /** A document in the map's sheet, rendered as the reader would, with diagrams as their source. */
