@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.20.0](https://github.com/m9sh/galley/compare/v0.19.1...v0.20.0) (2026-10-15)
+
+
+### Features
+
+* **reader:** show what changed since you last looked ([6de868c](https://github.com/m9sh/galley/commit/6de868c61fec7665614cc35385ce9ed599e91cb7))
+* **reader:** show what changed since you last looked ([e455f3e](https://github.com/m9sh/galley/commit/e455f3ee7ac90bbd28da33dfd2a6150f8d0eb25d)), closes [#39](https://github.com/m9sh/galley/issues/39)
+
+
+### Bug Fixes
+
+* **github:** read a pull request opened by clicking through GitHub ([978f3dd](https://github.com/m9sh/galley/commit/978f3ddd963cd3ecf907ff9940738f1955b49594))
+* **github:** read a pull request opened by clicking through GitHub ([48f6b9c](https://github.com/m9sh/galley/commit/48f6b9cb72ecb224e66fe3a7eadfcc1ad0080afc))
+* **reader:** smooth the top glow and the edge under the top bar ([4ffd407](https://github.com/m9sh/galley/commit/4ffd407d68bcdb4f57eb78558f620f7280c99add))
+* **reader:** smooth the top glow and the edge under the top bar ([5ec47c1](https://github.com/m9sh/galley/commit/5ec47c1e9dc2fa295b97706b1baa73cec21d1a0a))
+
 ## [0.19.1](https://github.com/m9sh/galley/compare/v0.19.0...v0.19.1) (2026-10-14)
 
 
